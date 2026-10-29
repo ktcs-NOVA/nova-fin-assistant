@@ -116,3 +116,56 @@ button { font: inherit; cursor: pointer; }
   .main { padding: 16px 16px 32px; }
   .page-title { flex-direction: column; gap: 2px; }
 }
+
+/* ---------- 판정 뱃지 ---------- */
+.badge {
+  display: inline-block;
+  font-size: 12px; font-weight: 600; line-height: 1;
+  padding: 5px 9px; border-radius: 999px;
+  white-space: nowrap;
+}
+.badge.good { background: var(--good-soft); color: var(--good); }
+.badge.bad  { background: var(--bad-soft);  color: var(--bad); }
+.badge.warn { background: var(--warn-soft); color: var(--warn); }
+.badge.muted { background: var(--line); color: var(--muted); }
+
+/* ---------- 검증 결과 ---------- */
+.result { display: flex; flex-direction: column; gap: 12px; }
+.result-summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 14px 18px;
+}
+.result-summary .label { font-size: 13px; color: var(--muted); margin-right: 10px; }
+.result-counts { display: flex; gap: 14px; font-size: 13px; font-weight: 600; }
+.result-counts .good { color: var(--good); }
+.result-counts .bad  { color: var(--bad); }
+.result-counts .warn { color: var(--warn); }
+
+.result-list { display: grid; gap: 10px; }
+.result-card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 14px 18px;
+}
+.result-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.result-head h3 { font-size: 15px; margin: 0; }
+.result-message { margin: 8px 0 10px; }
+.result-meta {
+  display: grid; grid-template-columns: 40px 1fr; gap: 4px 10px;
+  margin: 0; font-size: 13px;
+  border-top: 1px dashed var(--line); padding-top: 10px;
+}
+.result-meta dt { color: var(--muted); font-weight: 600; }
+.result-meta dd { margin: 0; }
+
+/* ---------- 버튼·상태 ---------- */
+.btn {
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+  padding: 9px 16px; border-radius: 9px;
+}
+.btn:hover { border-color: var(--brand); }
+.btn.primary { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); font-weight: 600; }
+.btn:disabled { opacity: .6; cursor: default; }
+.toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.hint { font-size: 13px; color: var(--muted); }
+.error { background: var(--bad-soft); color: var(--bad); padding: 10px 14px; border-radius: 9px; margin-bottom: 12px; }
