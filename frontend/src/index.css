@@ -65,6 +65,14 @@ button { font: inherit; cursor: pointer; }
 }
 .logo-sub { font-size: 12px; font-weight: 500; color: var(--muted); }
 
+.mode {
+  font-size: 12px; font-weight: 600;
+  padding: 3px 9px; border-radius: 999px;
+  white-space: nowrap;
+}
+.mode.mock { background: var(--warn-soft); color: var(--warn); }
+.mode.live { background: var(--good-soft); color: var(--good); }
+
 .nav {
   display: flex; gap: 4px;
   background: var(--bg); padding: 4px; border-radius: 10px;

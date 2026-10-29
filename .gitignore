@@ -11,6 +11,5 @@ __pycache__/
 .venv/
 venv/
 
-# Env files (secrets stay local)
-.env
+# Env (공통 .env 는 올리고, 개인 설정 .env.local 만 제외)
 .env.local
