@@ -6,7 +6,7 @@ KTcs 미래내일 일경험 · 팀 NOVA
 ## 폴더 구조
 
 ```
-expense-agent/
+nova-fin-assistant/
 ├── frontend/   # React (Vite) 화면  ← 프론트엔드 담당
 └── backend/    # API 서버           ← 백엔드 담당 (추가 예정)
 ```
