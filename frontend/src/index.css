@@ -169,3 +169,78 @@ button { font: inherit; cursor: pointer; }
 .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
 .hint { font-size: 13px; color: var(--muted); }
 .error { background: var(--bad-soft); color: var(--bad); padding: 10px 14px; border-radius: 9px; margin-bottom: 12px; }
+
+/* ---------- 헤더: 역할 전환 ---------- */
+.header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.role-switch { display: flex; gap: 2px; border: 1px solid var(--line); border-radius: 10px; padding: 2px; }
+.role-switch button { border: 0; background: none; padding: 6px 12px; border-radius: 8px; color: var(--muted); font-size: 14px; }
+.role-switch button.on { background: var(--brand); color: var(--brand-ink); font-weight: 600; }
+.nav { margin-left: 0; }
+
+/* ---------- 요약 숫자 ---------- */
+.stat-row { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.stat {
+  flex: 1; min-width: 120px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 12px 16px; display: flex; flex-direction: column; gap: 2px;
+}
+.stat-label { font-size: 12px; color: var(--muted); }
+.stat-value { font-size: 22px; font-weight: 700; }
+.stat.warn .stat-value { color: var(--bad); }
+
+/* ---------- 폼 요소 ---------- */
+select, textarea, input[type=text] {
+  font: inherit; color: inherit; background: var(--panel);
+  border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px;
+}
+textarea { width: 100%; resize: vertical; line-height: 1.5; }
+.field-inline { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
+.btn.danger { color: var(--bad); border-color: var(--bad); }
+.btn-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
+
+/* ---------- 표 ---------- */
+.table-wrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.table th, .table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.table th { font-size: 12px; color: var(--muted); font-weight: 600; background: var(--bg); }
+.table tr:last-child td { border-bottom: 0; }
+.table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.table .ellipsis { max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+.table tr.clickable { cursor: pointer; }
+.table tr.clickable:hover td { background: var(--brand-soft); }
+.muted-text { color: var(--muted); }
+
+/* ---------- 단계 표시 ---------- */
+.stepper { display: flex; gap: 6px; list-style: none; margin: 0 0 14px; padding: 0; overflow-x: auto; }
+.stepper li { flex: 1; min-width: 96px; display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); font-size: 13px; }
+.stepper .step-no { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: var(--line); color: var(--muted); flex: none; }
+.stepper li.done .step-no { background: var(--good-soft); color: var(--good); }
+.stepper li.done { color: var(--ink); }
+.stepper li.now { border-color: var(--brand); background: var(--brand-soft); color: var(--ink); font-weight: 600; }
+.stepper li.now .step-no { background: var(--brand); color: var(--brand-ink); }
+
+/* ---------- 상세 ---------- */
+.section-title { font-size: 15px; color: var(--muted); margin: 20px 0 8px; }
+.info-card { margin-bottom: 4px; }
+.info-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.info-head h2 { margin: 0; }
+.info-badges { display: flex; gap: 6px; }
+.info-grid { display: grid; grid-template-columns: 70px 1fr 70px 1fr; gap: 6px 12px; margin: 12px 0 0; font-size: 14px; }
+.info-grid dt { color: var(--muted); }
+.info-grid dd { margin: 0; }
+
+.review-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.review-col h3 { font-size: 14px; margin-bottom: 8px; }
+.check-list { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 6px; }
+.check-list label { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; cursor: pointer; }
+.check-list input { margin-top: 4px; }
+.message-box { font: inherit; white-space: pre-wrap; margin: 8px 0 0; padding: 12px; background: var(--bg); border-radius: 8px; font-size: 14px; }
+.preview-card { border-style: dashed; }
+.preview-head { display: flex; align-items: center; gap: 8px; }
+
+@media (max-width: 760px) {
+  .header-right { width: 100%; flex-direction: column; align-items: stretch; }
+  .role-switch button { flex: 1; }
+  .review-panel { grid-template-columns: 1fr; }
+  .info-grid { grid-template-columns: 70px 1fr; }
+}

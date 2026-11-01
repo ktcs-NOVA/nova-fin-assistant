@@ -64,3 +64,32 @@ export function getChecklist(type = '국내출장') {
   if (USE_MOCK) return mock.getChecklist(type)
   return request('GET', `/api/checklist?type=${encodeURIComponent(type)}`)
 }
+
+// ---------- 관리자 (M-01 정산 검토 대기함) ----------
+
+/** 제출 건 목록: { total, items: [{ id, submitter, dept, type, purpose, amount, date, verdict, status, step, items[] }] } */
+export function listSubmissions() {
+  if (USE_MOCK) return mock.listSubmissions()
+  return request('GET', '/api/admin/submissions')
+}
+
+/** 제출 건 상세 (목록 항목 + items 전체) */
+export function getSubmission(id) {
+  if (USE_MOCK) return mock.getSubmission(id)
+  return request('GET', `/api/admin/submissions/${encodeURIComponent(id)}`)
+}
+
+/** 승인/반려 저장. decision: '승인' | '반려' */
+export function decideSubmission(id, decision, message = '') {
+  if (USE_MOCK) return mock.decideSubmission(id, decision, message)
+  return request('POST', `/api/admin/submissions/${encodeURIComponent(id)}/decision`, { decision, message })
+}
+
+/** 반려 메시지 초안 (백엔드 RAG 생성): { message, sources[] } */
+export function draftRejectMessage(id, issueFields) {
+  if (USE_MOCK) return mock.draftRejectMessage(id, issueFields)
+  return request('POST', `/api/admin/submissions/${encodeURIComponent(id)}/reject-draft`, { issue_fields: issueFields })
+}
+
+// 검토 상태 값 (백엔드와 합의 필요)
+export const STATUS = { PENDING: '검토 대기', APPROVED: '승인', REJECTED: '반려' }
