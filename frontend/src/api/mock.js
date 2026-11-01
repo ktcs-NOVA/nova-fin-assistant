@@ -1,5 +1,6 @@
 // 목업 모드: 백엔드 없이 JSON 파일을 돌려줍니다.
-// 응답 모양은 "프론트-백엔드 연동 조율 문서" 3번과 같습니다.
+// 응답 모양은 docs/API.md 3번과 같습니다. 백엔드는 이 JSON과 같은 모양으로 응답하면 됩니다.
+// 내용은 전부 "(예시)" 가짜 데이터이며, 실제 판정은 백엔드가 합니다.
 
 import verifyData from '../mocks/verify.json'
 import qaData from '../mocks/qa.json'
