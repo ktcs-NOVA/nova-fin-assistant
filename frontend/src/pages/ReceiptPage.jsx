@@ -1,0 +1,274 @@
+// U-06 영수증 자동 정리 (영수증 등록)
+// 왼쪽: 사진 고르기 (샘플 11장 또는 내 사진) → "영수증 인식"
+// 오른쪽: 인식 결과를 수정 가능한 폼에 채움 → "지출 건 초안" 으로 다음 단계(지출 건 생성)에 넘길 값 확인
+//
+// 목업 모드: 샘플 사진은 experiments/receipt-ocr 1차 테스트에서 실제로 받은 결과를 보여줍니다.
+// 백엔드 연결 모드: 사진을 base64 로 POST /api/receipt 에 보내 실제로 인식합니다.
+
+import { useState } from 'react'
+import { recognizeReceipt, PURPOSES, USE_MOCK } from '../api/client.js'
+import receiptsData from '../mocks/receipts.json'
+
+const SAMPLES = receiptsData.samples
+const imageUrl = (file) => `${import.meta.env.BASE_URL}receipts/${file}`
+
+// 폼에 보여줄 칸 (순서대로). key 는 API 응답 필드명.
+const FIELDS = [
+  { key: 'merchant', label: '가맹점', required: true },
+  { key: 'business_type', label: '업종' },
+  { key: 'date', label: '날짜', required: true, placeholder: 'YYYY-MM-DD' },
+  { key: 'time', label: '시각', placeholder: 'HH:MM' },
+  { key: 'total_amount', label: '합계 금액', required: true, type: 'number' },
+  { key: 'card_last4', label: '카드 뒷 4자리' },
+  { key: 'approval_no', label: '승인번호' },
+]
+
+const CONFIDENCE = {
+  high: { label: '신뢰도 높음', cls: 'good' },
+  medium: { label: '신뢰도 보통 · 확인 필요', cls: 'warn' },
+  low: { label: '신뢰도 낮음 · 직접 확인', cls: 'bad' },
+}
+
+// 파일 → base64 (data: 접두어 제거)
+function readAsBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader()
+    r.onload = () => resolve(String(r.result).split(',')[1])
+    r.onerror = () => reject(new Error('사진 파일을 읽지 못했습니다.'))
+    r.readAsDataURL(blob)
+  })
+}
+
+export default function ReceiptPage() {
+  const [photo, setPhoto] = useState(null)      // { file, url, blob?, sample: bool }
+  const [form, setForm] = useState(null)        // 인식 결과 (수정 가능)
+  const [raw, setRaw] = useState(null)          // 인식 원본 (수정 전 비교용)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [draft, setDraft] = useState(null)      // 지출 건 초안
+
+  function pickSample(s) {
+    setPhoto({ file: s.file, url: imageUrl(s.file), sample: true, label: s.label })
+    setForm(null); setRaw(null); setDraft(null); setError('')
+  }
+
+  function pickOwn(e) {
+    const f = e.target.files?.[0]
+    if (!f) return
+    setPhoto({ file: f.name, url: URL.createObjectURL(f), blob: f, sample: false, label: f.name })
+    setForm(null); setRaw(null); setDraft(null); setError('')
+  }
+
+  async function recognize() {
+    if (!photo) return
+    setLoading(true); setError(''); setDraft(null)
+    try {
+      let base64 = null
+      let mediaType = null
+      if (!USE_MOCK) {
+        // 샘플은 public/ 에서 받아오고, 내 사진은 선택한 파일 그대로
+        const blob = photo.blob ?? (await (await fetch(photo.url)).blob())
+        base64 = await readAsBase64(blob)
+        mediaType = blob.type || 'image/jpeg'
+      }
+      const r = await recognizeReceipt({ filename: photo.file, mediaType, base64 })
+      setRaw(r)
+      setForm({
+        ...r,
+        purpose: r.purpose_candidates?.[0] ?? '',
+        items: r.items ?? [],
+      })
+    } catch (e) {
+      setError(e.message)
+      setForm(null)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function edit(key, value) {
+    setForm((f) => ({ ...f, [key]: value }))
+    setDraft(null)
+  }
+
+  function makeDraft() {
+    const missing = FIELDS.filter((f) => f.required && !String(form[f.key] ?? '').trim()).map((f) => f.label)
+    if (missing.length) {
+      setError(`필수 값이 비어 있습니다: ${missing.join(', ')}`)
+      return
+    }
+    setError('')
+    setDraft({
+      merchant: form.merchant,
+      date: form.date,
+      time: form.time || null,
+      amount: Number(form.total_amount),
+      purpose: form.purpose,
+      card_last4: form.card_last4 || null,
+      approval_no: form.approval_no || null,
+      receipt_file: photo.file,
+      edited_fields: FIELDS.filter((f) => String(raw[f.key] ?? '') !== String(form[f.key] ?? '')).map((f) => f.key),
+    })
+  }
+
+  const conf = form ? CONFIDENCE[form.confidence] ?? CONFIDENCE.medium : null
+  // 용도 드롭다운: AI 후보를 앞에, 나머지를 뒤에
+  const purposeOptions = form
+    ? [...(form.purpose_candidates ?? []), ...PURPOSES.filter((p) => !(form.purpose_candidates ?? []).includes(p))]
+    : PURPOSES
+
+  return (
+    <section>
+      <div className="page-title">
+        <h1>영수증 등록</h1>
+        <span className="desc">영수증 사진에서 가맹점·금액·일시·용도를 자동으로 읽어 지출 건 초안을 만듭니다.</span>
+      </div>
+
+      <div className="receipt-layout">
+        {/* ---------- 왼쪽: 사진 ---------- */}
+        <div className="card">
+          <h2>1. 영수증 사진</h2>
+          <p className="hint">
+            샘플을 고르거나 내 사진을 올려 주세요.
+            {USE_MOCK && ' 목업 모드에서는 샘플 11장만 인식됩니다 (1차 테스트에서 받은 실제 결과).'}
+          </p>
+
+          <div className="thumb-grid" role="list">
+            {SAMPLES.map((s) => (
+              <button
+                key={s.file}
+                type="button"
+                role="listitem"
+                className={`thumb ${photo?.file === s.file ? 'on' : ''}`}
+                onClick={() => pickSample(s)}
+                title={s.label}
+              >
+                <img src={imageUrl(s.file)} alt={s.label} loading="lazy" />
+                <span>{s.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <label className="upload">
+            <input type="file" accept="image/jpeg,image/png,image/webp" onChange={pickOwn} />
+            <span className="btn">내 사진 올리기</span>
+            <span className="hint">jpg · png · webp</span>
+          </label>
+
+          {photo && (
+            <div className="preview">
+              <img className="preview-img" src={photo.url} alt={photo.label} />
+              <div className="preview-name">{photo.label}</div>
+            </div>
+          )}
+
+          <div className="btn-row">
+            <button className="btn primary" onClick={recognize} disabled={!photo || loading}>
+              {loading ? '인식 중… (5초 안팎)' : '영수증 인식'}
+            </button>
+          </div>
+        </div>
+
+        {/* ---------- 오른쪽: 결과 ---------- */}
+        <div className="card">
+          <h2>2. 인식 결과</h2>
+          {error && <div className="error">{error}</div>}
+
+          {!form ? (
+            <div className="empty">사진을 고르고 "영수증 인식"을 누르면 읽어낸 값이 여기에 채워집니다.<br />값은 저장 전에 직접 고칠 수 있습니다.</div>
+          ) : (
+            <>
+              <div className="conf-row">
+                <span className={`badge ${conf.cls}`}>{conf.label}</span>
+                {form.purpose_candidates?.length > 0 && (
+                  <span className="hint">용도 후보: {form.purpose_candidates.join(' › ')}</span>
+                )}
+              </div>
+
+              <div className="form-grid">
+                {FIELDS.map((f) => {
+                  const v = form[f.key]
+                  const missing = v === null || v === undefined || v === ''
+                  return (
+                    <label key={f.key} className={`field ${missing ? 'missing' : ''}`}>
+                      <span className="field-label">
+                        {f.label}{f.required && ' *'}
+                        {missing && <em>읽지 못함</em>}
+                      </span>
+                      <input
+                        type={f.type ?? 'text'}
+                        value={v ?? ''}
+                        placeholder={f.placeholder ?? (missing ? '직접 입력' : '')}
+                        onChange={(e) => edit(f.key, e.target.value)}
+                      />
+                    </label>
+                  )
+                })}
+
+                <label className="field">
+                  <span className="field-label">용도 *</span>
+                  <select value={form.purpose} onChange={(e) => edit('purpose', e.target.value)}>
+                    {purposeOptions.map((p) => (
+                      <option key={p} value={p}>
+                        {p}{form.purpose_candidates?.includes(p) ? ' (AI 추천)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              {form.items.length > 0 && (
+                <>
+                  <div className="section-title">품목 ({form.items.length})</div>
+                  <table className="table items-table">
+                    <tbody>
+                      {form.items.map((it, i) => (
+                        <tr key={i}>
+                          <td>{it.name}</td>
+                          <td className="num">{it.amount != null ? it.amount.toLocaleString('ko-KR') + '원' : '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )}
+
+              {form.notes && (
+                <>
+                  <div className="section-title">AI 메모 (사람이 확인할 부분)</div>
+                  <p className="notes-box">{form.notes}</p>
+                </>
+              )}
+
+              <div className="btn-row">
+                <button className="btn primary" onClick={makeDraft}>지출 건 초안 만들기</button>
+              </div>
+
+              {draft && (
+                <div className="card preview-card draft-card">
+                  <div className="preview-head">
+                    <strong>지출 건 초안</strong>
+                    <span className="hint">다음 단계 "지출 건 생성" 으로 넘어갈 값</span>
+                  </div>
+                  <dl className="info-grid">
+                    <dt>가맹점</dt><dd>{draft.merchant}</dd>
+                    <dt>금액</dt><dd>{draft.amount.toLocaleString('ko-KR')}원</dd>
+                    <dt>일시</dt><dd>{draft.date}{draft.time ? ` ${draft.time}` : ''}</dd>
+                    <dt>용도</dt><dd>{draft.purpose}</dd>
+                    <dt>카드</dt><dd>{draft.card_last4 ? `**** ${draft.card_last4}` : '미확인'}</dd>
+                    <dt>승인번호</dt><dd>{draft.approval_no ?? '-'}</dd>
+                  </dl>
+                  <p className="hint" style={{ marginTop: 8 }}>
+                    {draft.edited_fields.length
+                      ? `사용자가 고친 칸: ${draft.edited_fields.join(', ')}`
+                      : '인식값을 그대로 사용 (수정 없음)'}
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}

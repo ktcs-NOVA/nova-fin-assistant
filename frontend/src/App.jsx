@@ -3,6 +3,7 @@ import Layout from './components/Layout.jsx'
 import QaPage from './pages/QaPage.jsx'
 import VerifyPage from './pages/VerifyPage.jsx'
 import ChecklistPage from './pages/ChecklistPage.jsx'
+import ReceiptPage from './pages/ReceiptPage.jsx'
 import ReviewPage from './pages/admin/ReviewPage.jsx'
 
 // 역할별 메뉴. 화면을 추가하려면 해당 역할 목록에 한 줄 추가하고 pages/ 에 파일을 만들면 됩니다.
@@ -11,6 +12,7 @@ const MENUS = {
   employee: {
     label: '직원',
     pages: [
+      { id: 'receipt', label: '영수증 등록', component: ReceiptPage },  // U-06
       { id: 'qa', label: '규정 Q&A', component: QaPage },            // U-01
       { id: 'verify', label: '청구 검증', component: VerifyPage },    // U-04
       { id: 'checklist', label: '체크리스트', component: ChecklistPage },

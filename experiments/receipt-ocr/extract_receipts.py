@@ -90,8 +90,9 @@ def image_files() -> list[Path]:
 
 # ---------- extract ----------
 
-def extract_one(client: anthropic.Anthropic, path: Path) -> dict:
-    data = base64.standard_b64encode(path.read_bytes()).decode("utf-8")
+def extract_bytes(client: anthropic.Anthropic, image: bytes, media_type: str) -> dict:
+    """사진 바이트 1장 → 추출값 dict. server.py 와 extract_one 이 함께 씁니다."""
+    data = base64.standard_b64encode(image).decode("utf-8")
     t0 = time.time()
     response = client.messages.parse(
         model=MODEL,
@@ -99,7 +100,7 @@ def extract_one(client: anthropic.Anthropic, path: Path) -> dict:
         messages=[{
             "role": "user",
             "content": [
-                {"type": "image", "source": {"type": "base64", "media_type": MEDIA[path.suffix.lower()], "data": data}},
+                {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": data}},
                 {"type": "text", "text": PROMPT},
             ],
         }],
@@ -107,10 +108,9 @@ def extract_one(client: anthropic.Anthropic, path: Path) -> dict:
     )
     elapsed = round(time.time() - t0, 1)
     if response.stop_reason == "refusal":
-        return {"file": path.name, "error": "refusal", "stop_details": str(response.stop_details)}
+        return {"error": "refusal", "stop_details": str(response.stop_details)}
     parsed: Receipt = response.parsed_output
     return {
-        "file": path.name,
         **parsed.model_dump(),
         "_meta": {
             "model": MODEL,
@@ -119,6 +119,11 @@ def extract_one(client: anthropic.Anthropic, path: Path) -> dict:
             "seconds": elapsed,
         },
     }
+
+
+def extract_one(client: anthropic.Anthropic, path: Path) -> dict:
+    result = extract_bytes(client, path.read_bytes(), MEDIA[path.suffix.lower()])
+    return {"file": path.name, **result}
 
 
 def cmd_extract(limit: int | None) -> None:

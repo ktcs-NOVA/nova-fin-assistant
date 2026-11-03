@@ -86,6 +86,24 @@ card_last4      7/10     70%
 purpose         8/10     80%
 ```
 
+## 프론트 화면과 붙여 보기 (server.py)
+
+프론트의 "영수증 등록" 화면(U-06)을 실제 인식으로 돌려보는 임시 서버입니다. 백엔드가 `POST /api/receipt` 를 만들기 전까지만 씁니다.
+
+```bash
+# 1) 이 폴더에서 서버 켜기 (API 키는 .env 에서 읽음)
+.venv/bin/python server.py
+```
+
+```bash
+# 2) frontend/.env.local 에 한 줄 적고 dev 서버가 다시 뜨면 헤더가 "백엔드 연결"로 바뀜
+echo "VITE_USE_MOCK=false" > ../../frontend/.env.local
+```
+
+- 제공 주소는 `POST /api/receipt` 하나뿐이라 다른 탭(규정 Q&A 등)은 오류가 납니다. 정상입니다.
+- 사진은 브라우저에서 base64 로 이 서버까지만 오고, API 키는 서버 안에만 있습니다.
+- 끝나면 `.env.local` 을 지우면 다시 목업 모드로 돌아갑니다.
+
 ## 결과 보고에 넣을 것
 
 1. 위 정답률 표

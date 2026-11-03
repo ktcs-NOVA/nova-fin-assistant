@@ -5,6 +5,7 @@
 import verifyData from '../mocks/verify.json'
 import qaData from '../mocks/qa.json'
 import checklistData from '../mocks/checklist.json'
+import receiptsData from '../mocks/receipts.json'
 
 // 실제 서버처럼 잠깐 기다렸다가 응답 (로딩 표시를 테스트하기 위해)
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -71,4 +72,17 @@ export async function draftRejectMessage(id, issueFields) {
     message: `${found.submitter}님, 제출하신 ${found.purpose} 정산 건은 아래 사유로 반려되었습니다.\n\n${lines.join('\n')}\n\n수정 후 다시 제출해 주세요.`,
     sources: picked.map((it) => it.basis),
   }
+}
+
+// ---------- 영수증 인식 (U-06) ----------
+// 샘플 11장은 experiments/receipt-ocr 에서 실제 API로 뽑은 결과를 그대로 돌려줍니다.
+// 샘플이 아닌 사진은 목업으로 인식할 수 없으므로 백엔드 연결 모드로 안내합니다.
+
+export async function recognizeReceipt({ filename }) {
+  await wait(1200)
+  const found = receiptsData.samples.find((s) => s.file === filename)
+  if (!found) {
+    throw new Error('목업 모드에서는 샘플 사진 11장만 인식할 수 있습니다. 직접 올린 사진은 백엔드 연결 모드(VITE_USE_MOCK=false)에서 인식됩니다.')
+  }
+  return structuredClone(found.result)
 }

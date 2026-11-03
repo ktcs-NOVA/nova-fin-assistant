@@ -93,3 +93,20 @@ export function draftRejectMessage(id, issueFields) {
 
 // 검토 상태 값 (백엔드와 합의 필요)
 export const STATUS = { PENDING: '검토 대기', APPROVED: '승인', REJECTED: '반려' }
+
+// ---------- 영수증 인식 (U-06 영수증 자동 정리) ----------
+
+// 용도 후보 값 (experiments/receipt-ocr 의 PURPOSES 와 같아야 함)
+export const PURPOSES = ['식비', '회의비', '교통비', '숙박비', '주유비', '소모품비', '도서비', '경조사비', '기타']
+
+/**
+ * 영수증 사진 1장 → 추출값.
+ * 보내는 것: { filename, media_type, image_base64 }
+ * 받는 것:   { merchant, business_type, date, time, total_amount, card_last4, approval_no,
+ *             items: [{ name, amount }], purpose_candidates: [], confidence: 'high'|'medium'|'low', notes }
+ * 사진에 없는 값은 null 로 옵니다.
+ */
+export function recognizeReceipt({ filename, mediaType, base64 }) {
+  if (USE_MOCK) return mock.recognizeReceipt({ filename })
+  return request('POST', '/api/receipt', { filename, media_type: mediaType, image_base64: base64 })
+}
