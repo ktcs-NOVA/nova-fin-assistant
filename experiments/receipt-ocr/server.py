@@ -4,8 +4,9 @@
   .venv/bin/python server.py            http://localhost:8000 에서 대기
   .venv/bin/python server.py --port 8001
 
-제공하는 주소는 하나뿐입니다. (나머지 /api/* 는 백엔드 담당이 만듭니다)
+제공하는 주소 (나머지 /api/* 는 백엔드 담당이 만듭니다)
 
+  POST /api/verify   (backend/precheck 가 저장소에 있을 때만) PM 이 만든 U-04 판정 엔진을 그대로 호출
   POST /api/receipt
     보내는 것: { "filename": "a.jpg", "media_type": "image/jpeg", "image_base64": "..." }
     받는 것:   extract_receipts.py 의 Receipt 와 같은 모양 (merchant, date, time, total_amount, ... notes)
@@ -20,11 +21,23 @@ from __future__ import annotations
 import argparse
 import base64
 import json
+import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 
 import anthropic
 
 from extract_receipts import MEDIA, extract_bytes, load_env
+
+# PM 의 U-04 판정 엔진(backend/precheck)이 저장소에 있으면 /api/verify 도 제공
+BACKEND = Path(__file__).resolve().parents[2] / "backend"
+verify_claim = None
+if (BACKEND / "precheck").is_dir():
+    sys.path.insert(0, str(BACKEND))
+    try:
+        from precheck import verify_claim  # noqa: E402
+    except Exception as e:  # 엔진 쪽 오류는 서버를 못 켜게 하지 않음
+        print(f"precheck 엔진을 불러오지 못했습니다: {e}")
 
 ALLOWED_MEDIA = set(MEDIA.values())
 MAX_BYTES = 10 * 1024 * 1024  # 사진 10MB 제한
@@ -52,19 +65,36 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         if self.path == "/api/health":
-            self._send(200, {"ok": True, "endpoints": ["POST /api/receipt"]})
+            eps = ["POST /api/receipt"] + (["POST /api/verify"] if verify_claim else [])
+            self._send(200, {"ok": True, "endpoints": eps})
         else:
             self._send(404, {"error": "이 테스트 서버는 POST /api/receipt 만 제공합니다. 다른 기능은 백엔드 서버가 필요합니다."})
 
     def do_POST(self) -> None:
-        if self.path != "/api/receipt":
-            self._send(404, {"error": "이 테스트 서버는 POST /api/receipt 만 제공합니다. 다른 기능은 백엔드 서버가 필요합니다."})
+        if self.path not in ("/api/receipt", "/api/verify"):
+            self._send(404, {"error": "이 테스트 서버는 POST /api/receipt (와 /api/verify) 만 제공합니다. 다른 기능은 백엔드 서버가 필요합니다."})
             return
         try:
             length = int(self.headers.get("Content-Length", "0"))
             body = json.loads(self.rfile.read(length) or b"{}")
         except (ValueError, json.JSONDecodeError):
             self._send(400, {"error": "요청 본문이 JSON 이 아닙니다."})
+            return
+
+        if self.path == "/api/verify":
+            if verify_claim is None:
+                self._send(404, {"error": "판정 엔진(backend/precheck)이 이 저장소에 없습니다. PM 브랜치를 합친 뒤 다시 켜 주세요."})
+                return
+            try:
+                result = verify_claim(body)
+            except ValueError as e:
+                self._send(400, {"error": str(e)})
+                return
+            except Exception as e:
+                self._send(500, {"error": f"판정 중 오류: {e}"})
+                return
+            print(f"[verify] {body.get('trip_type')} / {len(body.get('items', []))}건 → {result.get('overall')}")
+            self._send(200, result)
             return
 
         media_type = body.get("media_type")

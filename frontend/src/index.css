@@ -301,3 +301,18 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 @media (max-width: 640px) {
   .camera-guide { inset: 4% 18%; }
 }
+
+/* ---------- 청구 검증 입력 폼 (U-04) ---------- */
+.verify-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+.verify-form { display: grid; gap: 14px; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.card-head h2 { margin: 0; }
+.items-editor { display: grid; gap: 10px; }
+.item-row { position: relative; border: 1px solid var(--line); border-radius: 10px; padding: 12px 12px 12px; background: var(--bg); }
+.item-row .form-grid { padding-right: 56px; }
+.item-remove { position: absolute; top: 10px; right: 10px; padding: 4px 10px; font-size: 12px; color: var(--muted); }
+.field-check .check-inline { display: flex; align-items: center; gap: 8px; min-height: 36px; font-size: 14px; }
+.btn-row.between { justify-content: space-between; }
+@media (max-width: 860px) {
+  .verify-layout { grid-template-columns: 1fr; }
+}

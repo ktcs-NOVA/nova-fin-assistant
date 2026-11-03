@@ -1,31 +1,103 @@
-// 청구 검증 화면
-// 지금은 "예시 청구로 검증" 버튼으로 흐름(요청 → 로딩 → 결과 카드)만 보여줍니다.
-// 실제 입력 폼은 이 위에 기능으로 얹습니다.
+// U-04 청구 검증 화면
+// 입력 폼은 PM 문서 docs/U-04_청구검증_입력필드.md 의 "0. 최소 세트" 기준입니다.
+//   기본 정보: 청구 유형, 직급
+//   출장 정보 (출장일 때만): 시작일, 종료일, 출장지 지역, 교통수단
+//   청구 항목 (행 추가): 항목명, 금액, 사용일, 메모 + 숙박비면 박수·조식 포함
+// 요청 JSON 모양은 docs/API.md 3-2 그대로이고, 선택 칸은 값이 있을 때만 보냅니다.
 
 import { useState } from 'react'
 import { verifyClaim } from '../api/client.js'
 import VerifyResult from '../components/VerifyResult.jsx'
 
-// 예시 청구 (조율 문서 3-2 의 요청 모양)
-const SAMPLE_CLAIM = {
+const TRIP_TYPES = ['국내출장', '근무지 내 출장', '법인카드', '업무추진비']
+const GRADES = ['직원 3급 이하', '직원 1·2급', '임원/본부장', '감사', '사장']
+const REGIONS = ['', '서울', '광역시', '기타']
+const VEHICLES = ['', '대중교통', '업무용차량', '렌트차량', '자가용']
+// 항목명 추천값 (PM 문서 3-1). 직접 입력도 가능.
+const FIELD_NAMES = ['교통비', '철도운임', '항공운임', '숙박비', '식비', '일비', '통행료·주차비', '회의 식대', '업무추진비', '부서운영비', '경조금', '화환', '기타']
+
+const isTrip = (t) => t.includes('출장')
+const isLodging = (f) => f.includes('숙박')
+const today = () => new Date().toISOString().slice(0, 10)
+
+const emptyItem = () => ({ field: '', amount: '', date: '', note: '', nights: '', breakfast_included: false })
+
+// PM 문서 6절의 출장 시연 시나리오 (버튼 한 번으로 채움)
+const SAMPLE = {
   trip_type: '국내출장',
   grade: '직원 3급 이하',
+  trip: { start_date: '2026-10-20', end_date: '2026-10-21', region: '광역시', vehicle: '대중교통' },
   items: [
-    { field: '식비', amount: 27000, date: '2026-10-20', note: '조식 포함 숙박' },
-    { field: '숙박비', amount: 80000, date: '2026-10-20', note: '' },
+    { field: '철도운임', amount: '59800', date: '2026-10-20', note: '특실', nights: '', breakfast_included: false },
+    { field: '숙박비', amount: '98000', date: '2026-10-20', note: '', nights: '1', breakfast_included: true },
+    { field: '식비', amount: '54000', date: '', note: '', nights: '', breakfast_included: false },
+    { field: '일비', amount: '60000', date: '', note: '', nights: '', breakfast_included: false },
   ],
 }
 
 export default function VerifyPage() {
+  const [tripType, setTripType] = useState('국내출장')
+  const [grade, setGrade] = useState('직원 3급 이하')
+  const [trip, setTrip] = useState({ start_date: '', end_date: '', region: '', vehicle: '' })
+  const [items, setItems] = useState([emptyItem()])
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  const editTrip = (k, v) => setTrip((t) => ({ ...t, [k]: v }))
+  const editItem = (i, k, v) => setItems((list) => list.map((it, idx) => (idx === i ? { ...it, [k]: v } : it)))
+  const addItem = () => setItems((list) => [...list, emptyItem()])
+  const removeItem = (i) => setItems((list) => (list.length > 1 ? list.filter((_, idx) => idx !== i) : list))
+
+  function loadSample() {
+    setTripType(SAMPLE.trip_type)
+    setGrade(SAMPLE.grade)
+    setTrip(SAMPLE.trip)
+    setItems(SAMPLE.items.map((it) => ({ ...it })))
+    setResult(null)
+    setError('')
+  }
+
+  // 화면 값 → API.md 3-2 요청 JSON. 빈 선택 칸은 보내지 않음.
+  function buildRequest() {
+    const req = { trip_type: tripType, grade, settlement_date: today(), items: [] }
+    if (isTrip(tripType)) {
+      const t = {}
+      for (const [k, v] of Object.entries(trip)) if (v) t[k] = v
+      if (Object.keys(t).length) req.trip = t
+    }
+    for (const it of items) {
+      const row = { field: it.field.trim(), amount: Number(it.amount) }
+      if (it.date) row.date = it.date
+      if (it.note.trim()) row.note = it.note.trim()
+      if (isLodging(it.field)) {
+        if (it.nights) row.nights = Number(it.nights)
+        row.breakfast_included = it.breakfast_included
+      }
+      req.items.push(row)
+    }
+    return req
+  }
+
+  function validate() {
+    const bad = items.findIndex((it) => !it.field.trim() || !(Number(it.amount) > 0))
+    if (bad >= 0) return `${bad + 1}번째 항목의 항목명과 금액을 입력해 주세요.`
+    if (isTrip(tripType) && trip.start_date && trip.end_date && trip.end_date < trip.start_date) {
+      return '출장 종료일이 시작일보다 앞설 수 없습니다.'
+    }
+    return ''
+  }
+
   async function run() {
+    const msg = validate()
+    if (msg) {
+      setError(msg)
+      return
+    }
     setLoading(true)
     setError('')
     try {
-      setResult(await verifyClaim(SAMPLE_CLAIM))
+      setResult(await verifyClaim(buildRequest()))
     } catch (e) {
       setError(e.message)
       setResult(null)
@@ -41,20 +113,125 @@ export default function VerifyPage() {
         <span className="desc">제출 전 청구 내역을 규정 기준으로 점검합니다.</span>
       </div>
 
-      <div className="toolbar">
-        <button className="btn primary" onClick={run} disabled={loading}>
-          {loading ? '검증 중…' : '예시 청구로 검증'}
-        </button>
-        <span className="hint">입력 폼은 다음 단계에서 추가됩니다.</span>
+      <div className="verify-layout">
+        {/* ---------- 입력 ---------- */}
+        <div className="verify-form">
+          <div className="card">
+            <div className="card-head">
+              <h2>1. 청구 기본 정보</h2>
+              <button type="button" className="btn" onClick={loadSample}>출장 예시 불러오기</button>
+            </div>
+            <div className="form-grid">
+              <label className="field">
+                <span className="field-label">청구 유형 *</span>
+                <select value={tripType} onChange={(e) => setTripType(e.target.value)}>
+                  {TRIP_TYPES.map((t) => <option key={t}>{t}</option>)}
+                </select>
+              </label>
+              <label className="field">
+                <span className="field-label">직급 *</span>
+                <select value={grade} onChange={(e) => setGrade(e.target.value)}>
+                  {GRADES.map((g) => <option key={g}>{g}</option>)}
+                </select>
+              </label>
+            </div>
+          </div>
+
+          {isTrip(tripType) && (
+            <div className="card">
+              <h2>2. 출장 정보</h2>
+              <p className="hint">비워 두면 해당 규칙은 건너뛰거나 "담당자 확인 필요"로 안내됩니다.</p>
+              <div className="form-grid">
+                <label className="field">
+                  <span className="field-label">출장 시작일</span>
+                  <input type="date" value={trip.start_date} onChange={(e) => editTrip('start_date', e.target.value)} />
+                </label>
+                <label className="field">
+                  <span className="field-label">출장 종료일</span>
+                  <input type="date" value={trip.end_date} onChange={(e) => editTrip('end_date', e.target.value)} />
+                </label>
+                <label className="field">
+                  <span className="field-label">출장지 지역 <em>숙박비 상한 판단</em></span>
+                  <select value={trip.region} onChange={(e) => editTrip('region', e.target.value)}>
+                    {REGIONS.map((r) => <option key={r} value={r}>{r || '선택 안 함'}</option>)}
+                  </select>
+                </label>
+                <label className="field">
+                  <span className="field-label">교통수단 <em>일비·자가용 규칙</em></span>
+                  <select value={trip.vehicle} onChange={(e) => editTrip('vehicle', e.target.value)}>
+                    {VEHICLES.map((v) => <option key={v} value={v}>{v || '선택 안 함'}</option>)}
+                  </select>
+                </label>
+              </div>
+            </div>
+          )}
+
+          <div className="card">
+            <h2>{isTrip(tripType) ? '3' : '2'}. 청구 항목</h2>
+            <div className="items-editor">
+              {items.map((it, i) => (
+                <div key={i} className="item-row">
+                  <div className="form-grid">
+                    <label className="field">
+                      <span className="field-label">항목명 *</span>
+                      <input list="field-names" value={it.field} placeholder="예: 숙박비" onChange={(e) => editItem(i, 'field', e.target.value)} />
+                    </label>
+                    <label className="field">
+                      <span className="field-label">금액(원) *</span>
+                      <input type="number" min="0" value={it.amount} placeholder="0" onChange={(e) => editItem(i, 'amount', e.target.value)} />
+                    </label>
+                    <label className="field">
+                      <span className="field-label">사용일</span>
+                      <input type="date" value={it.date} onChange={(e) => editItem(i, 'date', e.target.value)} />
+                    </label>
+                    <label className="field">
+                      <span className="field-label">메모</span>
+                      <input type="text" value={it.note} placeholder="예: 특실, 동승" onChange={(e) => editItem(i, 'note', e.target.value)} />
+                    </label>
+                    {isLodging(it.field) && (
+                      <>
+                        <label className="field">
+                          <span className="field-label">박수</span>
+                          <input type="number" min="1" value={it.nights} placeholder="1" onChange={(e) => editItem(i, 'nights', e.target.value)} />
+                        </label>
+                        <label className="field field-check">
+                          <span className="field-label">조식 포함 <em>식비 1/3 차감</em></span>
+                          <span className="check-inline">
+                            <input type="checkbox" checked={it.breakfast_included} onChange={(e) => editItem(i, 'breakfast_included', e.target.checked)} />
+                            숙박에 조식이 포함됨
+                          </span>
+                        </label>
+                      </>
+                    )}
+                  </div>
+                  <button type="button" className="btn item-remove" onClick={() => removeItem(i)} disabled={items.length === 1} aria-label="항목 삭제">
+                    삭제
+                  </button>
+                </div>
+              ))}
+            </div>
+            <datalist id="field-names">
+              {FIELD_NAMES.map((f) => <option key={f} value={f} />)}
+            </datalist>
+            <div className="btn-row between">
+              <button type="button" className="btn" onClick={addItem}>+ 항목 추가</button>
+              <button type="button" className="btn primary" onClick={run} disabled={loading}>
+                {loading ? '검증 중…' : '검증하기'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ---------- 결과 ---------- */}
+        <div className="verify-result">
+          {error && <div className="error">{error}</div>}
+          {result ? (
+            <VerifyResult result={result} />
+          ) : (
+            !loading && <div className="empty">청구 내역을 입력하고 "검증하기"를 누르면 항목별 판정이 여기에 표시됩니다.</div>
+          )}
+        </div>
       </div>
-
-      {error && <div className="error">{error}</div>}
-
-      {result ? (
-        <VerifyResult result={result} />
-      ) : (
-        !loading && <div className="empty">검증 버튼을 누르면 결과가 여기에 표시됩니다.</div>
-      )}
     </section>
   )
 }

@@ -2,7 +2,6 @@
 // 응답 모양은 docs/API.md 3번과 같습니다. 백엔드는 이 JSON과 같은 모양으로 응답하면 됩니다.
 // 내용은 전부 "(예시)" 가짜 데이터이며, 실제 판정은 백엔드가 합니다.
 
-import verifyData from '../mocks/verify.json'
 import qaData from '../mocks/qa.json'
 import checklistData from '../mocks/checklist.json'
 import receiptsData from '../mocks/receipts.json'
@@ -16,10 +15,21 @@ export async function askQa(question) {
   return qaData
 }
 
+// 청구 검증: 실제 판정은 백엔드(PM이 만든 precheck 엔진)가 합니다.
+// 목업은 규칙을 흉내 내지 않고, 입력한 항목마다 "(예시)" 표시만 돌려줍니다.
 export async function verifyClaim(claim) {
   await wait(800)
   if (!claim?.items?.length) throw new Error('청구 항목이 비어 있습니다.')
-  return verifyData
+  return {
+    overall: '담당자 확인 필요',
+    items: claim.items.map((it) => ({
+      field: it.field,
+      verdict: '담당자 확인 필요',
+      message: `(예시) ${it.amount.toLocaleString('ko-KR')}원 — 목업 모드에서는 규정 판정을 하지 않습니다. 백엔드 연결 시 실제 판정이 표시됩니다.`,
+      basis: '(예시)',
+      fix: '',
+    })),
+  }
 }
 
 export async function getChecklist(type = '국내출장') {
