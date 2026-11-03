@@ -2,7 +2,7 @@
 U-04 사전검증 엔진 테스트.
 
 실행 (backend 폴더에서):
-    python -m unittest discover -s precheck/tests -v
+    python -m unittest discover -s app/precheck/tests -v
 
 케이스 1~7은 docs/API.md 7절 "목업 데이터에 쓸 검증 사례"와 같습니다.
 나머지는 규정 원문에서 추가로 뽑은 케이스입니다.
@@ -10,8 +10,8 @@ U-04 사전검증 엔진 테스트.
 
 import unittest
 
-from precheck import verify_claim
-from precheck.rules import OK, FIX, CHECK
+from app.precheck import verify_claim
+from app.precheck.rules import OK, FIX, CHECK
 
 
 def run(**req):

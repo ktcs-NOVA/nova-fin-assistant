@@ -2,13 +2,13 @@
 U-05 출장비 계산 테스트.
 
 실행 (backend 폴더에서):
-    python -m unittest discover -s precheck/tests -t . -v
+    python -m unittest discover -s app/precheck/tests -t . -v
 """
 
 import unittest
 
-from precheck import calc_travel, verify_claim
-from precheck.rules import OK, CHECK
+from app.precheck import calc_travel, verify_claim
+from app.precheck.rules import OK, CHECK
 
 
 def line(res, field):

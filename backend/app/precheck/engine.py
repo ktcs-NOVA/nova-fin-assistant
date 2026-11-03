@@ -4,7 +4,7 @@ U-04 지출 사전검증 엔진 (규칙 기반)
 docs/API.md 의 `POST /api/verify` 요청 JSON을 받아 응답 JSON을 돌려줍니다.
 백엔드 서버는 이 함수만 호출하면 됩니다.
 
-    from precheck import verify_claim
+    from app.precheck import verify_claim
     result = verify_claim(request_json)
 
 입력 형태는 API.md 와 같고, 아래 필드는 "있으면 더 정확하게 검사하는" 선택 필드입니다.
