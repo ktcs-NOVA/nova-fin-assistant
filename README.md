@@ -7,14 +7,14 @@ KTcs 미래내일 일경험 · 팀 NOVA
 
 ```
 nova-fin-assistant/
-├── frontend/   # React (Vite) 화면  ← 프론트엔드 담당
-├── backend/    # API 서버           ← 백엔드 담당 (추가 예정)
+├── frontend/   # React (Vite) 화면        ← 프론트엔드 담당
+├── backend/    # FastAPI API 서버 + RAG   ← 백엔드 담당
 └── docs/       # 연동 약속(API.md), 진행 보고
 ```
 
 ## 현재 상태 (2026-11-03)
 
-프론트엔드 **베이스코드** 단계입니다. 화면 틀과 백엔드 통신 구조는 갖춰져 있고, 기능은 아직 비어 있습니다.
+프론트엔드 · 백엔드 **베이스코드** 단계입니다. 화면 틀, API 서버, DB, RAG 뼈대가 갖춰져 있고 기능은 이제 얹는 단계입니다.
 
 | 구분 | 상태 |
 |---|---|
@@ -23,10 +23,43 @@ nova-fin-assistant/
 | 검증 결과 카드 (판정 3단계) | 완료 |
 | 영수증 등록 화면 (U-06) — 샘플 11장 + 내 사진 + 카메라 촬영, 인식값 수정, 지출 건 초안, "청구 검증으로 보내기"(법인카드 건으로 U-04 폼에 채움) | 완료 (실제 인식은 `experiments/receipt-ocr/server.py` 또는 백엔드) |
 | 관리자 정산 검토 대기함 (M-01) 와이어프레임 | 완료 (목업 데이터) |
-| 청구 검증 입력 폼, Q&A 채팅, 체크리스트 내용 | 다음 단계 |
-| 실제 백엔드 연결 테스트 | 백엔드 준비 후 |
+| 백엔드 서버 · DB(PostgreSQL + pgvector) · 실행 스크립트 | 완료 |
+| 규정 Q&A RAG (규정 적재 → 검색 → 답변 + 근거 조항) | 뼈대 완료 |
+| 청구 검증 규칙 엔진 연결 | 엔진 브랜치 합친 뒤 |
+| 청구 검증 입력 폼 (U-04 최소 세트 + 좌석 등급) | 완료 (PM 엔진으로 판정 확인) |
+| Q&A 채팅, 체크리스트 내용 | 다음 단계 |
+| 실제 백엔드 연결 테스트 | 가능 (아래 실행 방법) |
 
-지금 화면에 나오는 검증 결과는 전부 `(예시)`가 붙은 가짜 데이터입니다.
+청구 검증 · 체크리스트 응답은 아직 `(예시)`가 붙은 가짜 데이터입니다.
+
+## 빠른 시작
+
+백엔드를 켠 뒤 프론트를 연결 모드로 실행합니다.
+
+```powershell
+# 1) 백엔드 (backend 폴더)
+cd backend
+.\setup.cmd      # 처음 한 번
+.\server.cmd     # 서버 켜기 → http://localhost:8000/docs
+
+# 2) 프론트 (frontend 폴더, 새 터미널)
+cd frontend
+npm install      # 처음 한 번
+npm run dev      # → http://localhost:5173
+```
+
+## 백엔드 실행
+
+Docker Desktop 과 uv 가 필요합니다. 설치 방법과 자세한 내용은 [backend/README.md](backend/README.md) 를 봅니다.
+
+```powershell
+cd backend
+.\setup.cmd      # 처음 한 번: DB 켜기 · 테이블 생성 · 데모 데이터 · 규정 적재
+.\server.cmd     # 서버 켜기 (DB 자동 켜기 · 테이블 자동 최신화) · 끄기는 Ctrl+C
+```
+
+- 서버: http://localhost:8000 · API 테스트 화면: http://localhost:8000/docs
+- `backend/.env` 의 `OPENAI_API_KEY` 를 비우면 목업 AI 로 동작합니다.
 
 ## 프론트엔드 실행
 
@@ -49,7 +82,7 @@ npm run dev
 
 ### 3. 백엔드에 연결해서 실행
 
-`frontend/.env.local` 파일을 만들고 아래 두 줄을 적은 뒤 `npm run dev` 를 다시 실행합니다.
+백엔드 서버(`backend\server.cmd`)를 켠 상태에서, `frontend/.env.local` 파일을 만들고 아래 두 줄을 적은 뒤 `npm run dev` 를 다시 실행합니다.
 
 ```
 VITE_API_BASE=http://localhost:8000
@@ -86,6 +119,25 @@ frontend/src/
 - **화면을 추가하려면** `pages/` 에 파일을 만들고 `App.jsx` 의 `PAGES` 에 한 줄 추가합니다.
 - **색을 바꾸려면** `index.css` 맨 위의 변수만 고칩니다.
 
+## 백엔드 코드 안내
+
+```
+backend/app/
+├── main.py      # 시작점 · 라우터 등록 (기능 추가는 여기 한 줄)
+├── core/        # 설정 · DB 연결 · 에러 형식
+├── models/      # DB 테이블
+├── ai/          # OpenAI 호출 (LLM · 임베딩 · 마스킹)
+├── rag/         # 규정 적재 · 검색 · 답변
+├── precheck/    # 규칙 엔진
+└── domains/     # 기능별 API (qa · verify · checklist)
+```
+
+### 기능을 얹을 때
+
+- **API를 추가하려면** `domains/` 에 폴더를 만들고 `main.py` 에 라우터 한 줄 추가합니다.
+- **OpenAI를 부를 때**는 `app/ai/` 의 함수만 씁니다.
+- **에러를 돌려줄 때**는 `raise AppError("메시지", 상태코드)` 를 씁니다.
+
 ## 프론트·백엔드 사이 약속
 
 API 주소, 요청·응답 JSON 모양, 에러 형식, 판정 값 3가지는
@@ -99,14 +151,10 @@ API 주소, 요청·응답 JSON 모양, 에러 형식, 판정 값 3가지는
 
 판정 값: `규정상 확인 가능` · `보완 필요` · `담당자 확인 필요`
 
-### 백엔드 담당이 해줄 것
-
-1. `http://localhost:8000` 에서 서버가 뜨도록 하고, 실행 명령을 `backend/README.md` 에 적어주세요.
-2. 개발 중에는 `http://localhost:5173` 에서 오는 요청을 CORS 허용해 주세요.
-3. 위 API 3개가 `frontend/src/mocks/*.json` 과 같은 모양으로 응답하면 프론트는 손대지 않아도 연결됩니다. 처음에는 고정된 가짜 데이터를 돌려줘도 됩니다.
-4. 에러는 HTTP 400/500 + `{ "error": "설명" }` 형태로 보내주세요.
-
 ## 작업 방식
 
 - `frontend/` 는 프론트엔드 담당, `backend/` 는 백엔드 담당이 각자 자기 폴더만 수정합니다.
 - 작업은 `feature/이름` 브랜치에서 하고, Pull Request로 main에 합칩니다.
+- 새 작업은 최신 `main` 에서 브랜치를 따서 시작합니다. (`git checkout main` → `git pull` → `git checkout -b feature/이름`)
+- PR 은 **"Create a merge commit"** 으로 합칩니다. (Squash 하면 기록이 끊겨 다른 브랜치와 충돌이 납니다)
+- `.env` 처럼 API 키가 들어가는 파일은 커밋하지 않습니다.

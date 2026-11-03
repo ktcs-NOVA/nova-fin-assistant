@@ -1,0 +1,12 @@
+# Windows / Docker(리눅스) 사이 줄바꿈 차이를 없앰
+* text=auto eol=lf
+
+# Windows 실행 스크립트는 CRLF 유지
+*.cmd text eol=crlf
+
+# 바이너리 파일
+*.hwp binary
+*.hwpx binary
+*.pdf binary
+*.png binary
+*.jpg binary
