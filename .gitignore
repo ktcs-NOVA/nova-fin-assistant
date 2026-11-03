@@ -1,0 +1,15 @@
+# OS
+.DS_Store
+
+# Node
+node_modules/
+dist/
+
+# Python (backend)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Env (공통 .env 는 올리고, 개인 설정 .env.local 만 제외)
+.env.local
