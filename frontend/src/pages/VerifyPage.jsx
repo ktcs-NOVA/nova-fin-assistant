@@ -2,7 +2,7 @@
 // 입력 폼은 PM 문서 docs/U-04_청구검증_입력필드.md 의 "0. 최소 세트" 기준입니다.
 //   기본 정보: 청구 유형, 직급
 //   출장 정보 (출장일 때만): 시작일, 종료일, 출장지 지역, 교통수단
-//   청구 항목 (행 추가): 항목명, 금액, 사용일, 메모 + 숙박비면 박수·조식 포함
+//   청구 항목 (행 추가): 항목명, 금액, 사용일, 메모 + 숙박비면 박수·조식 포함, 철도·항공이면 좌석 등급
 // 요청 JSON 모양은 docs/API.md 3-2 그대로이고, 선택 칸은 값이 있을 때만 보냅니다.
 
 import { useState } from 'react'
@@ -18,9 +18,11 @@ const FIELD_NAMES = ['교통비', '철도운임', '항공운임', '숙박비', '
 
 const isTrip = (t) => t.includes('출장')
 const isLodging = (f) => f.includes('숙박')
+// 좌석 등급이 붙는 항목: 철도(일반/특실), 항공(이코노미/비즈니스)
+const seatOptions = (f) => (f.includes('철도') || f.includes('KTX') ? ['일반', '특실'] : f.includes('항공') ? ['이코노미', '비즈니스'] : null)
 const today = () => new Date().toISOString().slice(0, 10)
 
-const emptyItem = () => ({ field: '', amount: '', date: '', note: '', nights: '', breakfast_included: false })
+const emptyItem = () => ({ field: '', amount: '', date: '', note: '', nights: '', breakfast_included: false, seat_class: '' })
 
 // PM 문서 6절의 출장 시연 시나리오 (버튼 한 번으로 채움)
 const SAMPLE = {
@@ -28,10 +30,10 @@ const SAMPLE = {
   grade: '직원 3급 이하',
   trip: { start_date: '2026-10-20', end_date: '2026-10-21', region: '광역시', vehicle: '대중교통' },
   items: [
-    { field: '철도운임', amount: '59800', date: '2026-10-20', note: '특실', nights: '', breakfast_included: false },
-    { field: '숙박비', amount: '98000', date: '2026-10-20', note: '', nights: '1', breakfast_included: true },
-    { field: '식비', amount: '54000', date: '', note: '', nights: '', breakfast_included: false },
-    { field: '일비', amount: '60000', date: '', note: '', nights: '', breakfast_included: false },
+    { field: '철도운임', amount: '59800', date: '2026-10-20', note: '', nights: '', breakfast_included: false, seat_class: '특실' },
+    { field: '숙박비', amount: '98000', date: '2026-10-20', note: '', nights: '1', breakfast_included: true, seat_class: '' },
+    { field: '식비', amount: '54000', date: '', note: '', nights: '', breakfast_included: false, seat_class: '' },
+    { field: '일비', amount: '60000', date: '', note: '', nights: '', breakfast_included: false, seat_class: '' },
   ],
 }
 
@@ -74,6 +76,7 @@ export default function VerifyPage() {
         if (it.nights) row.nights = Number(it.nights)
         row.breakfast_included = it.breakfast_included
       }
+      if (seatOptions(it.field) && it.seat_class) row.seat_class = it.seat_class
       req.items.push(row)
     }
     return req
@@ -188,6 +191,15 @@ export default function VerifyPage() {
                       <span className="field-label">메모</span>
                       <input type="text" value={it.note} placeholder="예: 특실, 동승" onChange={(e) => editItem(i, 'note', e.target.value)} />
                     </label>
+                    {seatOptions(it.field) && (
+                      <label className="field">
+                        <span className="field-label">좌석 등급 <em>직급별 좌석 규칙</em></span>
+                        <select value={it.seat_class} onChange={(e) => editItem(i, 'seat_class', e.target.value)}>
+                          <option value="">선택 안 함</option>
+                          {seatOptions(it.field).map((o) => <option key={o} value={o}>{o}</option>)}
+                        </select>
+                      </label>
+                    )}
                     {isLodging(it.field) && (
                       <>
                         <label className="field">
