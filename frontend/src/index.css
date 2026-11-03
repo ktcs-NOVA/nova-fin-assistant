@@ -169,3 +169,153 @@ button { font: inherit; cursor: pointer; }
 .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
 .hint { font-size: 13px; color: var(--muted); }
 .error { background: var(--bad-soft); color: var(--bad); padding: 10px 14px; border-radius: 9px; margin-bottom: 12px; }
+
+/* ---------- 헤더: 역할 전환 ---------- */
+.header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.role-switch { display: flex; gap: 2px; border: 1px solid var(--line); border-radius: 10px; padding: 2px; }
+.role-switch button { border: 0; background: none; padding: 6px 12px; border-radius: 8px; color: var(--muted); font-size: 14px; }
+.role-switch button.on { background: var(--brand); color: var(--brand-ink); font-weight: 600; }
+.nav { margin-left: 0; }
+
+/* ---------- 요약 숫자 ---------- */
+.stat-row { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.stat {
+  flex: 1; min-width: 120px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 12px 16px; display: flex; flex-direction: column; gap: 2px;
+}
+.stat-label { font-size: 12px; color: var(--muted); }
+.stat-value { font-size: 22px; font-weight: 700; }
+.stat.warn .stat-value { color: var(--bad); }
+
+/* ---------- 폼 요소 ---------- */
+select, textarea, input[type=text] {
+  font: inherit; color: inherit; background: var(--panel);
+  border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px;
+}
+textarea { width: 100%; resize: vertical; line-height: 1.5; }
+.field-inline { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
+.btn.danger { color: var(--bad); border-color: var(--bad); }
+.btn-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
+
+/* ---------- 표 ---------- */
+.table-wrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.table th, .table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.table th { font-size: 12px; color: var(--muted); font-weight: 600; background: var(--bg); }
+.table tr:last-child td { border-bottom: 0; }
+.table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.table .ellipsis { max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+.table tr.clickable { cursor: pointer; }
+.table tr.clickable:hover td { background: var(--brand-soft); }
+.muted-text { color: var(--muted); }
+
+/* ---------- 단계 표시 ---------- */
+.stepper { display: flex; gap: 6px; list-style: none; margin: 0 0 14px; padding: 0; overflow-x: auto; }
+.stepper li { flex: 1; min-width: 96px; display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); font-size: 13px; }
+.stepper .step-no { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: var(--line); color: var(--muted); flex: none; }
+.stepper li.done .step-no { background: var(--good-soft); color: var(--good); }
+.stepper li.done { color: var(--ink); }
+.stepper li.now { border-color: var(--brand); background: var(--brand-soft); color: var(--ink); font-weight: 600; }
+.stepper li.now .step-no { background: var(--brand); color: var(--brand-ink); }
+
+/* ---------- 상세 ---------- */
+.section-title { font-size: 15px; color: var(--muted); margin: 20px 0 8px; }
+.info-card { margin-bottom: 4px; }
+.info-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.info-head h2 { margin: 0; }
+.info-badges { display: flex; gap: 6px; }
+.info-grid { display: grid; grid-template-columns: 70px 1fr 70px 1fr; gap: 6px 12px; margin: 12px 0 0; font-size: 14px; }
+.info-grid dt { color: var(--muted); }
+.info-grid dd { margin: 0; }
+
+.review-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.review-col h3 { font-size: 14px; margin-bottom: 8px; }
+.check-list { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 6px; }
+.check-list label { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; cursor: pointer; }
+.check-list input { margin-top: 4px; }
+.message-box { font: inherit; white-space: pre-wrap; margin: 8px 0 0; padding: 12px; background: var(--bg); border-radius: 8px; font-size: 14px; }
+.preview-card { border-style: dashed; }
+.preview-head { display: flex; align-items: center; gap: 8px; }
+
+@media (max-width: 760px) {
+  .header-right { width: 100%; flex-direction: column; align-items: stretch; }
+  .role-switch button { flex: 1; }
+  .review-panel { grid-template-columns: 1fr; }
+  .info-grid { grid-template-columns: 70px 1fr; }
+}
+
+/* ---------- 영수증 등록 (U-06) ---------- */
+.receipt-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+.thumb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin: 10px 0 12px; }
+.thumb {
+  display: flex; flex-direction: column; gap: 4px; padding: 4px; text-align: left;
+  background: var(--bg); border: 2px solid transparent; border-radius: 10px; color: var(--muted);
+}
+.thumb img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 6px; background: var(--line); }
+.thumb span { font-size: 11px; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.thumb:hover { border-color: var(--line); }
+.thumb.on { border-color: var(--brand); color: var(--ink); background: var(--brand-soft); }
+.upload { display: flex; align-items: center; gap: 10px; }
+.upload input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.upload .btn { cursor: pointer; }
+.preview { margin-top: 14px; text-align: center; }
+.preview-img { max-width: 100%; max-height: 420px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); }
+.preview-name { font-size: 13px; color: var(--muted); margin-top: 6px; }
+.conf-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.field-label { color: var(--muted); display: flex; gap: 6px; align-items: baseline; }
+.field-label em { font-style: normal; color: var(--warn); font-size: 11px; }
+.field input, .field select { width: 100%; font: inherit; font-size: 14px; color: inherit; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
+.field.missing input { border-color: var(--warn); background: var(--warn-soft); }
+.items-table td { padding: 6px 4px; border-bottom: 1px solid var(--line); }
+.items-table td.num { text-align: right; white-space: nowrap; }
+.notes-box { font-size: 13px; color: var(--muted); background: var(--bg); border-radius: 8px; padding: 10px 12px; margin: 0; }
+.draft-card { margin-top: 14px; }
+@media (max-width: 860px) {
+  .receipt-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .form-grid { grid-template-columns: 1fr; }
+}
+
+/* ---------- 영수증 촬영 뷰파인더 ---------- */
+.upload-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.camera { margin-top: 14px; border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; background: var(--bg); }
+.camera-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.camera-head select { margin-left: auto; max-width: 220px; font-size: 13px; }
+.camera-head .btn { padding: 6px 12px; }
+.camera-view { position: relative; background: #000; border-radius: 10px; overflow: hidden; aspect-ratio: 4 / 3; }
+.camera-view video, .camera-view img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.camera-guide {
+  position: absolute; inset: 6% 28%;
+  border: 2px dashed rgba(255,255,255,.85); border-radius: 8px;
+  box-shadow: 0 0 0 999px rgba(0,0,0,.35);
+  display: flex; align-items: flex-end; justify-content: center; pointer-events: none;
+}
+.camera-guide span { color: #fff; font-size: 12px; background: rgba(0,0,0,.55); padding: 4px 8px; border-radius: 6px; margin-bottom: 8px; text-align: center; }
+.camera-wait { position: absolute; inset: 0; display: grid; place-items: center; color: #ccc; font-size: 14px; }
+.camera-bar { display: flex; justify-content: center; gap: 10px; margin: 12px 0 8px; }
+.btn.shutter { padding: 10px 36px; border-radius: 999px; }
+@media (max-width: 640px) {
+  .camera-guide { inset: 4% 18%; }
+}
+
+/* ---------- 청구 검증 입력 폼 (U-04) ---------- */
+.verify-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+.verify-form { display: grid; gap: 14px; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.card-head h2 { margin: 0; }
+.items-editor { display: grid; gap: 10px; }
+.item-row { position: relative; border: 1px solid var(--line); border-radius: 10px; padding: 12px 12px 12px; background: var(--bg); }
+.item-row .form-grid { padding-right: 56px; }
+.item-remove { position: absolute; top: 10px; right: 10px; padding: 4px 10px; font-size: 12px; color: var(--muted); }
+.field-check .check-inline { display: flex; align-items: center; gap: 8px; min-height: 36px; font-size: 14px; }
+.btn-row.between { justify-content: space-between; }
+.item-row.from-receipt { border-color: var(--brand); }
+.item-origin { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13px; color: var(--muted); }
+.notice { padding: 10px 12px; border-radius: 10px; background: var(--brand-soft); border: 1px solid var(--brand); color: var(--ink); font-size: 14px; }
+@media (max-width: 860px) {
+  .verify-layout { grid-template-columns: 1fr; }
+}
