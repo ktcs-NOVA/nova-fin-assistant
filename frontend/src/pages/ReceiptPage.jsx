@@ -4,6 +4,10 @@
 //
 // 목업 모드: 샘플 사진은 experiments/receipt-ocr 1차 테스트에서 실제로 받은 결과를 보여줍니다.
 // 백엔드 연결 모드: 사진을 base64 로 POST /api/receipt 에 보내 실제로 인식합니다.
+//
+// "청구 검증으로 보내기": 초안을 U-04 청구 검증 폼의 항목 1건으로 넘깁니다 (App.jsx 의 sendToVerify).
+// PM 엔진은 초안 이름(purpose, business_type, total_amount)을 그대로 읽고, 영수증 건은 payment 를 "법인카드" 로 넣으면
+// 심야·제한업종 규칙까지 검사합니다 (docs/U-04_청구검증_입력필드.md 4절).
 
 import { useState } from 'react'
 import { recognizeReceipt, PURPOSES, USE_MOCK } from '../api/client.js'
@@ -40,7 +44,7 @@ function readAsBase64(blob) {
   })
 }
 
-export default function ReceiptPage() {
+export default function ReceiptPage({ onSendToVerify }) {
   const [photo, setPhoto] = useState(null)      // { file, url, blob?, sample: bool }
   const [form, setForm] = useState(null)        // 인식 결과 (수정 가능)
   const [raw, setRaw] = useState(null)          // 인식 원본 (수정 전 비교용)
@@ -109,6 +113,7 @@ export default function ReceiptPage() {
     setError('')
     setDraft({
       merchant: form.merchant,
+      business_type: form.business_type || null,
       date: form.date,
       time: form.time || null,
       amount: Number(form.total_amount),
@@ -117,6 +122,24 @@ export default function ReceiptPage() {
       approval_no: form.approval_no || null,
       receipt_file: photo.file,
       edited_fields: FIELDS.filter((f) => String(raw[f.key] ?? '') !== String(form[f.key] ?? '')).map((f) => f.key),
+    })
+  }
+
+  // 초안 → 청구 검증 폼 항목. 이름은 PM 엔진이 읽는 쪽(field, merchant_type, amount)으로 맞춰 보냄.
+  function sendToVerify() {
+    onSendToVerify?.({
+      trip_type: '법인카드',
+      items: [{
+        field: draft.purpose,
+        amount: String(draft.amount),
+        date: draft.date,
+        time: draft.time ?? '',
+        merchant: draft.merchant,
+        merchant_type: draft.business_type ?? '',
+        payment: '법인카드',
+        note: '',
+        receipt_file: draft.receipt_file,
+      }],
     })
   }
 
@@ -267,7 +290,7 @@ export default function ReceiptPage() {
                     <span className="hint">다음 단계 "지출 건 생성" 으로 넘어갈 값</span>
                   </div>
                   <dl className="info-grid">
-                    <dt>가맹점</dt><dd>{draft.merchant}</dd>
+                    <dt>가맹점</dt><dd>{draft.merchant}{draft.business_type ? ` (${draft.business_type})` : ''}</dd>
                     <dt>금액</dt><dd>{draft.amount.toLocaleString('ko-KR')}원</dd>
                     <dt>일시</dt><dd>{draft.date}{draft.time ? ` ${draft.time}` : ''}</dd>
                     <dt>용도</dt><dd>{draft.purpose}</dd>
@@ -279,6 +302,12 @@ export default function ReceiptPage() {
                       ? `사용자가 고친 칸: ${draft.edited_fields.join(', ')}`
                       : '인식값을 그대로 사용 (수정 없음)'}
                   </p>
+                  <div className="btn-row">
+                    <button type="button" className="btn primary" onClick={sendToVerify}>
+                      청구 검증으로 보내기 →
+                    </button>
+                  </div>
+                  <p className="hint">법인카드 결제 건으로 청구 검증 폼에 채워집니다. 필요하면 그 화면에서 항목을 더 넣고 "검증하기"를 누르세요.</p>
                 </div>
               )}
             </>

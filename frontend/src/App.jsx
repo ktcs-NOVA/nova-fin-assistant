@@ -31,6 +31,8 @@ const MENUS = {
 export default function App() {
   const [role, setRole] = useState('admin')
   const [current, setCurrent] = useState(MENUS.admin.home)
+  // 영수증 등록(U-06)에서 "청구 검증으로 보내기"를 누르면 여기에 담겨 청구 검증(U-04) 폼의 초기값이 됩니다.
+  const [verifyPrefill, setVerifyPrefill] = useState(null)
 
   const menu = MENUS[role]
   const Page = (menu.pages.find((p) => p.id === current) ?? menu.pages[0]).component
@@ -38,6 +40,18 @@ export default function App() {
   function changeRole(next) {
     setRole(next)
     setCurrent(MENUS[next].home)
+    setVerifyPrefill(null)
+  }
+
+  function changePage(id) {
+    setCurrent(id)
+    if (id !== 'verify') setVerifyPrefill(null)   // 검증 화면을 떠나면 넘겨받은 값은 버림
+  }
+
+  function sendToVerify(prefill) {
+    setVerifyPrefill(prefill)
+    setRole('employee')
+    setCurrent('verify')
   }
 
   return (
@@ -47,9 +61,9 @@ export default function App() {
       onRoleChange={changeRole}
       pages={menu.pages}
       current={current}
-      onChange={setCurrent}
+      onChange={changePage}
     >
-      <Page />
+      <Page onSendToVerify={sendToVerify} prefill={verifyPrefill} />
     </Layout>
   )
 }
