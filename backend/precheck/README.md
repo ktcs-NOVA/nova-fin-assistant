@@ -19,7 +19,20 @@ def verify(req: dict):
 응답 형태는 `docs/API.md` 3-2와 같습니다 (`overall`, `items[].field/verdict/message/basis/fix`).
 `items[].rule_id` 가 추가로 붙는데, 프론트는 무시해도 되고 테스트·관리자 화면에서 쓸 수 있습니다.
 
-## 입력
+## U-05 출장비 계산
+
+```python
+from precheck import calc_travel
+
+@app.post("/api/travel-calc")
+def travel_calc(req: dict):
+    return calc_travel(req)
+```
+
+입력·출력과 계산 규칙은 [docs/U-05_출장비계산.md](../../docs/U-05_출장비계산.md) 참고.
+결과의 `verify_request` 를 그대로 `verify_claim()` 에 넣으면 사전검증까지 이어집니다.
+
+## 입력 (U-04)
 
 API.md 요청 형태 그대로 동작합니다. 아래 **선택 필드**를 보내면 더 많은 규칙을 검사합니다.
 없으면 해당 규칙을 건너뛰거나 "담당자 확인 필요"로 안내합니다.
