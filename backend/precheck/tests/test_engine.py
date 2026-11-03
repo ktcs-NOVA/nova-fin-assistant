@@ -212,6 +212,15 @@ class CardAndBusinessRules(unittest.TestCase):
         res = run(trip_type="업무추진비", items=[{"field": "경조금", "amount": 100000, "payment": "현금"}])
         self.assertEqual(find(res, "B-CONDOLENCE-CAP")["verdict"], FIX)
 
+    def test_receipt_draft_fields(self):
+        """U-06 영수증 화면의 '지출 건 초안'을 그대로 넣어도 동작하는지 (purpose, business_type)"""
+        draft = {"merchant": "OO호프", "business_type": "맥주전문점", "date": "2026-10-21",
+                 "time": "23:40", "amount": 85000, "purpose": "회의비", "payment": "법인카드"}
+        res = run(trip_type="법인카드", items=[draft])
+        self.assertEqual(find(res, "C-OTHER-BAR")["verdict"], FIX)
+        self.assertEqual(find(res, "C-ODD-HOURS")["verdict"], FIX)
+        self.assertEqual(res["items"][0]["field"], "회의비")
+
     def test_empty_items_raises(self):
         with self.assertRaises(ValueError):
             verify_claim({"trip_type": "국내출장", "items": []})

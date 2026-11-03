@@ -61,6 +61,21 @@ def _text(item) -> str:
     return " ".join(str(p) for p in parts if p)
 
 
+def _normalize_item(item: dict) -> dict:
+    """U-06 영수증 화면의 '지출 건 초안' 필드명도 그대로 받기 위한 변환.
+    purpose -> field, business_type -> merchant_type, total_amount -> amount
+    """
+    it = dict(item)
+    if not it.get("field") and it.get("purpose"):
+        it["field"] = it["purpose"]
+    if not it.get("merchant_type") and it.get("business_type"):
+        it["merchant_type"] = it["business_type"]
+    if "amount" not in it and "total_amount" in it:
+        it["amount"] = it["total_amount"]
+    it["amount"] = int(it.get("amount") or 0)
+    return it
+
+
 def _has(text: str, *words) -> bool:
     return any(w in text for w in words)
 
@@ -511,7 +526,7 @@ def _check_trip_bundle(items, ctx, grade):
 # ---------------------------------------------------------------------------
 def verify_claim(req: dict) -> dict:
     """POST /api/verify 요청 -> 응답 (docs/API.md 3-2 형식)."""
-    items = req.get("items") or []
+    items = [_normalize_item(i) for i in (req.get("items") or [])]
     if not items:
         raise ValueError("items가 비어 있습니다.")
 
