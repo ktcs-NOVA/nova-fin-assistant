@@ -42,24 +42,29 @@ if (BACKEND / "precheck").is_dir():
 
 ALLOWED_MEDIA = set(MEDIA.values())
 MAX_BYTES = 10 * 1024 * 1024  # 사진 10MB 제한
-ORIGIN = "http://localhost:5173"  # Vite dev 서버 (CORS 허용 대상)
+ORIGIN = "http://localhost:5173"  # 기본 Vite dev 서버. localhost / 127.0.0.1 이면 포트가 달라도 허용
 
 client: anthropic.Anthropic | None = None
 
 
 class Handler(BaseHTTPRequestHandler):
+    def _origin(self) -> str:
+        """요청한 브라우저 주소가 내 PC(localhost)면 그대로 허용. 5173 이 밀려 5174 가 되어도 됨."""
+        o = self.headers.get("Origin", "")
+        return o if o.startswith(("http://localhost:", "http://127.0.0.1:")) else ORIGIN
+
     def _send(self, status: int, body: dict) -> None:
         data = json.dumps(body, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
-        self.send_header("Access-Control-Allow-Origin", ORIGIN)
+        self.send_header("Access-Control-Allow-Origin", self._origin())
         self.end_headers()
         self.wfile.write(data)
 
     def do_OPTIONS(self) -> None:  # CORS 사전 요청
         self.send_response(204)
-        self.send_header("Access-Control-Allow-Origin", ORIGIN)
+        self.send_header("Access-Control-Allow-Origin", self._origin())
         self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
@@ -161,7 +166,7 @@ if __name__ == "__main__":
     # 키가 없어도 서버는 켜짐 (/api/verify 는 키 없이 동작, 영수증 인식만 꺼짐)
     client = anthropic.Anthropic() if os.environ.get("ANTHROPIC_API_KEY") else None
     eps = ("POST /api/receipt" if client else "영수증 인식 꺼짐(API 키 없음)") + (", POST /api/verify" if verify_claim else "")
-    print(f"테스트 서버: http://localhost:{args.port}  ({eps}, 허용 출처 {ORIGIN})")
+    print(f"테스트 서버: http://localhost:{args.port}  ({eps}, 허용 출처 localhost 의 모든 포트)")
     print("끝내려면 Ctrl+C")
     try:
         ThreadingHTTPServer(("127.0.0.1", args.port), Handler).serve_forever()
