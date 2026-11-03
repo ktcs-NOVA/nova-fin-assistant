@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import base64
 import json
+import os
 import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -65,7 +66,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         if self.path == "/api/health":
-            eps = ["POST /api/receipt"] + (["POST /api/verify"] if verify_claim else [])
+            eps = (["POST /api/receipt"] if client else []) + (["POST /api/verify"] if verify_claim else [])
             self._send(200, {"ok": True, "endpoints": eps})
         else:
             self._send(404, {"error": "이 테스트 서버는 POST /api/receipt 만 제공합니다. 다른 기능은 백엔드 서버가 필요합니다."})
@@ -113,6 +114,9 @@ class Handler(BaseHTTPRequestHandler):
             self._send(400, {"error": "사진이 10MB 를 넘습니다. 줄여서 다시 올려 주세요."})
             return
 
+        if client is None:
+            self._send(500, {"error": "API 키가 없어 영수증 인식은 쓸 수 없습니다. experiments/receipt-ocr/.env 에 ANTHROPIC_API_KEY 를 넣고 다시 켜 주세요."})
+            return
         name = body.get("filename", "?")
         print(f"[receipt] {name} ({len(image) // 1024} KB) ...", end=" ", flush=True)
         try:
@@ -154,8 +158,10 @@ if __name__ == "__main__":
     args = ap.parse_args()
 
     load_env()
-    client = anthropic.Anthropic()
-    print(f"영수증 인식 테스트 서버: http://localhost:{args.port}  (POST /api/receipt, 허용 출처 {ORIGIN})")
+    # 키가 없어도 서버는 켜짐 (/api/verify 는 키 없이 동작, 영수증 인식만 꺼짐)
+    client = anthropic.Anthropic() if os.environ.get("ANTHROPIC_API_KEY") else None
+    eps = ("POST /api/receipt" if client else "영수증 인식 꺼짐(API 키 없음)") + (", POST /api/verify" if verify_claim else "")
+    print(f"테스트 서버: http://localhost:{args.port}  ({eps}, 허용 출처 {ORIGIN})")
     print("끝내려면 Ctrl+C")
     try:
         ThreadingHTTPServer(("127.0.0.1", args.port), Handler).serve_forever()
