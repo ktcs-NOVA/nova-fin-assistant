@@ -8,6 +8,7 @@
 import { useState } from 'react'
 import { recognizeReceipt, PURPOSES, USE_MOCK } from '../api/client.js'
 import receiptsData from '../mocks/receipts.json'
+import CameraCapture from '../components/CameraCapture.jsx'
 
 const SAMPLES = receiptsData.samples
 const imageUrl = (file) => `${import.meta.env.BASE_URL}receipts/${file}`
@@ -46,6 +47,7 @@ export default function ReceiptPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [draft, setDraft] = useState(null)      // 지출 건 초안
+  const [camera, setCamera] = useState(false)   // 촬영 뷰파인더 열림
 
   function pickSample(s) {
     setPhoto({ file: s.file, url: imageUrl(s.file), sample: true, label: s.label })
@@ -57,6 +59,13 @@ export default function ReceiptPage() {
     if (!f) return
     setPhoto({ file: f.name, url: URL.createObjectURL(f), blob: f, sample: false, label: f.name })
     setForm(null); setRaw(null); setDraft(null); setError('')
+  }
+
+  // 뷰파인더에서 찍은 사진은 "내 사진 올리기" 와 똑같이 취급
+  function pickShot(blob, filename) {
+    setPhoto({ file: filename, url: URL.createObjectURL(blob), blob, sample: false, label: '카메라 촬영' })
+    setForm(null); setRaw(null); setDraft(null); setError('')
+    setCamera(false)
   }
 
   async function recognize() {
@@ -149,13 +158,20 @@ export default function ReceiptPage() {
             ))}
           </div>
 
-          <label className="upload">
-            <input type="file" accept="image/jpeg,image/png,image/webp" onChange={pickOwn} />
-            <span className="btn">내 사진 올리기</span>
+          <div className="upload-row">
+            <label className="upload">
+              <input type="file" accept="image/jpeg,image/png,image/webp" onChange={pickOwn} />
+              <span className="btn">내 사진 올리기</span>
+            </label>
+            <button type="button" className="btn" onClick={() => setCamera(true)} disabled={camera}>
+              카메라로 찍기
+            </button>
             <span className="hint">jpg · png · webp</span>
-          </label>
+          </div>
 
-          {photo && (
+          {camera && <CameraCapture onCapture={pickShot} onClose={() => setCamera(false)} />}
+
+          {photo && !camera && (
             <div className="preview">
               <img className="preview-img" src={photo.url} alt={photo.label} />
               <div className="preview-name">{photo.label}</div>
