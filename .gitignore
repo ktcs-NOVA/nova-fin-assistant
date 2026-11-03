@@ -13,3 +13,11 @@ venv/
 
 # Env (공통 .env 는 올리고, 개인 설정 .env.local 만 제외)
 .env.local
+
+# 실험 폴더: API 키, 영수증 사진(개인정보), 결과물은 올리지 않음
+experiments/**/.env
+experiments/**/.venv/
+experiments/receipt-ocr/receipts/*
+!experiments/receipt-ocr/receipts/.gitkeep
+experiments/receipt-ocr/results/*
+!experiments/receipt-ocr/results/.gitkeep
