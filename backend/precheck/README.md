@@ -32,6 +32,19 @@ def travel_calc(req: dict):
 입력·출력과 계산 규칙은 [docs/U-05_출장비계산.md](../../docs/U-05_출장비계산.md) 참고.
 결과의 `verify_request` 를 그대로 `verify_claim()` 에 넣으면 사전검증까지 이어집니다.
 
+## U-07 결의서 초안
+
+```python
+from precheck import draft_voucher
+
+@app.post("/api/voucher-draft")
+def voucher_draft(req: dict):
+    return draft_voucher(req)
+```
+
+요청은 `/api/verify` 와 같습니다 (`requester`, `title`, `tax_invoice` 추가 가능).
+자세한 내용은 [docs/U-07_결의서초안.md](../../docs/U-07_결의서초안.md) 참고.
+
 ## 입력 (U-04)
 
 API.md 요청 형태 그대로 동작합니다. 아래 **선택 필드**를 보내면 더 많은 규칙을 검사합니다.
