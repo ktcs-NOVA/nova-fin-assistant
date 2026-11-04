@@ -1,0 +1,12 @@
+# 개인 설정 (API 키 포함) — 절대 커밋 금지
+.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# 업로드 파일 (영수증 사진 등)
+uploads/
