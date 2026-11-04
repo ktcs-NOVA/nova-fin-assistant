@@ -4,7 +4,7 @@ U-05 출장비 자동 계산 (국내 출장)
 출장 정보를 넣으면 여비규정 별표 1 기준으로 받을 수 있는 금액을 항목별로 계산하고,
 계산식과 적용 조항을 함께 돌려줍니다.
 
-    from precheck import calc_travel
+    from app.precheck import calc_travel
     result = calc_travel(request_json)
 
 - 일비·식비: 정액 → 바로 금액이 나옴

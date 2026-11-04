@@ -6,7 +6,7 @@
 ## 백엔드에서 쓰는 법
 
 ```python
-from precheck import verify_claim
+from app.precheck import verify_claim
 
 @app.post("/api/verify")
 def verify(req: dict):
@@ -22,7 +22,7 @@ def verify(req: dict):
 ## U-05 출장비 계산
 
 ```python
-from precheck import calc_travel
+from app.precheck import calc_travel
 
 @app.post("/api/travel-calc")
 def travel_calc(req: dict):
@@ -75,7 +75,7 @@ API.md 요청 형태 그대로 동작합니다. 아래 **선택 필드**를 보�
 
 ```bash
 cd backend
-python -m unittest discover -s precheck/tests -t . -v
+python -m unittest discover -s app/precheck/tests -t . -v
 ```
 
 ## 규정이 바뀌면

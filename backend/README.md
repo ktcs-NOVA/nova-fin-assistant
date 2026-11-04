@@ -89,7 +89,7 @@ data/           규정 원문
 | API | 상태 |
 |---|---|
 | `POST /api/qa` | RAG 동작 (규정 미적재 시 예시 응답) |
-| `POST /api/verify` | `app/precheck` 규칙 엔진 사용 (합치기 전엔 예시 응답) |
+| `POST /api/verify` | `app/precheck` 규칙 엔진으로 판정 |
 | `GET /api/checklist` | 예시 응답 |
 
 ## 팀 규칙
