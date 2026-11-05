@@ -10,3 +10,6 @@ __pycache__/
 
 # 업로드 파일 (영수증 사진 등)
 uploads/
+
+# 평가 실행 결과 (scripts.eval_qa 가 만드는 파일)
+data/eval/results/
