@@ -53,7 +53,10 @@ export default function ProcedureGuide({ result }) {
 
           {deadline && (
             <section>
-              <h4><span className="num">3</span>제출 기한</h4>
+              <h4>
+                <span className="num">3</span>제출 기한
+                {deadline.check && <span className="badge warn">{VERDICT.CHECK}</span>}
+              </h4>
               <p className="fact">{deadline.text}</p>
               <Basis text={deadline.basis} />
             </section>

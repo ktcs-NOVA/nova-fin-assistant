@@ -68,7 +68,11 @@ def test_qa_response_has_grounded_flag_when_no_db_docs_or_sample():
         assert {"answer", "grounded", "sources"} <= r.json().keys()
 
 
-def test_procedure_shape():
+def test_procedure_shape(monkeypatch):
+    # DB·LLM 없이 응답 모양만 검사
+    from app.domains.procedure import service
+
+    monkeypatch.setattr(service, "get_procedure", lambda db, task: service.SAMPLE)
     r = client.post("/api/procedure", json={"task": "국내 출장비 정산"})
     assert r.status_code == 200
     data = r.json()
