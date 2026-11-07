@@ -95,16 +95,20 @@ frontend/src/
 ├── App.jsx                 # 메뉴 목록과 현재 화면 (화면 추가는 여기 한 줄)
 ├── index.css               # 디자인 토큰(색·폰트)과 공통 스타일
 ├── api/
-│   ├── client.js           # 백엔드 호출 함수 3개 (askQa, verifyClaim, getChecklist)
+│   ├── client.js           # 백엔드 호출 함수 (askQa, getProcedure, verifyClaim, getChecklist)
 │   └── mock.js             # 목업 모드 응답
-├── mocks/                  # 가짜 응답 JSON (verify / qa / checklist)
+├── mocks/                  # 가짜 응답 JSON (verify / qa / qa-ungrounded / procedure / checklist)
 ├── components/
 │   ├── Layout.jsx          # 상단 헤더 + 탭 메뉴
 │   ├── VerdictBadge.jsx    # 판정 3단계 뱃지
 │   ├── ResultCard.jsx      # 검증 결과 카드 한 장
-│   └── VerifyResult.jsx    # 종합 판정 + 카드 목록
+│   ├── VerifyResult.jsx    # 종합 판정 + 카드 목록
+│   ├── QaAnswer.jsx        # 규정 Q&A 답변 (본문 [1] 인용 ↔ 근거 목록 연결)
+│   ├── ProcedureGuide.jsx  # 업무절차 안내 (필요 서류 · 순서 · 기한 · 결재자)
+│   ├── SourceList.jsx      # 근거 조항 목록 (조항 · 개정일 · 원문 링크)
+│   └── GroundNotice.jsx    # 근거 있음 뱃지 / "담당자 확인 필요" 경고
 └── pages/
-    ├── QaPage.jsx          # 규정 Q&A
+    ├── QaPage.jsx          # 규정 Q&A · 업무절차 안내 (U-01 · U-02 · U-03)
     ├── VerifyPage.jsx      # 청구 검증
     └── ChecklistPage.jsx   # 체크리스트
 ```

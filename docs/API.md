@@ -70,6 +70,7 @@ app.add_middleware(
 | 규정 Q&A | POST | `/api/qa` | 질문 문장 | 답변 문장 + 근거 조항 |
 | 청구 검증 | POST | `/api/verify` | 청구 내역 (항목별 금액·날짜 등) | 항목별 판정 + 근거 조항 + 수정 방법 |
 | 체크리스트 | GET | `/api/checklist` | 없음 (또는 경비 종류) | 체크 항목 목록 |
+| 업무절차 안내 (U-02) | POST | `/api/procedure` | 알고 싶은 업무 | 필요 서류 · 작성 순서 · 기한 · 결재자 + 근거 조항 |
 
 ### 3-1. 규정 Q&A (`POST /api/qa`)
 
@@ -81,13 +82,23 @@ app.add_middleware(
 백엔드가 돌려주는 것:
 ```json
 {
-  "answer": "자가용 이용은 사전 승인이 필요하며, 승인 시 철도·자동차 운임 범위 안에서 지급됩니다.",
+  "answer": "자가용 이용은 사전 승인이 필요하며[1], 승인 시 철도·자동차 운임 범위 안에서 지급됩니다[2].",
+  "grounded": true,
   "sources": [
-    { "regulation": "여비규정", "article": "제13조 제5항" },
-    { "regulation": "여비규정", "article": "제13조 제6항" }
+    { "ref": 1, "regulation": "여비규정", "article": "제13조 제5항", "revised_at": "2025-09-23", "url": null },
+    { "ref": 2, "regulation": "여비규정", "article": "제13조 제6항", "revised_at": "2025-09-23", "url": null }
   ]
 }
 ```
+
+> **2026-11-06 추가 (U-03 근거·출처 표시)** — 기존 필드는 그대로이고 아래 필드만 늘었습니다.
+>
+> | 필드 | 뜻 |
+> |---|---|
+> | `grounded` | `false` 면 규정에서 근거를 못 찾은 답변. 화면에 "담당자 확인 필요"를 표시하고 `sources` 는 빈 배열 |
+> | `sources[].ref` | 답변 본문의 `[1]`, `[2]` 인용 번호와 짝. 1부터 차례대로 |
+> | `sources[].revised_at` | 조항 최근 개정일 (`YYYY-MM-DD`, 없으면 `null`) |
+> | `sources[].url` | 원문 링크 (없으면 `null`) |
 
 ### 3-2. 청구 검증 (`POST /api/verify`) ★ 모양을 꼭 고정해야 하는 부분
 
@@ -154,6 +165,39 @@ app.add_middleware(
   ]
 }
 ```
+
+### 3-4. 업무절차 안내 (`POST /api/procedure`) — U-02
+
+> 2026-11-06 추가. 지금 백엔드는 고정된 예시 응답을 돌려주고, 이후 RAG 로 채웁니다.
+
+프론트가 보내는 것:
+```json
+{ "task": "국내 출장비 정산하려면?" }
+```
+
+백엔드가 돌려주는 것:
+```json
+{
+  "task": "국내 출장비 정산",
+  "summary": "출장보고서와 정산 출장원을 작성하고 증빙을 붙여 15일 안에 정산을 신청합니다.",
+  "documents": [
+    { "name": "출장원(정산)", "detail": "별지 제3호 서식", "basis": "여비규정 별지 제3호 서식" }
+  ],
+  "steps": [
+    { "title": "출장결과보고 승인", "detail": "출장승인권자가 금액과 증빙을 확인", "basis": "여비규정 제3조의2 제3항" }
+  ],
+  "deadline": { "text": "출장을 마친 날부터 15일 이내", "basis": "여비규정 제3조의2 제2항" },
+  "approver": { "text": "「위임전결규정 시행세칙」에서 정한 전결권자", "basis": "여비규정 제3조의2 제1항", "check": true },
+  "grounded": true,
+  "sources": [
+    { "ref": 1, "regulation": "여비규정", "article": "제3조의2", "revised_at": "2026-10-21", "url": null }
+  ]
+}
+```
+
+- `documents` ① 필요 서류, `steps` ② 작성 순서, `deadline` ③ 제출 기한, `approver` ④ 결재자
+- `check: true` 는 규정만으로 확정할 수 없어 "담당자 확인 필요"로 표시할 항목
+- `sources` 모양은 3-1 과 같습니다.
 
 ---
 

@@ -59,3 +59,32 @@ def test_cors_allows_frontend():
         headers={"Origin": "http://localhost:5173", "Access-Control-Request-Method": "POST"},
     )
     assert r.headers.get("access-control-allow-origin") == "http://localhost:5173"
+
+
+def test_qa_response_has_grounded_flag_when_no_db_docs_or_sample():
+    # 규정이 적재되지 않았거나 DB 가 없으면 예시 응답/에러 — 응답 모양만 검사할 수 있을 때 검사
+    r = client.post("/api/qa", json={"question": "자가용 출장"})
+    if r.status_code == 200:
+        assert {"answer", "grounded", "sources"} <= r.json().keys()
+
+
+def test_procedure_shape():
+    r = client.post("/api/procedure", json={"task": "국내 출장비 정산"})
+    assert r.status_code == 200
+    data = r.json()
+    assert {
+        "task",
+        "documents",
+        "steps",
+        "deadline",
+        "approver",
+        "grounded",
+        "sources",
+    } <= data.keys()
+    assert all({"name", "basis"} <= d.keys() for d in data["documents"])
+
+
+def test_procedure_blank_is_400():
+    r = client.post("/api/procedure", json={"task": " "})
+    assert r.status_code == 400
+    assert r.json() == {"error": "알고 싶은 업무를 입력해 주세요."}

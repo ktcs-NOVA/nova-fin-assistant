@@ -47,10 +47,19 @@ async function request(method, path, body) {
 
 // ---------- 화면에서 쓰는 함수 3개 ----------
 
-/** 규정 Q&A: { answer, sources: [{ regulation, article }] } */
+/** 규정 Q&A (U-01·U-03): { answer, grounded, sources: [{ ref, regulation, article, revised_at, url }] }
+ *  answer 안의 [1] 같은 번호는 sources[].ref 와 짝입니다. grounded 가 false 면 근거를 못 찾은 답변입니다. */
 export function askQa(question) {
   if (USE_MOCK) return mock.askQa(question)
   return request('POST', '/api/qa', { question })
+}
+
+/** 업무절차·필요서류 안내 (U-02):
+ *  { task, summary, documents: [{ name, detail, basis }], steps: [{ title, detail, basis }],
+ *    deadline: { text, basis }, approver: { text, basis, check }, grounded, sources: [...] } */
+export function getProcedure(task) {
+  if (USE_MOCK) return mock.getProcedure(task)
+  return request('POST', '/api/procedure', { task })
 }
 
 /** 청구 검증: { overall, items: [{ field, verdict, message, basis, fix }] } */
