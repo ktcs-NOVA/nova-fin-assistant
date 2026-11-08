@@ -17,7 +17,7 @@ export default function App() {
 
   return (
     <Layout pages={PAGES} current={current} onChange={setCurrent}>
-      <Page />
+      <Page onNavigate={setCurrent} />
     </Layout>
   )
 }

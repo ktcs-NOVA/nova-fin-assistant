@@ -91,6 +91,8 @@ data/           규정 원문
 | `POST /api/qa` | RAG 동작 (규정 미적재 시 예시 응답) |
 | `POST /api/verify` | `app/precheck` 규칙 엔진으로 판정 |
 | `GET /api/checklist` | 예시 응답 |
+| `POST /api/procedure` | 업무별 규칙으로 안내, 결재자는 전결표에서 조회 |
+| `GET·POST /api/checklists` | 직원별 체크리스트 저장·조회·체크·삭제 (시연용 사번 헤더) |
 
 ## 팀 규칙
 

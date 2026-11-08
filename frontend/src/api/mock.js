@@ -36,3 +36,48 @@ export async function getChecklist(type = '국내출장') {
   await wait(300)
   return { ...checklistData, type }
 }
+
+// 내 체크리스트: 목업에서는 새로고침하면 사라집니다.
+let savedChecklists = []
+let nextSavedId = 1
+
+export async function getChecklists() {
+  await wait(300)
+  return structuredClone(savedChecklists)
+}
+
+export async function createChecklist(task) {
+  await wait(300)
+  const { summary, deadline, approver, sources, documents, steps } = procedureData
+  const rows = [
+    ...documents.map((d) => ({ kind: 'document', title: d.name, detail: d.detail, basis: d.basis })),
+    ...steps.map((s) => ({ kind: 'step', title: s.title, detail: s.detail, basis: s.basis })),
+  ]
+  const checklist = {
+    id: nextSavedId++,
+    task,
+    summary,
+    deadline,
+    approver,
+    sources,
+    created_at: new Date().toISOString(),
+    items: rows.map((row) => ({ ...row, id: nextSavedId++, done: false, done_at: null })),
+  }
+  savedChecklists = [checklist, ...savedChecklists]
+  return structuredClone(checklist)
+}
+
+export async function updateChecklistItem(checklistId, itemId, done) {
+  await wait(150)
+  const item = savedChecklists.find((c) => c.id === checklistId)?.items.find((i) => i.id === itemId)
+  if (!item) throw new Error('체크 항목을 찾을 수 없습니다.')
+  item.done = done
+  item.done_at = done ? new Date().toISOString() : null
+  return structuredClone(item)
+}
+
+export async function deleteChecklist(checklistId) {
+  await wait(150)
+  savedChecklists = savedChecklists.filter((c) => c.id !== checklistId)
+  return null
+}

@@ -200,6 +200,37 @@ app.add_middleware(
 - `check: true` 는 규정만으로 확정할 수 없어 "담당자 확인 필요"로 표시할 항목
 - `sources` 모양은 3-1 과 같습니다.
 
+### 3-5. 내 체크리스트 (`/api/checklists`) — U-02
+
+업무 절차 안내를 직원별로 저장하고 체크합니다. 3-3 의 `/api/checklist` 는 예시 응답이고 화면에서 쓰지 않습니다.
+
+| 하는 일 | 방식 | 주소 | 프론트가 보내는 것 |
+|---|---|---|---|
+| 목록 조회 | GET | `/api/checklists` | 없음 |
+| 저장 | POST | `/api/checklists` | `{ "task": "국내 출장비 정산" }` (3-4 응답의 `task`) |
+| 체크 | PATCH | `/api/checklists/{id}/items/{itemId}` | `{ "done": true }` |
+| 삭제 | DELETE | `/api/checklists/{id}` | 없음 (응답 본문 없음, 204) |
+
+저장·조회가 돌려주는 것:
+```json
+{
+  "id": 1,
+  "task": "국내 출장비 정산",
+  "summary": "출장원(정산)과 출장보고서에 증빙을 붙여 15일 이내에 정산합니다.",
+  "deadline": { "text": "출장을 완료한 날부터 15일 이내", "basis": "여비규정 제3조의2 제2항", "check": false },
+  "approver": { "text": "부서장을 제외한 직원: 부서장", "basis": "위임전결규정 시행세칙 별표", "check": false },
+  "sources": [{ "ref": 1, "regulation": "여비규정", "article": "제3조의2", "revised_at": "2026-10-21", "url": null }],
+  "created_at": "2026-11-08T09:00:00+09:00",
+  "items": [
+    { "id": 10, "kind": "document", "title": "출장보고서", "detail": "별지 제4호 서식.", "basis": "여비규정 별지 제4호 서식", "done": false, "done_at": null }
+  ]
+}
+```
+
+- `kind` 는 `document`(필요 서류) 또는 `step`(작성 순서)입니다.
+- 사용자는 `X-Employee-No` 헤더의 사번으로 구분하고, 없으면 데모 직원 `E1001` 로 처리합니다. 시연용이며 실제 로그인이 아닙니다.
+- 내용은 저장 시점의 복사본입니다. 규정이 개정되어도 저장한 내용은 바뀌지 않습니다.
+
 ---
 
 ## 4. 에러일 때 돌려주는 모양 (함께 정할 것)

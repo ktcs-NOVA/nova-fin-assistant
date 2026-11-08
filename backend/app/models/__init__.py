@@ -7,6 +7,7 @@ Alembic 이 이 목록을 보고 변경 사항(마이그레이션)을 자동으�
     uv run alembic upgrade head
 """
 
+from app.models.checklist import Checklist, ChecklistItem
 from app.models.expense import Expense, Receipt, Trip
 from app.models.knowledge import Chunk, Document
 from app.models.log import QueryLog
@@ -14,6 +15,8 @@ from app.models.submission import Review, Submission
 from app.models.user import User
 
 __all__ = [
+    "Checklist",
+    "ChecklistItem",
     "Chunk",
     "Document",
     "Expense",

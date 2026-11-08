@@ -34,7 +34,7 @@ const MODES = {
 
 let nextId = 1
 
-export default function QaPage() {
+export default function QaPage({ onNavigate }) {
   const [mode, setMode] = useState('qa')
   const [messages, setMessages] = useState([]) // { id, mode, text, status: 'loading'|'done'|'error', result, error }
   const [input, setInput] = useState('')
@@ -127,7 +127,7 @@ export default function QaPage() {
               <div className="bubble-bot">
                 {m.status === 'loading' && <p className="loading">{loading}</p>}
                 {m.status === 'error' && <div className="error">{m.error}</div>}
-                {m.status === 'done' && <Answer result={m.result} />}
+                {m.status === 'done' && <Answer result={m.result} onNavigate={onNavigate} />}
               </div>
             </div>
           )

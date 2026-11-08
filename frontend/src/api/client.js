@@ -42,10 +42,10 @@ async function request(method, path, body) {
     throw new Error(message)
   }
 
-  return res.json()
+  return res.status === 204 ? null : res.json()
 }
 
-// ---------- 화면에서 쓰는 함수 3개 ----------
+// ---------- 화면에서 쓰는 함수 ----------
 
 /** 규정 Q&A (U-01·U-03): { answer, grounded, sources: [{ ref, regulation, article, revised_at, url }] }
  *  answer 안의 [1] 같은 번호는 sources[].ref 와 짝입니다. grounded 가 false 면 근거를 못 찾은 답변입니다. */
@@ -66,6 +66,31 @@ export function getProcedure(task) {
 export function verifyClaim(claim) {
   if (USE_MOCK) return mock.verifyClaim(claim)
   return request('POST', '/api/verify', claim)
+}
+
+/** 내 체크리스트 목록: [{ id, task, summary, deadline, approver, sources, created_at,
+ *    items: [{ id, kind: 'document'|'step', title, detail, basis, done, done_at }] }] */
+export function getChecklists() {
+  if (USE_MOCK) return mock.getChecklists()
+  return request('GET', '/api/checklists')
+}
+
+/** 절차 안내를 내 체크리스트로 저장. task 는 안내 응답의 task 값입니다. */
+export function createChecklist(task) {
+  if (USE_MOCK) return mock.createChecklist(task)
+  return request('POST', '/api/checklists', { task })
+}
+
+/** 체크 항목 완료 표시를 바꿉니다. 바뀐 항목을 돌려줍니다. */
+export function updateChecklistItem(checklistId, itemId, done) {
+  if (USE_MOCK) return mock.updateChecklistItem(checklistId, itemId, done)
+  return request('PATCH', `/api/checklists/${checklistId}/items/${itemId}`, { done })
+}
+
+/** 내 체크리스트를 삭제합니다. */
+export function deleteChecklist(checklistId) {
+  if (USE_MOCK) return mock.deleteChecklist(checklistId)
+  return request('DELETE', `/api/checklists/${checklistId}`)
 }
 
 /** 체크리스트: { type, items: [{ id, text, basis }] } */
