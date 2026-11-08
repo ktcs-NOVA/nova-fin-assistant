@@ -165,6 +165,14 @@ def calc_travel(req: dict) -> dict:
     return _result(grade, trip_type, region, days, nights, lines, notes, trip)
 
 
+def _fuel_type(raw):
+    """'휘발유'·'가솔린'·'EV' 같은 입력을 연비표의 유종 이름으로 맞춤. 모르면 None."""
+    text = str(raw or "").strip()
+    if text in R.FUEL_EFFICIENCY:
+        return text
+    return R.FUEL_ALIASES.get(text.lower())
+
+
 def _private_car_line(trip, req):
     car = dict(req.get("private_car") or {})
     km = car.get("distance_km")
@@ -173,23 +181,28 @@ def _private_car_line(trip, req):
                      "왕복 거리를 입력하면 유류비를 계산합니다",
                      "여비규정 제13조 제6항, 별표 1 주2)")
     d = R.FUEL_DEFAULTS
-    if str(car.get("fuel") or "").lower() in {"전기", "ev", "electric"}:
+    fuel = _fuel_type(car.get("fuel"))
+    note = ""
+    if fuel is None:
+        fuel = R.DEFAULT_FUEL
+        note += f"차량 유형을 알 수 없어 {fuel} 기준으로 계산했습니다. "
+    if fuel in R.ELECTRIC_FUELS:
         price = car.get("price_per_kwh", d["price_per_kwh"])
-        eff = car.get("km_per_kwh", d["km_per_kwh"])
-        fuel_cost = km / eff * price
-        formula = f"{km}km ÷ {eff}km/kWh × {_won(price)}/kWh"
+        eff = car.get("km_per_kwh", R.FUEL_EFFICIENCY[fuel])
+        unit, price_given = "km/kWh", "price_per_kwh" in car
     else:
         price = car.get("price_per_liter", d["price_per_liter"])
-        eff = car.get("km_per_liter", d["km_per_liter"])
-        fuel_cost = km / eff * price
-        formula = f"{km}km ÷ {eff}km/L × {_won(price)}/L"
+        eff = car.get("km_per_liter", R.FUEL_EFFICIENCY[fuel])
+        unit, price_given = "km/L", "price_per_liter" in car
+    fuel_cost = km / eff * price
+    formula = f"{km}km ÷ {eff}{unit}({fuel}) × {_won(price)}/{unit.split('/')[1]}"
     tolls = int(car.get("tolls") or 0)
     total = int(round(fuel_cost)) + tolls
     if tolls:
         formula += f" + 통행료 {_won(tolls)}"
-    note = ""
-    if "price_per_liter" not in car and "price_per_kwh" not in car:
-        note = f"유가·연비는 {d['basis_date']}입니다. "
+    note += f"유류비 산식은 {R.FUEL_BASIS}입니다. "
+    if not price_given:
+        note += f"단가는 {d['basis_date']}이니 출장일 단가를 입력하세요. "
     fare = car.get("public_fare")
     if fare is not None and total > fare:
         formula += f" = {_won(total)} → 대중교통 운임 {_won(fare)} 한도 적용"
