@@ -319,6 +319,7 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .notice { padding: 10px 12px; border-radius: 10px; background: var(--brand-soft); border: 1px solid var(--brand); color: var(--ink); font-size: 14px; }
 @media (max-width: 860px) {
   .verify-layout { grid-template-columns: 1fr; }
+}
 
 /* ---------- 규정 Q&A (U-01 · U-02 · U-03) ---------- */
 .qa-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
