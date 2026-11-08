@@ -14,9 +14,12 @@ from app.core.config import settings
 from app.core.db import engine
 from app.core.errors import register_error_handlers
 from app.domains.checklist.router import router as checklist_router
+from app.domains.procedure.router import router as procedure_router
 from app.domains.qa.router import router as qa_router
+from app.domains.travel.router import router as travel_router
 from app.domains.verify import service as verify_service
 from app.domains.verify.router import router as verify_router
+from app.domains.voucher.router import router as voucher_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -56,3 +59,6 @@ def health() -> dict:
 app.include_router(qa_router)  # POST /api/qa
 app.include_router(verify_router)  # POST /api/verify  (규칙 엔진 연결)
 app.include_router(checklist_router)  # GET  /api/checklist
+app.include_router(procedure_router)  # POST /api/procedure  (U-02, 예시 응답)
+app.include_router(travel_router)  # POST /api/travel-calc  (U-05 출장비 계산)
+app.include_router(voucher_router)  # POST /api/voucher-draft  (U-07 결의서 초안)

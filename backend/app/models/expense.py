@@ -1,6 +1,6 @@
 """지출 데이터: 출장 묶음(Trip) · 지출 건(Expense) · 영수증(Receipt)
 
-필드 이름은 U-04 검증 엔진(backend/precheck)의 입력과 맞췄습니다.
+필드 이름은 U-04 검증 엔진(backend/app/precheck)의 입력과 맞췄습니다.
 엔진이 쓰는 선택 필드(nights, breakfast_included, reason_doc …)는 컬럼으로 다 만들지 않고
 `extra`(JSONB)에 넣어 둡니다. 자주 쓰게 되면 그때 컬럼으로 올리세요.
 """

@@ -72,15 +72,39 @@ def answer(db: Session, question: str, *, audience: str = AUDIENCE_EMPLOYEE) -> 
     if settings.ai_mock:
         reply += "\n\n(검색된 조항: " + ", ".join(_label(h) for h in grounded_hits) + ")"
 
-    # 답변에서 실제로 인용한 번호만 출처로. 인용이 없으면 검색된 조항 전체.
-    cited = {int(n) for n in re.findall(r"\[(\d+)\]", reply)}
-    used = [h for i, h in enumerate(grounded_hits, start=1) if i in cited] or grounded_hits
+    reply, sources, grounded = tidy_citations(reply, grounded_hits)
+    return RagAnswer(reply, sources, grounded=grounded, hits=hits)
 
-    sources, seen = [], set()
-    for h in used:
+
+def tidy_citations(reply: str, hits: list[Hit]) -> tuple[str, list[dict], bool]:
+    """답변의 [n] 인용을 출처 목록과 맞춥니다 (U-03). 반환: (정리된 답변, 출처, 근거 여부)
+
+    - 실제로 인용한 조항만 출처로, 번호는 등장 순서대로 1, 2, 3… 으로 다시 매김
+    - 검색 결과에 없는 번호(지어낸 인용)는 본문에서 지움
+    - 인용 없이 "담당자 확인"으로 답했으면 근거 없음 (출처를 붙이지 않음)
+    - 인용 표시 없이 답했으면 검색된 조항 전체를 근거로
+    """
+    cited = [int(n) for n in re.findall(r"\[(\d+)\]", reply)]
+    if not cited and "담당자 확인" in reply:
+        return reply, [], False
+
+    order = list(dict.fromkeys(n for n in cited if 1 <= n <= len(hits)))
+    if not order:
+        order = list(range(1, len(hits) + 1))
+
+    renumber, sources, seen = {}, [], {}
+    for old in order:
+        h = hits[old - 1]
         key = (h.document.title, h.chunk.article)
-        if key not in seen:
-            seen.add(key)
-            sources.append(_source(h))
+        if key in seen:  # 같은 조항의 다른 조각이면 같은 번호로
+            renumber[old] = seen[key]
+            continue
+        new = len(sources) + 1
+        seen[key] = renumber[old] = new
+        sources.append({"ref": new, **_source(h)})
 
-    return RagAnswer(reply, sources, grounded=True, hits=hits)
+    def _swap(m: re.Match) -> str:
+        n = int(m[1])
+        return f"[{renumber[n]}]" if n in renumber else ""
+
+    return re.sub(r"\[(\d+)\]", _swap, reply), sources, True

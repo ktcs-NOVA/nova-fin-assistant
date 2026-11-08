@@ -31,7 +31,7 @@ def answer_question(db: Session, question: str) -> QaResponse:
     latency_ms = int((time.perf_counter() - started) * 1000)
 
     _save_log(db, question, result, latency_ms)
-    return QaResponse(answer=result.answer, sources=result.sources)
+    return QaResponse(answer=result.answer, grounded=result.grounded, sources=result.sources)
 
 
 def _save_log(db: Session, question: str, result: answerer.RagAnswer, latency_ms: int) -> None:

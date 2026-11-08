@@ -170,6 +170,7 @@ button { font: inherit; cursor: pointer; }
 .hint { font-size: 13px; color: var(--muted); }
 .error { background: var(--bad-soft); color: var(--bad); padding: 10px 14px; border-radius: 9px; margin-bottom: 12px; }
 
+
 /* ---------- 헤더: 역할 전환 ---------- */
 .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 .role-switch { display: flex; gap: 2px; border: 1px solid var(--line); border-radius: 10px; padding: 2px; }
@@ -318,4 +319,128 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .notice { padding: 10px 12px; border-radius: 10px; background: var(--brand-soft); border: 1px solid var(--brand); color: var(--ink); font-size: 14px; }
 @media (max-width: 860px) {
   .verify-layout { grid-template-columns: 1fr; }
+
+/* ---------- 규정 Q&A (U-01 · U-02 · U-03) ---------- */
+.qa-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
+.segmented {
+  display: inline-flex; gap: 4px;
+  background: var(--panel); border: 1px solid var(--line);
+  padding: 4px; border-radius: 10px;
+}
+.segmented button {
+  border: 0; background: none; color: var(--muted);
+  padding: 7px 14px; border-radius: 7px;
+}
+.segmented button.on { background: var(--brand-soft); color: var(--brand); font-weight: 600; }
+.btn.small { padding: 6px 12px; font-size: 13px; }
+
+.chat { display: flex; flex-direction: column; gap: 18px; min-height: 240px; }
+.chat-empty {
+  padding: 32px 20px; text-align: center; color: var(--muted);
+  border: 1px dashed var(--line); border-radius: var(--radius);
+}
+.chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 4px; }
+.chip {
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+  padding: 8px 14px; border-radius: 999px; font-size: 14px;
+}
+.chip:hover { border-color: var(--brand); color: var(--brand); }
+
+.turn { display: flex; flex-direction: column; gap: 10px; }
+.bubble-user {
+  align-self: flex-end; max-width: 80%;
+  background: var(--brand); color: var(--brand-ink);
+  padding: 10px 14px; border-radius: 14px 14px 4px 14px;
+  white-space: pre-wrap; word-break: keep-all;
+}
+.bubble-tag {
+  display: inline-block; margin-right: 6px; padding: 1px 7px;
+  font-size: 11px; font-weight: 600; border-radius: 999px;
+  background: rgba(255, 255, 255, .2);
+}
+.bubble-bot {
+  align-self: flex-start; width: 100%;
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 4px 14px 14px 14px; padding: 16px 18px;
+}
+.loading { margin: 0; color: var(--muted); animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .45; } }
+.bubble-bot .error { margin: 0; }
+
+.answer { display: flex; flex-direction: column; gap: 12px; }
+.answer-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.answer-text { margin: 0; white-space: pre-line; word-break: keep-all; }
+.cite-wrap { white-space: nowrap; } /* 인용 번호를 앞 단어와 같은 줄에 */
+.cite {
+  display: inline-grid; place-items: center;
+  min-width: 18px; height: 18px; margin: 0 2px; padding: 0 4px;
+  vertical-align: 2px; font-size: 11px; font-weight: 700;
+  border: 0; border-radius: 5px;
+  background: var(--brand-soft); color: var(--brand);
+}
+.cite.on, .cite:hover { background: var(--brand); color: var(--brand-ink); }
+
+.notice { display: flex; flex-direction: column; gap: 2px; width: 100%; padding: 10px 14px; border-radius: 9px; font-size: 14px; }
+.notice.warn { background: var(--warn-soft); color: var(--warn); }
+
+/* 근거 조항 목록 (U-03) */
+.sources { border-top: 1px dashed var(--line); padding-top: 12px; }
+.sources-title { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+.source-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.source-list li { display: flex; align-items: center; gap: 8px; }
+.source {
+  flex: 1; display: flex; align-items: center; gap: 10px; text-align: left;
+  border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+  padding: 8px 12px; border-radius: 9px; font-size: 14px;
+}
+.source.on { border-color: var(--brand); background: var(--brand-soft); }
+.source-ref {
+  flex: none; display: grid; place-items: center;
+  width: 20px; height: 20px; border-radius: 6px;
+  background: var(--brand-soft); color: var(--brand); font-size: 12px; font-weight: 700;
+}
+.source.on .source-ref { background: var(--brand); color: var(--brand-ink); }
+.source-name { font-weight: 600; }
+.source-date { margin-left: auto; color: var(--muted); font-size: 12px; white-space: nowrap; }
+.source-link { font-size: 13px; color: var(--brand); white-space: nowrap; }
+
+/* 업무 절차 안내 (U-02) */
+.procedure-task { margin: 0; font-size: 16px; }
+.procedure { display: grid; gap: 16px; }
+.procedure h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 15px; }
+.procedure .num {
+  display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--brand); color: var(--brand-ink); font-size: 12px;
+}
+.check-list, .step-list { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+.check-list li, .step-list li { padding-left: 2px; }
+.check-list .detail, .step-list .detail { display: block; color: var(--ink); font-size: 14px; }
+.basis { display: block; font-size: 12px; color: var(--muted); }
+.fact { margin: 0 0 2px; font-weight: 600; }
+
+/* 입력창 */
+.composer {
+  position: sticky; bottom: 0; z-index: 5;
+  display: flex; align-items: flex-end; gap: 10px;
+  margin-top: 20px; padding: 12px 0 6px;
+  background: var(--bg);
+}
+.composer textarea {
+  flex: 1; resize: none;
+  border: 1px solid var(--line); border-radius: 12px;
+  background: var(--panel); color: var(--ink);
+  padding: 11px 14px; font: inherit; line-height: 1.45;
+}
+.composer textarea:focus { outline: 2px solid var(--brand-soft); border-color: var(--brand); }
+.composer .btn { height: 46px; white-space: nowrap; }
+.disclaimer { margin: 4px 0 0; font-size: 12px; }
+
+@media (max-width: 640px) {
+  .qa-toolbar { flex-wrap: wrap; }
+  .segmented { flex: 1; }
+  .segmented button { flex: 1; padding: 7px 8px; }
+  .bubble-user { max-width: 92%; }
+  .bubble-bot { padding: 14px; }
+  .source { flex-wrap: wrap; }
+  .source-date { margin-left: 30px; }
 }

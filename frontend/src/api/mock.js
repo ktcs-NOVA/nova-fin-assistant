@@ -3,16 +3,27 @@
 // 내용은 전부 "(예시)" 가짜 데이터이며, 실제 판정은 백엔드가 합니다.
 
 import qaData from '../mocks/qa.json'
+import qaUngroundedData from '../mocks/qa-ungrounded.json'
+import procedureData from '../mocks/procedure.json'
 import checklistData from '../mocks/checklist.json'
 import receiptsData from '../mocks/receipts.json'
 
 // 실제 서버처럼 잠깐 기다렸다가 응답 (로딩 표시를 테스트하기 위해)
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
+// 이 단어가 들어간 질문은 "근거 없음" 응답을 돌려줘서 경고 화면(U-03)을 확인할 수 있게 합니다.
+const UNGROUNDED_WORDS = ['주차', '연차', '휴가']
+
 export async function askQa(question) {
   await wait(600)
   if (!question?.trim()) throw new Error('질문을 입력해 주세요.')
-  return qaData
+  return UNGROUNDED_WORDS.some((w) => question.includes(w)) ? qaUngroundedData : qaData
+}
+
+export async function getProcedure(task) {
+  await wait(700)
+  if (!task?.trim()) throw new Error('알고 싶은 업무를 입력해 주세요.')
+  return procedureData
 }
 
 // 청구 검증: 실제 판정은 백엔드(PM이 만든 precheck 엔진)가 합니다.

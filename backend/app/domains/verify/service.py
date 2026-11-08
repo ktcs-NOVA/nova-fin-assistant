@@ -1,7 +1,7 @@
 """U-04 청구 검증.
 
 판정 로직은 규칙 엔진(app/precheck)을 그대로 씁니다.
-엔진이 아직 합쳐지지 않았으면 예시 응답(frontend/src/mocks/verify.json 과 같은 모양)을 돌려줍니다.
+엔진을 불러오지 못하면 예시 응답(frontend/src/mocks/verify.json 과 같은 모양)을 돌려줍니다.
 """
 
 import copy
@@ -12,12 +12,9 @@ from app.core.errors import AppError
 log = logging.getLogger("nova.verify")
 
 try:
-    from app.precheck import verify_claim as _engine  # 합친 뒤 위치
+    from app.precheck import verify_claim as _engine
 except ImportError:
-    try:
-        from precheck import verify_claim as _engine  # 합치기 전 위치 (backend/precheck)
-    except ImportError:
-        _engine = None
+    _engine = None
 
 SAMPLE = {
     "overall": "보완 필요",

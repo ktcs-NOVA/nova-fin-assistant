@@ -1,6 +1,6 @@
 """U-04 청구 검증 요청·응답 모양 (docs/API.md 3-2).
 
-검증 엔진(backend/precheck)은 API.md 필드 외에 선택 필드(trip, nights, time, payment …)를
+검증 엔진(backend/app/precheck)은 API.md 필드 외에 선택 필드(trip, nights, time, payment …)를
 더 받습니다. 그래서 요청은 정해진 필드 밖의 값도 그대로 통과시킵니다 (extra="allow").
 """
 
