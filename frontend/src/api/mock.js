@@ -48,6 +48,36 @@ export async function getChecklist(type = '국내출장') {
   return { ...checklistData, type }
 }
 
+// 출장비 계산(U-05): 실제 계산은 백엔드(PM 의 travel_calc 엔진)가 합니다.
+// 목업은 규칙을 흉내 내지 않고, 모양만 같은 "(예시)" 응답을 돌려줍니다.
+export async function calcTravel(req) {
+  await wait(600)
+  const grade = req?.grade ?? '직원 3급 이하'
+  const trip = req?.trip ?? {}
+  return {
+    grade,
+    trip_type: req?.trip_type ?? '국내출장',
+    region: trip.region ?? null,
+    days: 2,
+    nights: 1,
+    lines: [
+      { field: '일비', amount: 60000, type: '정액', formula: '(예시) 30,000원 × 2일', basis: '여비규정 제14조 제1항, 별표 1', note: '' },
+      { field: '식비', amount: 54000, type: '정액', formula: '(예시) 27,000원 × 2일', basis: '여비규정 제14조 제1항, 별표 1', note: '' },
+      { field: '숙박비', amount: 90000, type: '상한(실비)', formula: '(예시) 광역시 90,000원 × 1박', basis: '여비규정 제14조 제2항, 별표 1', note: '영수증 금액으로 실비 정산' },
+    ],
+    summary: { fixed_total: 114000, lodging_cap: 90000, transport_total: 0, estimated_max: 204000 },
+    notes: ['(예시) 목업 모드에서는 규정 계산을 하지 않습니다. 백엔드 연결 시 실제 계산 결과가 표시됩니다.'],
+    verify_request: {
+      trip_type: '국내출장', grade, trip,
+      items: [
+        { field: '일비', amount: 60000 },
+        { field: '식비', amount: 54000, days: 2 },
+        { field: '숙박비', amount: 90000, nights: 1 },
+      ],
+    },
+  }
+}
+
 // ---------- 관리자 (M-01 정산 검토 대기함) ----------
 
 import submissionsData from '../mocks/submissions.json'
