@@ -200,13 +200,16 @@ def _check_lodging(item, grade, ctx):
                             f"{ctx['region']} 숙박비 상한 {_won(cap)}({nights}박)을 {_won(amount - cap)} 초과했습니다. "
                             f"부득이한 사유가 있으면 상한의 30%({_won(extra_cap)})까지 추가 지급할 수 있습니다.",
                             "여비규정 제11조 제6항, 별표 1",
-                            "초과 사유(행사 기간 숙소 부족 등) 소명 후 담당자 판단",
+                            f"부득이한 사유가 없으면 상한 {_won(cap)}으로 수정 (초과분 본인 부담). "
+                            "사유(행사 기간 숙소 부족 등)가 있으면 소명 후 담당자 판단",
                             "T-LODGING-EXTRA"))
     else:
         out.append(_finding(item, R.FIX,
-                            f"{ctx['region']} 숙박비 상한 {_won(cap)}({nights}박)의 30% 추가 한도({_won(extra_cap)})까지 넘었습니다.",
+                            f"숙박비는 {ctx['region']} 상한 {_won(cap)}({nights}박)까지만 지급합니다. "
+                            f"실제 결제액 {_won(amount)}을 그대로 청구해 30% 추가 한도({_won(extra_cap)})도 넘었습니다.",
                             "여비규정 제11조 제6항, 별표 1",
-                            f"숙박비 청구액을 최대 {_won(extra_cap)} 이내로 수정 (초과분 본인 부담)",
+                            f"숙박비 청구액을 상한 {_won(cap)}으로 수정 (초과분 본인 부담). "
+                            f"부득이한 사유를 승인받아도 최대 {_won(extra_cap)}까지만 인정",
                             "T-LODGING-CAP"))
     return out
 
@@ -322,10 +325,32 @@ def _check_transport(item, grade, ctx):
                             "이코노미 운임으로 수정 (차액은 본인 부담)", "T-TRANS-AIR-CLASS"))
 
     if item.get("receipt") is False:
-        out.append(_finding(item, R.FIX,
-                            "교통비는 사용내역을 확인할 수 있는 영수증(승차권·탑승권 포함)을 제출해야 합니다.",
-                            "여비규정 제10조 제1항·제2항", "영수증 또는 승차권 첨부",
-                            "T-TRANS-RECEIPT"))
+        transit = _has(t, *R.PUBLIC_TRANSIT_WORDS)
+        fare = item.get("authorized_fare")
+        if transit and item.get("substitute_approved") is True:
+            # 사유서 + 부서장 승인 결재문서로 증빙을 대체한 경우: 인가요금 이내인지만 봄
+            if fare is not None and amount > fare:
+                out.append(_finding(item, R.FIX,
+                                    f"증빙을 결재문서로 대체할 때는 대중교통 인가요금({_won(fare)})을 기준으로 합니다.",
+                                    R.SUBSTITUTE_BASIS, f"청구 금액을 {_won(fare)}으로 수정",
+                                    "T-TRANS-SUBSTITUTE-FARE"))
+            elif fare is None:
+                out.append(_finding(item, R.CHECK,
+                                    "영수증 대신 부서장 승인 결재문서를 제출했습니다. 청구 금액이 대중교통 인가요금 이내인지 확인이 필요합니다.",
+                                    R.SUBSTITUTE_BASIS, "해당 구간 인가요금을 입력하거나 담당자가 확인",
+                                    "T-TRANS-SUBSTITUTE-CHECK"))
+        elif transit:
+            out.append(_finding(item, R.FIX,
+                                "교통비는 사용내역을 확인할 수 있는 영수증(승차권 포함)을 제출해야 합니다. "
+                                "철도·버스 증빙이 어렵다면 사유를 적어 부서장 승인을 받은 결재문서로 대신할 수 있습니다.",
+                                f"여비규정 제10조 제1항·제2항, {R.SUBSTITUTE_BASIS}",
+                                "영수증 첨부, 또는 결의서 초안의 사유서 템플릿으로 결재문서 작성 (인가요금 기준)",
+                                "T-TRANS-RECEIPT"))
+        else:
+            out.append(_finding(item, R.FIX,
+                                "교통비는 사용내역을 확인할 수 있는 영수증(승차권·탑승권 포함)을 제출해야 합니다.",
+                                "여비규정 제10조 제1항·제2항", "영수증 또는 승차권 첨부",
+                                "T-TRANS-RECEIPT"))
     return out
 
 

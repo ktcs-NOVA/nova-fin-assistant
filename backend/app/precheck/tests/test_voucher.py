@@ -94,5 +94,49 @@ class VoucherDraft(unittest.TestCase):
         self.assertEqual(d["lines"][0]["amount"], 35000)
 
 
+class ReasonForm(unittest.TestCase):
+    """철도·버스 증빙 곤란 시 사유서(결재문서) 템플릿 — 실무자 의견 반영"""
+
+    def ktx(self, **extra):
+        item = {"field": "철도운임", "amount": 59800, "seat_class": "일반", "receipt": False,
+                "route": "서울역 → 부산역", **extra}
+        return {"trip_type": "국내출장", "grade": "직원 3급 이하",
+                "trip": {"start_date": "2026-10-20", "end_date": "2026-10-21", "region": "부산"},
+                "requester": {"name": "홍길동", "department": "해운정책팀"},
+                "items": [item]}
+
+    def test_missing_ktx_receipt_gives_template(self):
+        d = draft_voucher(self.ktx(), today=TODAY)
+        self.assertEqual(d["status"], "제출 전 보완 필요")
+        self.assertEqual(len(d["reason_forms"]), 1)
+        form = d["reason_forms"][0]
+        self.assertEqual(form["status"], "작성 필요")
+        fields = {f["key"]: f for f in form["fields"]}
+        self.assertEqual(fields["route"]["value"], "서울역 → 부산역")
+        self.assertEqual(fields["mode"]["value"], "철도운임 (일반)")
+        self.assertEqual(fields["reason"]["value"], "")          # 비어 있으면 화면이 흐린 예시 표시
+        self.assertTrue(fields["reason"]["placeholder"].startswith("예:"))
+        self.assertIn("증빙 대체 결재문서(사유서 · 부서장 승인)", names(d))
+
+    def test_approved_substitute_within_fare_passes(self):
+        d = draft_voucher(self.ktx(substitute_approved=True, authorized_fare=59800,
+                                   no_receipt_reason="현장 현금 발권 후 승차권 분실"), today=TODAY)
+        self.assertEqual(d["verify"]["fix"], 0)
+        self.assertEqual(d["reason_forms"][0]["status"], "부서장 승인 완료")
+
+    def test_approved_substitute_over_fare_is_fix(self):
+        d = draft_voucher(self.ktx(substitute_approved=True, authorized_fare=50000), today=TODAY)
+        self.assertEqual(d["verify"]["fix"], 1)
+
+    def test_no_template_when_receipt_present(self):
+        d = draft_voucher(self.ktx(receipt=True), today=TODAY)
+        self.assertEqual(d["reason_forms"], [])
+
+    def test_taxi_has_no_template(self):
+        req = self.ktx()
+        req["items"] = [{"field": "택시비", "amount": 12000, "receipt": False}]
+        self.assertEqual(draft_voucher(req, today=TODAY)["reason_forms"], [])
+
+
 if __name__ == "__main__":
     unittest.main()
