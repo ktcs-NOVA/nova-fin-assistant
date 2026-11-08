@@ -85,6 +85,36 @@ class TravelCalc(unittest.TestCase):
                                            "public_fare": 30000}})
         self.assertEqual(line(res, "교통비(자가용)")["amount"], 12800)
 
+    def test_private_car_fuel_table(self):
+        """실무자 의견 반영 산식: 운행거리 ÷ 유종별 연비 × 출장일 단가"""
+        cases = [("휘발유", 1700, 37778),      # 200 ÷ 9 × 1,700
+                 ("경유", 1550, 44286),        # 200 ÷ 7 × 1,550
+                 ("LPG", 1000, 33333),         # 200 ÷ 6 × 1,000
+                 ("하이브리드", 1700, 22667),   # 200 ÷ 15 × 1,700
+                 ("디젤", 1550, 44286)]        # 별칭 → 경유
+        for fuel, price, expected in cases:
+            with self.subTest(fuel=fuel):
+                res = calc_travel({"trip": {"vehicle": "자가용"},
+                                   "private_car": {"distance_km": 200, "fuel": fuel,
+                                                   "price_per_liter": price, "public_fare": 100000}})
+                car = line(res, "교통비(자가용)")
+                self.assertEqual(car["amount"], expected)
+                self.assertIn("실무자 의견 반영", car["note"])
+
+    def test_private_car_electric(self):
+        res = calc_travel({"trip": {"vehicle": "자가용"},
+                           "private_car": {"distance_km": 200, "fuel": "전기",
+                                           "price_per_kwh": 300, "public_fare": 100000}})
+        # 200 ÷ 3.5 × 300 = 17,142.9
+        self.assertEqual(line(res, "교통비(자가용)")["amount"], 17143)
+
+    def test_private_car_asks_for_trip_day_price(self):
+        res = calc_travel({"trip": {"vehicle": "자가용"},
+                           "private_car": {"distance_km": 90, "fuel": "휘발유", "public_fare": 100000}})
+        car = line(res, "교통비(자가용)")
+        self.assertEqual(car["amount"], 17000)          # 90 ÷ 9 × 1,700 (가정 단가)
+        self.assertIn("출장일 단가를 입력", car["note"])
+
     def test_intra_city(self):
         res = calc_travel({"trip_type": "근무지 내 출장", "trip": {"hours": 5}})
         self.assertEqual(line(res, "교통비")["amount"], 30000)
