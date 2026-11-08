@@ -246,6 +246,27 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
   .info-grid { grid-template-columns: 70px 1fr; }
 }
 
+/* ---------- 계정과목 검토 (M-05) ---------- */
+.account-card { display: grid; gap: 12px; }
+.account-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.account-state { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 600; border: 1px solid var(--line); background: var(--bg); color: var(--muted); }
+.account-state.match { background: var(--good-soft); color: var(--good); border-color: transparent; }
+.account-state.mismatch, .account-state.missing { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.account-card.state-mismatch, .account-card.state-missing { border-color: var(--warn); }
+.account-compare { display: grid; grid-template-columns: 1fr auto 1fr; gap: 14px; align-items: center; }
+.account-col { padding: 12px 14px; border-radius: 10px; background: var(--bg); }
+.account-col .label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.account-name { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.account-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.account-arrow { font-size: 20px; color: var(--muted); }
+.account-basis, .account-note { margin: 0; font-size: 13px; color: var(--muted); }
+.account-note { color: var(--ink); padding: 8px 12px; border-radius: 8px; background: var(--brand-soft); }
+.error-text { color: var(--bad); }
+@media (max-width: 760px) {
+  .account-compare { grid-template-columns: 1fr; }
+  .account-arrow { display: none; }
+}
+
 /* ---------- 영수증 등록 (U-06) ---------- */
 .receipt-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
 .thumb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin: 10px 0 12px; }

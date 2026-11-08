@@ -136,10 +136,47 @@ export function decideSubmission(id, decision, message = '') {
   return request('POST', `/api/admin/submissions/${encodeURIComponent(id)}/decision`, { decision, message })
 }
 
-/** 반려 메시지 초안 (백엔드 RAG 생성): { message, sources[] } */
-export function draftRejectMessage(id, issueFields) {
-  if (USE_MOCK) return mock.draftRejectMessage(id, issueFields)
-  return request('POST', `/api/admin/submissions/${encodeURIComponent(id)}/reject-draft`, { issue_fields: issueFields })
+/** 반려 메시지 초안 (백엔드 RAG 생성): { message, sources[] }
+ *  extraIssues: AI 판정 항목이 아닌 추가 사유 (예: M-05 계정과목 불일치). 모양은 items[] 한 개와 같습니다. */
+export function draftRejectMessage(id, issueFields, extraIssues = []) {
+  if (USE_MOCK) return mock.draftRejectMessage(id, issueFields, extraIssues)
+  return request('POST', `/api/admin/submissions/${encodeURIComponent(id)}/reject-draft`, {
+    issue_fields: issueFields,
+    extra_issues: extraIssues,
+  })
+}
+
+// ---------- 계정과목 검토 (M-05) ----------
+
+/**
+ * 제출 건 → U-07 결의서 초안 API 로 AI 계정과목 제안을 받아 한 줄로 정리합니다. 관리자 전용 API 추가 없음.
+ * 받는 것: { account, sub_accounts: [], confidence: '규정 확인'|'가정', basis }
+ * account 가 '담당자 확인' 이면 AI가 과목을 정하지 못한 것입니다.
+ */
+export async function suggestAccount(submission) {
+  if (USE_MOCK) return mock.suggestAccount(submission)
+  const draft = await request('POST', '/api/voucher-draft', toVoucherRequest(submission))
+  return pickSuggestion(draft.lines ?? [])
+}
+
+/** 제출 건을 /api/voucher-draft 요청 모양으로 바꿉니다.
+ *  국내출장은 AI 판정 항목(숙박비·식비·일비·교통비)을 그대로 항목으로, 그 외는 용도 1건을 항목으로 보냅니다. */
+export function toVoucherRequest(sub) {
+  const base = { trip_type: sub.type, requester: { name: sub.submitter, department: sub.dept } }
+  if (sub.type === '국내출장') {
+    const fields = [...new Set(sub.items.map((it) => it.field))].filter((f) => f !== '정산 기한')
+    const items = fields.map((field, i) => ({ field, amount: i === 0 ? sub.amount : 0 }))
+    return { ...base, items: items.length ? items : [{ field: sub.purpose, amount: sub.amount }] }
+  }
+  return { ...base, items: [{ field: sub.purpose, amount: sub.amount, date: sub.date, merchant: sub.merchant ?? '' }] }
+}
+
+/** 결의서 lines[] 중 금액이 가장 큰 과목을 대표로, 세목은 모두 모읍니다. */
+export function pickSuggestion(lines) {
+  if (!lines.length) return { account: '담당자 확인', sub_accounts: [], confidence: '가정', basis: '' }
+  const top = [...lines].sort((a, b) => (b.amount ?? 0) - (a.amount ?? 0))[0]
+  const sub_accounts = [...new Set(lines.filter((l) => l.account === top.account).map((l) => l.sub_account).filter(Boolean))]
+  return { account: top.account, sub_accounts, confidence: top.confidence, basis: top.basis }
 }
 
 // 검토 상태 값 (백엔드와 합의 필요)
