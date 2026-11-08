@@ -107,6 +107,7 @@ app.add_middleware(
 > | `type` | `answer` 규정 답변 / `procedure` 절차 안내 / `clarify` 어떤 업무인지 되묻기 |
 > | `procedure` | `type` 이 `procedure` 일 때 3-4 응답과 같은 모양. `answer` 에는 요약이 들어감 |
 > | `options` | `type` 이 `clarify` 일 때 고를 수 있는 업무 이름 목록 |
+> | `contact` | `grounded` 가 `false` 일 때 안내할 담당자 `{ department, name, phone }`. 지금은 시연용 가상 계정이고, 계정이 없으면 `null` |
 >
 > 도구 선택 정확도는 `uv run python -m scripts.eval_route` 로 확인합니다 (`data/eval/route_eval.csv`).
 

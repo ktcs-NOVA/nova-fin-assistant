@@ -1,12 +1,14 @@
 import logging
 import time
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.constants import CONTACT_EMPLOYEE_NO
 from app.domains.procedure import service as procedure_service
 from app.domains.qa import assistant
-from app.domains.qa.schemas import QaResponse
-from app.models import QueryLog
+from app.domains.qa.schemas import ContactInfo, QaResponse
+from app.models import QueryLog, User
 from app.rag import answerer, retriever
 
 log = logging.getLogger("nova.qa")
@@ -68,7 +70,20 @@ def answer_question(db: Session, question: str) -> QaResponse:
     latency_ms = int((time.perf_counter() - started) * 1000)
 
     _save_log(db, question, result, latency_ms)
-    return QaResponse(answer=result.answer, grounded=result.grounded, sources=result.sources)
+    return QaResponse(
+        answer=result.answer,
+        grounded=result.grounded,
+        sources=result.sources,
+        contact=None if result.grounded else _contact(db),
+    )
+
+
+def _contact(db: Session) -> ContactInfo | None:
+    """근거를 못 찾았을 때 안내할 담당자. 계정이 없으면 None."""
+    user = db.scalar(select(User).where(User.employee_no == CONTACT_EMPLOYEE_NO))
+    if user is None:
+        return None
+    return ContactInfo(department=user.department, name=user.name, phone=user.phone or "")
 
 
 def _save_log(db: Session, question: str, result: answerer.RagAnswer, latency_ms: int) -> None:

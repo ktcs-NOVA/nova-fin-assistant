@@ -12,7 +12,12 @@ from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 
-from app.core.constants import ROLE_ADMIN, ROLE_EMPLOYEE, STATUS_PENDING
+from app.core.constants import (
+    CONTACT_EMPLOYEE_NO,
+    ROLE_ADMIN,
+    ROLE_EMPLOYEE,
+    STATUS_PENDING,
+)
 from app.core.db import SessionLocal
 from app.models import Expense, Submission, Trip, User
 
@@ -20,11 +25,15 @@ KST = ZoneInfo("Asia/Seoul")
 
 USERS = [
     # 사번, 이름, 부서, 여비 직급, 역할
-    ("E1001", "데모직원1", "기획팀", "직원 3급 이하", ROLE_EMPLOYEE),
-    ("E1002", "데모직원2", "총무인사부", "직원 1·2급", ROLE_EMPLOYEE),
-    ("E1003", "데모직원3", "해운정책팀", "직원 3급 이하", ROLE_EMPLOYEE),
-    ("A2001", "데모관리자", "재무회계부", "직원 1·2급", ROLE_ADMIN),
+    ("E1001", "노은비", "기획팀", "직원 3급 이하", ROLE_EMPLOYEE),
+    ("E1002", "박철환", "총무인사부", "직원 1·2급", ROLE_EMPLOYEE),
+    ("E1003", "황종원", "해운정책팀", "직원 3급 이하", ROLE_EMPLOYEE),
+    ("A2001", "이채은", "재무회계부", "직원 1·2급", ROLE_ADMIN),
+    (CONTACT_EMPLOYEE_NO, "이채은사원", "재무회계부", "직원 1·2급", ROLE_ADMIN),
 ]
+
+# 연락처도 가상입니다. 실제 담당자가 정해지면 이 값과 위 계정을 바꾸세요.
+PHONES = {CONTACT_EMPLOYEE_NO: "000-0000-0000"}
 
 
 def seed_users(db) -> dict[str, User]:
@@ -32,7 +41,14 @@ def seed_users(db) -> dict[str, User]:
     for no, name, dept, grade, role in USERS:
         user = db.scalar(select(User).where(User.employee_no == no))
         if user is None:
-            user = User(employee_no=no, name=name, department=dept, grade=grade, role=role)
+            user = User(
+                employee_no=no,
+                name=name,
+                department=dept,
+                grade=grade,
+                role=role,
+                phone=PHONES.get(no),
+            )
             db.add(user)
         users[no] = user
     db.flush()

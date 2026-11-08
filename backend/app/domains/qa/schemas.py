@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field, field_validator
 from app.domains.procedure.schemas import ProcedureResponse
 from app.domains.sources import Source
 
-__all__ = ["QaRequest", "QaResponse", "Source"]
+__all__ = ["ContactInfo", "QaRequest", "QaResponse", "Source"]
 
 
 class QaRequest(BaseModel):
@@ -22,6 +22,12 @@ class QaRequest(BaseModel):
         return v
 
 
+class ContactInfo(BaseModel):
+    department: str
+    name: str
+    phone: str = ""  # 연락처
+
+
 class QaResponse(BaseModel):
     # answer: 규정 답변 / procedure: 절차 안내 도구의 결과 / clarify: 어떤 업무인지 되묻기
     type: Literal["answer", "procedure", "clarify"] = "answer"
@@ -30,3 +36,4 @@ class QaResponse(BaseModel):
     sources: list[Source]
     procedure: ProcedureResponse | None = None  # type 이 procedure 일 때 (3-4 와 같은 모양)
     options: list[str] = []  # type 이 clarify 일 때 고를 수 있는 업무
+    contact: ContactInfo | None = None  # grounded 가 False 일 때 안내할 담당자

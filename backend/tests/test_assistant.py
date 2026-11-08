@@ -1,5 +1,7 @@
 """챗봇 도구 선택과 통합 응답 테스트 — DB·API 키 없이 실행."""
 
+from types import SimpleNamespace
+
 import pytest
 
 from app.domains.qa import assistant, service
@@ -126,6 +128,44 @@ def test_answer_route_uses_rag(monkeypatch, ready):
 def test_clarify_with_task_hint_goes_to_procedure(monkeypatch, question, task):
     _pick(monkeypatch, ("ask_which_task", {}))
     assert assistant.route(question) == Route("procedure", task, by="llm+hint")
+
+
+class _ContactDb:
+    def __init__(self, user):
+        self.user = user
+
+    def scalar(self, statement):
+        return self.user
+
+
+def _answer_with(monkeypatch, grounded, user):
+    monkeypatch.setattr(service.retriever, "has_documents", lambda db: True)
+    monkeypatch.setattr(service, "_save_log", lambda *args: None)
+    monkeypatch.setattr(
+        service.answerer,
+        "answer",
+        lambda db, q: SimpleNamespace(answer="답", grounded=grounded, sources=[], hits=[]),
+    )
+    return service.answer_question(_ContactDb(user), "질문")
+
+
+def test_contact_shown_when_no_grounds(monkeypatch):
+    user = SimpleNamespace(department="재무회계부", name="데모담당자", phone="000-0000-0000")
+    contact = _answer_with(monkeypatch, False, user).contact
+    assert (contact.department, contact.name, contact.phone) == (
+        "재무회계부",
+        "데모담당자",
+        "000-0000-0000",
+    )
+
+
+def test_contact_hidden_when_grounded(monkeypatch):
+    user = SimpleNamespace(department="재무회계부", name="데모담당자", phone="000-0000-0000")
+    assert _answer_with(monkeypatch, True, user).contact is None
+
+
+def test_no_contact_account_still_answers(monkeypatch):
+    assert _answer_with(monkeypatch, False, None).contact is None
 
 
 def test_clarify_without_hint_stays(monkeypatch):
