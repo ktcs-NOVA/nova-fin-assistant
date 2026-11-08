@@ -210,7 +210,58 @@ app.add_middleware(
 - `check: true` 는 규정만으로 확정할 수 없어 "담당자 확인 필요"로 표시할 항목
 - `sources` 모양은 3-1 과 같습니다.
 
-### 3-5. 내 체크리스트 (`/api/checklists`) — U-02
+### 3-5. 출장비 계산 (`POST /api/travel-calc`) — U-05
+
+> 2026-11-08 추가. 입력·출력 전체와 계산 규칙은 [U-05_출장비계산.md](U-05_출장비계산.md) 참고.
+
+프론트가 보내는 것 (자가용 예시):
+```json
+{
+  "grade": "직원 3급 이하",
+  "trip": { "start_date": "2026-10-20", "end_date": "2026-10-20", "vehicle": "자가용" },
+  "private_car": { "distance_km": 200, "fuel": "휘발유", "price_per_liter": 1700, "tolls": 0, "public_fare": 100000 }
+}
+```
+
+백엔드가 돌려주는 것 (요약):
+```json
+{
+  "grade": "직원 3급 이하",
+  "lines": [
+    { "field": "일비", "amount": 30000, "type": "정액", "formula": "30,000원 × 1일", "…": "…" },
+    { "field": "식비", "amount": 27000, "type": "정액", "formula": "27,000원 × 1일", "…": "…" },
+    { "field": "교통비(자가용)", "amount": 37778, "type": "실비(한도)",
+      "formula": "200km ÷ 9.0km/L(휘발유) × 1,700원/L", "basis": "여비규정 제13조 제6항, 별표 1 주2)",
+      "note": "유류비 산식은 실무자 의견 반영(멘토 제공 산식)입니다." }
+  ],
+  "summary": { "fixed_total": 57000, "lodging_cap": 0, "transport_total": 37778, "estimated_max": 94778 },
+  "notes": ["자가용은 출장승인권자가 인정한 경우에만 가능합니다 (제13조 제5항)."],
+  "verify_request": { "trip_type": "국내출장", "grade": "직원 3급 이하", "trip": {}, "items": [] }
+}
+```
+
+- 화면은 `summary.estimated_max` 를 "받을 수 있는 금액"으로 크게 보여주고, `lines` 로 항목별 계산식을 보여주면 됩니다.
+- `verify_request` 를 그대로 `/api/verify` 에 보내면 U-04 검증으로 이어집니다.
+
+### 3-6. 결의서 초안 (`POST /api/voucher-draft`) — U-07
+
+> 2026-11-08 추가. 자세한 규칙은 [U-07_결의서초안.md](U-07_결의서초안.md) 참고.
+
+프론트가 보내는 것: `/api/verify` 와 같은 청구 내역 (+ 선택: `trip`, `requester`, `verify_result`)
+```json
+{
+  "trip_type": "국내출장",
+  "grade": "직원 3급 이하",
+  "trip": { "start_date": "2026-10-20", "end_date": "2026-10-21", "region": "부산" },
+  "items": [ { "field": "숙박비", "amount": 90000, "nights": 1 } ]
+}
+```
+
+백엔드가 돌려주는 것: `document`, `status`("제출 가능" / "제출 전 보완 필요"), `header`(건명·작성일·합계 등),
+`summary`(적요), `lines`(계정과목별 금액), `attachments`(첨부서류), `deadlines`, `verify`, `warnings`, `approval_note`.
+`items` 가 비어 있으면 400 `{"error": "items가 비어 있습니다."}`.
+
+### 3-7. 내 체크리스트 (`/api/checklists`) — U-02
 
 업무 절차 안내를 직원별로 저장하고 체크합니다. 3-3 의 `/api/checklist` 는 예시 응답이고 화면에서 쓰지 않습니다.
 

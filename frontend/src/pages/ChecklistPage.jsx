@@ -1,6 +1,6 @@
 // 내 체크리스트 화면 (U-02)
 // 규정 Q&A의 업무 절차 안내에서 저장한 업무를 모아 보고, 끝낸 항목을 체크합니다.
-// 데이터 모양은 docs/API.md 3-5 와 같습니다.
+// 데이터 모양은 docs/API.md 3-7 와 같습니다.
 
 import { useEffect, useState } from 'react'
 import {

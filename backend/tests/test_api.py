@@ -92,3 +92,47 @@ def test_procedure_blank_is_400():
     r = client.post("/api/procedure", json={"task": " "})
     assert r.status_code == 400
     assert r.json() == {"error": "알고 싶은 업무를 입력해 주세요."}
+
+
+def test_travel_calc_private_car():
+    body = {
+        "grade": "직원 3급 이하",
+        "trip": {"start_date": "2026-10-20", "end_date": "2026-10-20", "vehicle": "자가용"},
+        "private_car": {
+            "distance_km": 200,
+            "fuel": "휘발유",
+            "price_per_liter": 1700,
+            "public_fare": 100000,
+        },
+    }
+    r = client.post("/api/travel-calc", json=body)
+    assert r.status_code == 200
+    data = r.json()
+    car = next(line for line in data["lines"] if line["field"] == "교통비(자가용)")
+    assert car["amount"] == 37778  # 200 ÷ 9 × 1,700 (실무자 의견 반영 산식)
+    assert "estimated_max" in data["summary"]
+    assert data["verify_request"]["items"]
+
+
+def test_voucher_draft_shape():
+    body = {
+        "trip_type": "국내출장",
+        "grade": "직원 3급 이하",
+        "trip": {"start_date": "2026-10-20", "end_date": "2026-10-21", "region": "부산"},
+        "items": [
+            {"field": "숙박비", "amount": 90000, "nights": 1},
+            {"field": "철도운임", "amount": 59800, "seat_class": "일반"},
+        ],
+    }
+    r = client.post("/api/voucher-draft", json=body)
+    assert r.status_code == 200
+    data = r.json()
+    assert data["document"] == "지출결의서(초안)"
+    assert data["header"]["total"] == 149800
+    assert data["lines"] and data["attachments"]
+
+
+def test_voucher_draft_empty_items_is_400():
+    r = client.post("/api/voucher-draft", json={"items": []})
+    assert r.status_code == 400
+    assert r.json() == {"error": "items가 비어 있습니다."}

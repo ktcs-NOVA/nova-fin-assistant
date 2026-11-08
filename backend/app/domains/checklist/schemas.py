@@ -1,4 +1,4 @@
-"""체크리스트 요청·응답 모양 (docs/API.md 3-3, 3-5). 바꾸기 전에 프론트 담당에게 먼저 알리기."""
+"""체크리스트 요청·응답 모양 (docs/API.md 3-3, 3-7). 바꾸기 전에 프론트 담당에게 먼저 알리기."""
 
 from datetime import datetime
 from typing import Literal
