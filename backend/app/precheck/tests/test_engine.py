@@ -120,6 +120,15 @@ class TravelRules(unittest.TestCase):
         self.assertEqual(hit["verdict"], FIX)
         self.assertIn("104,000원", hit["fix"])
 
+    def test_demo_seoul_hotel_150k_capped_to_100k(self):
+        """시연 케이스: 서울 3급, 15만 원 숙소를 실결제액 그대로 청구 → 상한 10만 원으로 수정 안내"""
+        res = run(trip={"start_date": "2026-10-20", "end_date": "2026-10-21", "region": "서울"},
+                  items=[{"field": "숙박비", "amount": 150000, "nights": 1}])
+        hit = find(res, "T-LODGING-CAP")
+        self.assertEqual(hit["verdict"], FIX)
+        self.assertIn("상한 100,000원으로 수정", hit["fix"])
+        self.assertIn("150,000원", hit["message"])
+
     def test_lodging_total_cap_over_nights(self):
         """제14조②: 2박이면 상한 합계(160,000원) 안에서 실비 인정"""
         res = run(trip={"region": "기타"}, items=[{"field": "숙박비", "amount": 150000, "nights": 2}])

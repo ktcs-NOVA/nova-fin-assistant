@@ -146,7 +146,69 @@ def _attachments(req, items, is_travel):
         add("경조 사실·업무 관련성 증빙", "업무추진비 및 조직관리비 집행 지침 제4조 제1항", "경조금 현금 지출")
     if req.get("tax_invoice"):
         add("(세금)계산서 또는 거래명세", "회계규정 시행세칙 제8조 제1항 제2호")
+    if _transit_without_receipt(items):
+        add("증빙 대체 결재문서(사유서 · 부서장 승인)", R.SUBSTITUTE_BASIS,
+            "철도·버스 영수증을 받기 어려운 구간 — 대중교통 인가요금 기준")
     return docs
+
+
+# ---------------------------------------------------------------------------
+# 철도·버스 증빙 곤란 사유서 템플릿 (결재문서 초안)
+# ---------------------------------------------------------------------------
+def _transit_without_receipt(items):
+    return [i for i in items
+            if i.get("receipt") is False and classify(i) == "transport"
+            and any(w in _text(i) for w in R.PUBLIC_TRANSIT_WORDS)]
+
+
+def _mode_label(item):
+    seat = item.get("seat_class")
+    name = str(item.get("field") or "")
+    return f"{name} ({seat})" if seat else name
+
+
+def _field(key, label, value="", placeholder="", required=True):
+    """화면은 value 가 비어 있으면 placeholder 를 흐린 글씨 예시로 보여줍니다."""
+    return {"key": key, "label": label, "value": value, "placeholder": placeholder, "required": required}
+
+
+def _reason_forms(req, items, trip, title):
+    forms = []
+    requester = dict(req.get("requester") or {})
+    period = ""
+    if trip.get("start_date"):
+        period = str(trip["start_date"])
+        if trip.get("end_date") and trip["end_date"] != trip["start_date"]:
+            period += f" ~ {trip['end_date']}"
+    for it in _transit_without_receipt(items):
+        fare = it.get("authorized_fare")
+        forms.append({
+            "document": "교통비 증빙 대체 사유서",
+            "for_item": it.get("field", "교통비"),
+            "status": "부서장 승인 완료" if it.get("substitute_approved") is True else "작성 필요",
+            "fields": [
+                _field("title", "건명", f"{title} — 교통비 증빙 대체 사유서" if title else ""),
+                _field("requester", "작성자", " / ".join(x for x in (requester.get("department"),
+                                                                 requester.get("name")) if x),
+                       "예: 해운정책팀 / 홍길동"),
+                _field("period", "출장 기간", period, "예: 2026-10-20 ~ 2026-10-21"),
+                _field("route", "이용 구간", str(it.get("route") or ""), "예: 서울역 → 부산역 (편도)"),
+                _field("mode", "이용 수단", _mode_label(it), "예: KTX 일반실"),
+                _field("amount", "청구 금액", _won(it["amount"]) if it.get("amount") else "", "예: 59,800원"),
+                _field("authorized_fare", "인가요금 기준", _won(fare) if fare is not None else "",
+                       "예: 코레일 KTX 일반실 서울–부산 59,800원 (출장일 기준 운임표)"),
+                _field("reason", "증빙이 어려운 사유", str(it.get("no_receipt_reason") or ""),
+                       "예: 역 현장에서 현금으로 발권했고 승차권을 분실해 결제 내역을 조회할 수 없음"),
+                _field("approver", "부서장 승인", "", "부서장 결재 후 이 문서를 결의서에 첨부", required=True),
+            ],
+            "guide": [
+                "청구 금액은 같은 구간 대중교통 인가요금을 넘을 수 없습니다.",
+                "사유에는 언제·어디서·왜 영수증을 받을 수 없었는지 구체적으로 적습니다.",
+                "부서장 승인을 받은 결재문서가 영수증을 대신합니다.",
+            ],
+            "basis": R.SUBSTITUTE_BASIS,
+        })
+    return forms
 
 
 # ---------------------------------------------------------------------------
@@ -228,6 +290,7 @@ def draft_voucher(req: dict, today: date | None = None) -> dict:
         "summary": f"{title}: {breakdown} / 합계 {_won(total)}",
         "lines": lines,
         "attachments": _attachments(req, items, is_travel),
+        "reason_forms": _reason_forms(req, items, trip, title),   # 철도·버스 증빙 곤란 시 사유서
         "deadlines": deadlines,
         "verify": {"overall": check["overall"], "fix": len(fix_items), "review": len(review_items)},
         "warnings": warnings,
