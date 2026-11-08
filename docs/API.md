@@ -252,6 +252,48 @@ app.add_middleware(
 
 ---
 
+### 3-4. 영수증 인식 (`POST /api/receipt`) — U-06, 2026-11-03 추가
+
+프론트의 "영수증 등록" 화면이 사진 1장을 보내면, 백엔드가 Vision 모델로 값을 읽어 돌려줍니다.
+프론트는 사진을 base64 문자열로 보냅니다. (multipart 가 편하시면 말씀해 주세요. 프론트 쪽 한 줄만 바꾸면 됩니다.)
+
+프론트가 보내는 것:
+```json
+{ "filename": "receipt.jpg", "media_type": "image/jpeg", "image_base64": "/9j/4AAQ..." }
+```
+`media_type` 은 `image/jpeg` · `image/png` · `image/webp` 중 하나입니다.
+
+백엔드가 돌려주는 것 (사진에 없는 값은 `null`):
+```json
+{
+  "merchant": "유로드밀 (Euro De Meal)",
+  "business_type": "카페",
+  "date": "2026-10-29",
+  "time": "10:59",
+  "total_amount": 20000,
+  "card_last4": null,
+  "approval_no": "22989793",
+  "items": [
+    { "name": "아메리카노Hot", "amount": 4000 },
+    { "name": "감자크림스프", "amount": 5000 }
+  ],
+  "purpose_candidates": ["식비", "회의비"],
+  "confidence": "high",
+  "notes": "카드번호 뒷자리가 마스킹되어 card_last4 는 null."
+}
+```
+
+| 필드 | 설명 |
+|---|---|
+| `date` / `time` | `YYYY-MM-DD` / 24시간 `HH:MM` |
+| `total_amount` | 쉼표·원 없는 정수 (최종 결제 금액) |
+| `card_last4` | 가려져 있으면 `null` (대부분의 영수증이 그렇습니다) |
+| `purpose_candidates` | `식비 회의비 교통비 숙박비 주유비 소모품비 도서비 경조사비 기타` 중 1~3개, 가능성 높은 순 |
+| `confidence` | `high` / `medium` / `low`. 프론트는 `medium` 이하를 노란 배지로 표시합니다 |
+| `notes` | 흐림·잘림·추정한 부분. 화면에 "AI 메모"로 그대로 보여줍니다 |
+
+참고 구현: `experiments/receipt-ocr/extract_receipts.py` 의 `Receipt` 모델과 `PROMPT` 가 이 모양 그대로이고, `server.py` 가 이 주소를 그대로 제공하는 테스트 서버입니다. 백엔드에 옮기실 때 그대로 가져다 쓰셔도 됩니다. 11장 테스트에서 전 필드 정답률 100% 였습니다 (`experiments/receipt-ocr/README.md`).
+
 ## 4. 에러일 때 돌려주는 모양 (함께 정할 것)
 
 백엔드가 실패했을 때도 프론트가 "문제가 생겼습니다"를 띄워야 합니다. 아래처럼 통일하면 프론트는 성공/실패 두 경우만 처리하면 됩니다.

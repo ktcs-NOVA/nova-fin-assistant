@@ -1,9 +1,9 @@
-// 전체 틀: 상단 헤더(로고 + 메뉴 탭) + 본문 영역
+// 전체 틀: 상단 헤더(로고 + 역할 전환 + 메뉴 탭) + 본문 영역
 // 어떤 화면을 보여줄지는 App.jsx가 정하고, 여기서는 틀만 그립니다.
 
 import { USE_MOCK, API_BASE } from '../api/client.js'
 
-export default function Layout({ pages, current, onChange, children }) {
+export default function Layout({ roles, role, onRoleChange, pages, current, onChange, children }) {
   return (
     <div className="app">
       <header className="header">
@@ -20,18 +20,29 @@ export default function Layout({ pages, current, onChange, children }) {
           {USE_MOCK ? '목업 모드' : '백엔드 연결'}
         </span>
 
-        <nav className="nav" aria-label="주요 메뉴">
-          {pages.map((p) => (
-            <button
-              key={p.id}
-              className={p.id === current ? 'on' : ''}
-              onClick={() => onChange(p.id)}
-              aria-current={p.id === current ? 'page' : undefined}
-            >
-              {p.label}
-            </button>
-          ))}
-        </nav>
+        <div className="header-right">
+          {/* 역할 전환 (로그인 대신 시연용) */}
+          <div className="role-switch" role="group" aria-label="역할">
+            {roles.map((r) => (
+              <button key={r.id} className={r.id === role ? 'on' : ''} onClick={() => onRoleChange(r.id)}>
+                {r.label}
+              </button>
+            ))}
+          </div>
+
+          <nav className="nav" aria-label="주요 메뉴">
+            {pages.map((p) => (
+              <button
+                key={p.id}
+                className={p.id === current ? 'on' : ''}
+                onClick={() => onChange(p.id)}
+                aria-current={p.id === current ? 'page' : undefined}
+              >
+                {p.label}
+              </button>
+            ))}
+          </nav>
+        </div>
       </header>
 
       <main className="main">{children}</main>
