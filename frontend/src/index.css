@@ -334,6 +334,9 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .item-row .form-grid { padding-right: 56px; }
 .item-remove { position: absolute; top: 10px; right: 10px; padding: 4px 10px; font-size: 12px; color: var(--muted); }
 .field-check .check-inline { display: flex; align-items: center; gap: 8px; min-height: 36px; font-size: 14px; }
+/* .field input 의 width:100% 가 체크박스에도 걸려 글자가 세로로 밀리던 것 방지 */
+.field-check .check-inline input[type=checkbox] { width: 16px; height: 16px; flex: none; margin: 0; padding: 0; accent-color: var(--brand); }
+.field-check .check-inline > span, .field-check .check-inline { word-break: keep-all; }
 .btn-row.between { justify-content: space-between; }
 .item-row.from-receipt { border-color: var(--brand); }
 .item-origin { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13px; color: var(--muted); }
