@@ -168,11 +168,11 @@ export async function decideSubmission(id, decision, message = '') {
 
 // 반려 메시지 초안: 실제로는 백엔드가 RAG 근거로 작성합니다.
 // 목업에서는 선택한 문제 항목의 근거·수정 방법을 그대로 이어 붙입니다.
-export async function draftRejectMessage(id, issueFields) {
+export async function draftRejectMessage(id, issueFields, extraIssues = []) {
   await wait(700)
   const found = submissions.find((s) => s.id === id)
   if (!found) throw new Error(`제출 건 ${id} 을(를) 찾을 수 없습니다.`)
-  const picked = found.items.filter((it) => issueFields.includes(it.field))
+  const picked = [...found.items.filter((it) => issueFields.includes(it.field)), ...extraIssues]
   if (!picked.length) throw new Error('반려 사유를 하나 이상 선택해 주세요.')
   const lines = picked.map(
     (it, i) => `${i + 1}. [${it.field}] ${it.message}\n   - 근거: ${it.basis}\n   - 수정: ${it.fix || '담당자와 협의'}`,
@@ -180,6 +180,33 @@ export async function draftRejectMessage(id, issueFields) {
   return {
     message: `${found.submitter}님, 제출하신 ${found.purpose} 정산 건은 아래 사유로 반려되었습니다.\n\n${lines.join('\n')}\n\n수정 후 다시 제출해 주세요.`,
     sources: picked.map((it) => it.basis),
+  }
+}
+
+// ---------- 계정과목 검토 (M-05) ----------
+// 실제로는 백엔드 U-07 결의서 초안(suggest_account)이 정합니다. 목업은 같은 규칙을 단순화해 흉내 냅니다.
+const ACCOUNT_RULES = [
+  [['숙박', '식비', '일비', '교통', '운임', '철도', '항공', '자가용'], '여비교통비', '국내여비', '규정 확인', '예산세칙 제22조 제2항, 여비규정 제2조'],
+  [['화환', '경조'], '업무추진비', '경조사비', '규정 확인', '업무추진비 및 조직관리비 집행 지침 제2조 제1항'],
+  [['업무추진비', '간담회', '접대', '유관기관'], '업무추진비', '대외 업무협의·간담회', '규정 확인', '업무추진비 및 조직관리비 집행 지침 제2조 제1항'],
+  [['회의', '다과', '회식'], '조직관리비', '부서운영비(회의·다과·회식)', '규정 확인', '업무추진비 및 조직관리비 집행 지침 제2조 제2항'],
+  [['사무용품', '소모품', '문구'], '소모품비', '', '가정', 'KOBC 계정과목표 미공개 — 일반 공공기관 비용 과목으로 가정'],
+  [['도서', '인쇄'], '도서인쇄비', '', '가정', 'KOBC 계정과목표 미공개 — 일반 공공기관 비용 과목으로 가정'],
+]
+
+export async function suggestAccount(sub) {
+  await wait(500)
+  const texts = sub.type === '국내출장' ? sub.items.map((it) => it.field) : [sub.purpose]
+  for (const t of texts) {
+    const hit = ACCOUNT_RULES.find(([words]) => words.some((w) => t.includes(w)))
+    if (hit) {
+      const [, account, subAccount, confidence, basis] = hit
+      return { account, sub_accounts: subAccount ? [subAccount] : [], confidence, basis }
+    }
+  }
+  return {
+    account: '담당자 확인', sub_accounts: [], confidence: '가정',
+    basis: '항목명만으로 과목을 정할 수 없음 — 회계책임자 확인 필요 (회계규정 시행세칙 제6조 제3항)',
   }
 }
 
