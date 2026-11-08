@@ -5,8 +5,9 @@
 //   청구 항목 (행 추가): 항목명, 금액, 사용일, 메모 + 숙박비면 박수·조식 포함, 철도·항공이면 좌석 등급
 // 요청 JSON 모양은 docs/API.md 3-2 그대로이고, 선택 칸은 값이 있을 때만 보냅니다.
 //
-// prefill: 영수증 등록(U-06)에서 "청구 검증으로 보내기"로 넘어온 초기값 ({ trip_type, items }).
-//   영수증에서 온 항목은 가맹점·업종·사용 시각·결제수단(법인카드)을 함께 갖고 있고, 화면엔 읽기 전용으로 보여 주며 요청에 그대로 실립니다.
+// prefill: 다른 화면에서 "청구 검증으로 보내기"로 넘어온 초기값 ({ from, trip_type, grade?, trip?, items }).
+//   - 영수증 등록(U-06, from: 'receipt'): 항목에 가맹점·업종·사용 시각·결제수단(법인카드)이 함께 오고, 화면엔 읽기 전용으로 보여 주며 요청에 그대로 실립니다.
+//   - 출장비 계산(U-05, from: 'travel'): 직급·출장 정보와 계산된 항목(일비·식비·숙박비 상한·운임)이 옵니다. 숙박비는 상한이므로 실제 금액으로 고쳐 검증합니다.
 
 import { useState } from 'react'
 import { verifyClaim } from '../api/client.js'
@@ -47,10 +48,11 @@ const SAMPLE = {
 
 export default function VerifyPage({ prefill }) {
   const [tripType, setTripType] = useState(prefill?.trip_type ?? '국내출장')
-  const [grade, setGrade] = useState('직원 3급 이하')
-  const [trip, setTrip] = useState({ start_date: '', end_date: '', region: '', vehicle: '' })
+  const [grade, setGrade] = useState(prefill?.grade ?? '직원 3급 이하')
+  const [trip, setTrip] = useState({ start_date: '', end_date: '', region: '', vehicle: '', ...(prefill?.trip ?? {}) })
   const [items, setItems] = useState(() => (prefill?.items?.length ? prefill.items.map((it) => ({ ...emptyItem(), ...it })) : [emptyItem()]))
   const receiptCount = items.filter(fromReceipt).length
+  const fromTravel = prefill?.from === 'travel' && items.length > 0
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -133,6 +135,11 @@ export default function VerifyPage({ prefill }) {
           {receiptCount > 0 && (
             <div className="notice">
               영수증 등록에서 {receiptCount}건을 넘겨받았습니다. 결제수단은 법인카드로 채웠고, 필요하면 항목을 더 넣은 뒤 "검증하기"를 누르세요.
+            </div>
+          )}
+          {fromTravel && (
+            <div className="notice">
+              출장비 계산 결과 {items.length}건을 넘겨받았습니다. 숙박비는 규정 상한이 들어가 있으니 실제 영수증 금액으로 고친 뒤 "검증하기"를 누르세요.
             </div>
           )}
           <div className="card">

@@ -74,6 +74,20 @@ export function getChecklist(type = '국내출장') {
   return request('GET', `/api/checklist?type=${encodeURIComponent(type)}`)
 }
 
+// ---------- 출장비 계산 (U-05) ----------
+
+/**
+ * 출장 정보 → 받을 수 있는 금액. 요청·응답 모양은 docs/API.md 3-5, docs/U-05_출장비계산.md.
+ * 보내는 것: { trip_type, grade, trip: {...}, fares?: [{ type, amount, seat_class }], private_car?: {...} }
+ * 받는 것:   { grade, region, days, nights, lines: [{ field, amount, type, formula, basis, note }],
+ *             summary: { fixed_total, lodging_cap, transport_total, estimated_max }, notes: [], verify_request: {...} }
+ * verify_request 를 그대로 verifyClaim() 에 넣으면 U-04 검증으로 이어집니다.
+ */
+export function calcTravel(req) {
+  if (USE_MOCK) return mock.calcTravel(req)
+  return request('POST', '/api/travel-calc', req)
+}
+
 // ---------- 관리자 (M-01 정산 검토 대기함) ----------
 
 /** 제출 건 목록: { total, items: [{ id, submitter, dept, type, purpose, amount, date, verdict, status, step, items[] }] } */

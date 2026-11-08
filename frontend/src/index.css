@@ -444,3 +444,24 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
   .source { flex-wrap: wrap; }
   .source-date { margin-left: 30px; }
 }
+
+/* ---------- 출장비 계산 (U-05) ---------- */
+.calc-total {
+  display: flex; flex-direction: column; gap: 4px;
+  background: var(--brand-soft); border: 1px solid var(--brand); border-radius: var(--radius);
+  padding: 16px 20px; margin-bottom: 12px;
+}
+.calc-total .label { font-size: 13px; color: var(--muted); }
+.calc-total strong { font-size: 30px; font-weight: 800; color: var(--brand); font-variant-numeric: tabular-nums; }
+.calc-meta { font-size: 13px; color: var(--muted); }
+.calc-line { padding: 14px 16px; display: grid; gap: 4px; }
+.calc-line-head { display: flex; align-items: center; gap: 10px; }
+.calc-line-head b { font-size: 15px; }
+.calc-amount { margin-left: auto; font-weight: 700; font-variant-numeric: tabular-nums; }
+.calc-formula { font-size: 14px; }
+.calc-basis { font-size: 13px; color: var(--muted); }
+.badge.type-정액 { background: var(--good-soft); color: var(--good); }
+.badge.type-상한실비, .badge.type-실비한도 { background: var(--warn-soft); color: var(--warn); }
+.badge.type-실비 { background: var(--brand-soft); color: var(--brand); }
+.badge.type-감액 { background: var(--bad-soft); color: var(--bad); }
+.notes-box li + li { margin-top: 4px; }

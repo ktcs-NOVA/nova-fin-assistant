@@ -27,6 +27,7 @@ nova-fin-assistant/
 | 규정 Q&A RAG (규정 적재 → 검색 → 답변 + 근거 조항) | 뼈대 완료 |
 | 청구 검증 규칙 엔진 연결 (`backend/app/precheck`, 규칙 36개 · 테스트 41개) | 완료 |
 | 청구 검증 입력 폼 (U-04 최소 세트 + 좌석 등급) | 완료 |
+| 출장비 계산 화면 (U-05) — 출장 정보 입력 → 항목별 금액·계산식·근거, "청구 검증으로 보내기"(계산 결과로 U-04 폼에 채움) | 완료 (`POST /api/travel-calc`) |
 | Q&A 채팅, 체크리스트 내용 | 다음 단계 |
 | 실제 백엔드 연결 테스트 | 가능 (아래 실행 방법) |
 
@@ -113,6 +114,7 @@ frontend/src/
 └── pages/
     ├── QaPage.jsx          # 규정 Q&A · 업무절차 안내 (U-01 · U-02 · U-03)
     ├── VerifyPage.jsx      # 청구 검증
+    ├── TravelCalcPage.jsx  # 출장비 계산 (U-05)
     └── ChecklistPage.jsx   # 체크리스트
 ```
 
@@ -151,6 +153,7 @@ API 주소, 요청·응답 JSON 모양, 에러 형식, 판정 값 3가지는
 |---|---|---|
 | 규정 Q&A | POST | `/api/qa` |
 | 청구 검증 | POST | `/api/verify` |
+| 출장비 계산 | POST | `/api/travel-calc` |
 | 체크리스트 | GET | `/api/checklist?type=국내출장` |
 
 판정 값: `규정상 확인 가능` · `보완 필요` · `담당자 확인 필요`
