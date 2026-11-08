@@ -6,6 +6,8 @@ from typing import Literal
 VERDICT_OK = "규정상 확인 가능"
 VERDICT_FIX = "보완 필요"
 VERDICT_CHECK = "담당자 확인 필요"
+# 근거를 못 찾았을 때 안내할 담당자 계정 (scripts/seed.py 의 데모담당자)
+CONTACT_EMPLOYEE_NO = "A2002"
 Verdict = Literal["규정상 확인 가능", "보완 필요", "담당자 확인 필요"]
 
 # 정산 제출 건의 검토 상태 (frontend client.js 의 STATUS)

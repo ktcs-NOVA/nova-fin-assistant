@@ -22,6 +22,7 @@ class User(TimestampMixin, Base):
     # 여비 직급: 직원 3급 이하 / 직원 1·2급 / 임원/본부장 …
     grade: Mapped[str] = mapped_column(String(20))
     role: Mapped[str] = mapped_column(String(10), default="employee", server_default="employee")
+    phone: Mapped[str | None] = mapped_column(String(20))  # 연락처
 
     expenses: Mapped[list["Expense"]] = relationship(back_populates="user")
     submissions: Mapped[list["Submission"]] = relationship(back_populates="user")

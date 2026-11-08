@@ -1,5 +1,6 @@
 """답변 생성 (LLM)."""
 
+import json
 from functools import lru_cache
 
 from app.ai.masking import mask
@@ -36,3 +37,33 @@ def chat(system: str, user: str, *, temperature: float | None = 0.0) -> str:
         **kwargs,
     )
     return resp.choices[0].message.content or ""
+
+
+def choose_tool(system: str, user: str, tools: list[dict]) -> tuple[str, dict] | None:
+    """LLM 에게 도구 하나를 고르게 합니다. → (도구 이름, 인자). 목업 모드면 None.
+
+    tools 는 OpenAI function 정의 목록입니다: {"name", "description", "parameters"}
+    """
+    user = mask(user)
+
+    if settings.ai_mock:
+        return None
+
+    resp = _client().chat.completions.create(
+        model=settings.llm_model,
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ],
+        tools=[{"type": "function", "function": tool} for tool in tools],
+        tool_choice="required",
+        temperature=0.0,
+    )
+    calls = resp.choices[0].message.tool_calls
+    if not calls:
+        return None
+    try:
+        args = json.loads(calls[0].function.arguments or "{}")
+    except json.JSONDecodeError:
+        args = {}
+    return calls[0].function.name, args if isinstance(args, dict) else {}

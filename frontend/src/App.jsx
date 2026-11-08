@@ -65,7 +65,7 @@ export default function App() {
       current={current}
       onChange={changePage}
     >
-      <Page onSendToVerify={sendToVerify} prefill={verifyPrefill} />
+      <Page onNavigate={changePage} onSendToVerify={sendToVerify} prefill={verifyPrefill} />
     </Layout>
   )
 }

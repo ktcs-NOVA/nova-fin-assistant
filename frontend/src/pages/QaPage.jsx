@@ -1,47 +1,53 @@
-// 규정 Q&A 화면 (U-01 규정 통합 Q&A · U-02 업무절차 안내 · U-03 근거·출처 표시)
-// 위쪽 전환 버튼으로 "규정 질문"과 "업무 절차 안내"를 고르고, 대화처럼 묻고 답합니다.
-// 모든 답변에는 근거 조항이 붙고, 근거가 없으면 "담당자 확인 필요"로 표시됩니다.
+// 규정 Q&A 챗봇 (U-01 규정 답변 · U-02 업무절차 안내 · U-03 근거 표시)
+// 입력창은 하나입니다. 백엔드가 질문을 보고 답하는 방식을 고르고, 응답의 type 으로 화면을 정합니다.
+//   answer    규정 답변 + 근거 조항
+//   procedure 절차 안내 카드 + 내 체크리스트 저장
+//   clarify   어떤 업무인지 되묻기 + 업무 버튼
 
 import { useEffect, useRef, useState } from 'react'
-import { askQa, getProcedure } from '../api/client.js'
+import { askQa } from '../api/client.js'
 import QaAnswer from '../components/QaAnswer.jsx'
 import ProcedureGuide from '../components/ProcedureGuide.jsx'
 
-// 모드별 설정. 예시 질문을 바꾸려면 examples 만 고치면 됩니다.
-const MODES = {
-  qa: {
-    label: '규정 질문',
-    request: askQa,
-    Answer: QaAnswer,
-    placeholder: '규정에 대해 물어보세요. 예) 출장 때 자가용 쓰면 비용은 어떻게 돼요?',
-    loading: '관련 조항을 찾는 중…',
-    examples: [
-      '출장 때 자가용 쓰면 비용은 어떻게 돼요?',
-      '숙박비에 조식이 포함돼 있으면 식비는?',
-      '밤 11시 넘어서 법인카드를 써도 돼요?',
-      '업무추진비 50만원 넘게 쓰려면 뭐 해야 돼요?',
-    ],
-  },
-  procedure: {
-    label: '업무 절차 안내',
-    request: getProcedure,
-    Answer: ProcedureGuide,
-    placeholder: '처음 하는 업무를 적어 주세요. 예) 국내 출장비 정산하려면?',
-    loading: '필요 서류와 절차를 정리하는 중…',
-    examples: ['국내 출장비 정산하려면?', '법인카드 쓰고 나서 처리할 일은?', '업무추진비 집행 절차는?'],
-  },
-}
+// 예시 질문. 규정 질문과 절차 질문을 섞어 두면 챗봇이 알아서 고르는 모습을 볼 수 있습니다.
+const EXAMPLES = [
+  '출장 다녀오면 뭘 준비해야 해?',
+  '숙박비에 조식이 포함돼 있으면 식비는?',
+  '법인카드 쓰고 나서 해야 할 일은?',
+  '밤 11시 넘어서 법인카드를 써도 돼요?',
+]
 
 let nextId = 1
 
-export default function QaPage() {
-  const [mode, setMode] = useState('qa')
-  const [messages, setMessages] = useState([]) // { id, mode, text, status: 'loading'|'done'|'error', result, error }
+function Clarify({ result, onPick }) {
+  return (
+    <div className="answer">
+      <p className="answer-text">{result.answer}</p>
+      <div className="chips clarify-options">
+        {result.options.map((task) => (
+          <button key={task} type="button" className="chip" onClick={() => onPick(`${task} 절차 알려줘`)}>
+            {task}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function Reply({ result, onNavigate, onAsk }) {
+  if (result.type === 'procedure' && result.procedure) {
+    return <ProcedureGuide result={result.procedure} onNavigate={onNavigate} />
+  }
+  if (result.type === 'clarify') return <Clarify result={result} onPick={onAsk} />
+  return <QaAnswer result={result} />
+}
+
+export default function QaPage({ onNavigate }) {
+  const [messages, setMessages] = useState([]) // { id, text, status: 'loading'|'done'|'error', result, error }
   const [input, setInput] = useState('')
   const endRef = useRef(null)
 
   const busy = messages.some((m) => m.status === 'loading')
-  const config = MODES[mode]
 
   // 새 메시지가 생기면 맨 아래로 스크롤
   useEffect(() => {
@@ -53,12 +59,11 @@ export default function QaPage() {
     if (!question || busy) return
 
     const id = nextId++
-    const current = mode
     setInput('')
-    setMessages((prev) => [...prev, { id, mode: current, text: question, status: 'loading' }])
+    setMessages((prev) => [...prev, { id, text: question, status: 'loading' }])
 
     try {
-      const result = await MODES[current].request(question)
+      const result = await askQa(question)
       setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, status: 'done', result } : m)))
     } catch (e) {
       setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, status: 'error', error: e.message } : m)))
@@ -77,37 +82,23 @@ export default function QaPage() {
     <section className="qa">
       <div className="page-title">
         <h1>규정 Q&A</h1>
-        <span className="desc">경비 규정에 대해 질문하면 근거 조항과 함께 답합니다.</span>
+        <span className="desc">규정이 궁금하거나 업무를 어떻게 처리할지 모를 때 물어보세요.</span>
       </div>
 
-      <div className="qa-toolbar">
-        <div className="segmented" role="tablist" aria-label="질문 종류">
-          {Object.entries(MODES).map(([id, m]) => (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              aria-selected={mode === id}
-              className={mode === id ? 'on' : ''}
-              onClick={() => setMode(id)}
-            >
-              {m.label}
-            </button>
-          ))}
-        </div>
-        {messages.length > 0 && (
+      {messages.length > 0 && (
+        <div className="qa-toolbar">
           <button type="button" className="btn small" onClick={() => setMessages([])} disabled={busy}>
             새 대화
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="chat">
         {messages.length === 0 && (
           <div className="chat-empty">
-            <p>{mode === 'qa' ? '이런 질문을 해보세요' : '이런 업무를 안내받을 수 있어요'}</p>
+            <p>규정 내용은 근거 조항과 함께 답하고, 처리 절차를 물으면 단계별로 안내해요.</p>
             <div className="chips">
-              {config.examples.map((q) => (
+              {EXAMPLES.map((q) => (
                 <button key={q} type="button" className="chip" onClick={() => send(q)}>
                   {q}
                 </button>
@@ -116,22 +107,16 @@ export default function QaPage() {
           </div>
         )}
 
-        {messages.map((m) => {
-          const { Answer, loading, label } = MODES[m.mode]
-          return (
-            <div key={m.id} className="turn">
-              <div className="bubble-user">
-                {m.mode === 'procedure' && <span className="bubble-tag">{label}</span>}
-                {m.text}
-              </div>
-              <div className="bubble-bot">
-                {m.status === 'loading' && <p className="loading">{loading}</p>}
-                {m.status === 'error' && <div className="error">{m.error}</div>}
-                {m.status === 'done' && <Answer result={m.result} />}
-              </div>
+        {messages.map((m) => (
+          <div key={m.id} className="turn">
+            <div className="bubble-user">{m.text}</div>
+            <div className="bubble-bot">
+              {m.status === 'loading' && <p className="loading">답변을 준비하는 중…</p>}
+              {m.status === 'error' && <div className="error">{m.error}</div>}
+              {m.status === 'done' && <Reply result={m.result} onNavigate={onNavigate} onAsk={send} />}
             </div>
-          )
-        })}
+          </div>
+        ))}
         <div ref={endRef} />
       </div>
 
@@ -146,7 +131,7 @@ export default function QaPage() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder={config.placeholder}
+          placeholder="예) 출장 다녀오면 뭘 준비해야 해? · 숙박비 한도는 얼마야?"
           rows={2}
           maxLength={1000}
           aria-label="질문 입력"

@@ -55,7 +55,7 @@ export default function QaAnswer({ result }) {
   return (
     <div className="answer">
       <div className="answer-head">
-        <GroundNotice grounded={grounded} count={sources.length} />
+        <GroundNotice grounded={grounded} count={sources.length} contact={result.contact} />
       </div>
       <p className="answer-text">{withCitations(answer, refs, activeRef, setActiveRef)}</p>
       <SourceList sources={sources} activeRef={activeRef} onSelect={setActiveRef} />

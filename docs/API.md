@@ -99,6 +99,17 @@ app.add_middleware(
 > | `sources[].ref` | 답변 본문의 `[1]`, `[2]` 인용 번호와 짝. 1부터 차례대로 |
 > | `sources[].revised_at` | 조항 최근 개정일 (`YYYY-MM-DD`, 없으면 `null`) |
 > | `sources[].url` | 원문 링크 (없으면 `null`) |
+>
+> **2026-11-08 추가 (챗봇 도구 선택)** — 백엔드가 질문을 보고 답하는 방식을 고릅니다. 기존 필드는 그대로입니다.
+>
+> | 필드 | 뜻 |
+> |---|---|
+> | `type` | `answer` 규정 답변 / `procedure` 절차 안내 / `clarify` 어떤 업무인지 되묻기 |
+> | `procedure` | `type` 이 `procedure` 일 때 3-4 응답과 같은 모양. `answer` 에는 요약이 들어감 |
+> | `options` | `type` 이 `clarify` 일 때 고를 수 있는 업무 이름 목록 |
+> | `contact` | `grounded` 가 `false` 일 때 안내할 담당자 `{ department, name, phone }`. 지금은 시연용 가상 계정이고, 계정이 없으면 `null` |
+>
+> 도구 선택 정확도는 `uv run python -m scripts.eval_route` 로 확인합니다 (`data/eval/route_eval.csv`).
 
 ### 3-2. 청구 검증 (`POST /api/verify`) ★ 모양을 꼭 고정해야 하는 부분
 
@@ -168,7 +179,8 @@ app.add_middleware(
 
 ### 3-4. 업무절차 안내 (`POST /api/procedure`) — U-02
 
-> 2026-11-06 추가. 지금 백엔드는 고정된 예시 응답을 돌려주고, 이후 RAG 로 채웁니다.
+> 2026-11-08 변경. 서류·순서·기한은 업무별로 조항과 함께 정해 둔 내용을 안내하고, 결재자는 위임전결규정 시행세칙 별표에서 조회합니다. 근거 표현이 현재 규정에 없으면 `grounded: false` 로 답합니다.
+> 안내하는 업무는 국내·국외 출장비 정산, 법인카드 사용 후 처리, 업무추진비 집행입니다. 그 밖의 업무는 `grounded: false` 로 답합니다. 응답 모양은 그대로입니다.
 
 프론트가 보내는 것:
 ```json
@@ -250,9 +262,40 @@ app.add_middleware(
 `summary`(적요), `lines`(계정과목별 금액), `attachments`(첨부서류), `deadlines`, `verify`, `warnings`, `approval_note`.
 `items` 가 비어 있으면 400 `{"error": "items가 비어 있습니다."}`.
 
+### 3-7. 내 체크리스트 (`/api/checklists`) — U-02
+
+업무 절차 안내를 직원별로 저장하고 체크합니다. 3-3 의 `/api/checklist` 는 예시 응답이고 화면에서 쓰지 않습니다.
+
+| 하는 일 | 방식 | 주소 | 프론트가 보내는 것 |
+|---|---|---|---|
+| 목록 조회 | GET | `/api/checklists` | 없음 |
+| 저장 | POST | `/api/checklists` | `{ "task": "국내 출장비 정산" }` (3-4 응답의 `task`) |
+| 체크 | PATCH | `/api/checklists/{id}/items/{itemId}` | `{ "done": true }` |
+| 삭제 | DELETE | `/api/checklists/{id}` | 없음 (응답 본문 없음, 204) |
+
+저장·조회가 돌려주는 것:
+```json
+{
+  "id": 1,
+  "task": "국내 출장비 정산",
+  "summary": "출장원(정산)과 출장보고서에 증빙을 붙여 15일 이내에 정산합니다.",
+  "deadline": { "text": "출장을 완료한 날부터 15일 이내", "basis": "여비규정 제3조의2 제2항", "check": false },
+  "approver": { "text": "부서장을 제외한 직원: 부서장", "basis": "위임전결규정 시행세칙 별표", "check": false },
+  "sources": [{ "ref": 1, "regulation": "여비규정", "article": "제3조의2", "revised_at": "2026-10-21", "url": null }],
+  "created_at": "2026-11-08T09:00:00+09:00",
+  "items": [
+    { "id": 10, "kind": "document", "title": "출장보고서", "detail": "별지 제4호 서식.", "basis": "여비규정 별지 제4호 서식", "done": false, "done_at": null }
+  ]
+}
+```
+
+- `kind` 는 `document`(필요 서류) 또는 `step`(작성 순서)입니다.
+- 사용자는 `X-Employee-No` 헤더의 사번으로 구분하고, 없으면 데모 직원 `E1001` 로 처리합니다. 시연용이며 실제 로그인이 아닙니다.
+- 내용은 저장 시점의 복사본입니다. 규정이 개정되어도 저장한 내용은 바뀌지 않습니다.
+
 ---
 
-### 3-4. 영수증 인식 (`POST /api/receipt`) — U-06, 2026-11-03 추가
+### 3-8. 영수증 인식 (`POST /api/receipt`) — U-06, 2026-11-03 추가
 
 프론트의 "영수증 등록" 화면이 사진 1장을 보내면, 백엔드가 Vision 모델로 값을 읽어 돌려줍니다.
 프론트는 사진을 base64 문자열로 보냅니다. (multipart 가 편하시면 말씀해 주세요. 프론트 쪽 한 줄만 바꾸면 됩니다.)

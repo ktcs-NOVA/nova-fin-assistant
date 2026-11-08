@@ -4,7 +4,7 @@
 
 import { VERDICT } from '../api/client.js'
 
-export default function GroundNotice({ grounded, count }) {
+export default function GroundNotice({ grounded, count, contact }) {
   if (grounded) {
     return <span className="badge good">근거 조항 {count}개</span>
   }
@@ -12,6 +12,12 @@ export default function GroundNotice({ grounded, count }) {
     <div className="notice warn" role="status">
       <strong>{VERDICT.CHECK}</strong>
       <span>등록된 규정에서 근거를 찾지 못했습니다. 정확한 처리는 담당자에게 확인해 주세요.</span>
+      {contact && (
+        <span>
+          담당: {contact.department} {contact.name}
+          {contact.phone && ` · 연락처 ${contact.phone}`}
+        </span>
+      )}
     </div>
   )
 }
