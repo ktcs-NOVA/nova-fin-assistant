@@ -99,6 +99,16 @@ app.add_middleware(
 > | `sources[].ref` | 답변 본문의 `[1]`, `[2]` 인용 번호와 짝. 1부터 차례대로 |
 > | `sources[].revised_at` | 조항 최근 개정일 (`YYYY-MM-DD`, 없으면 `null`) |
 > | `sources[].url` | 원문 링크 (없으면 `null`) |
+>
+> **2026-11-08 추가 (챗봇 도구 선택)** — 백엔드가 질문을 보고 답하는 방식을 고릅니다. 기존 필드는 그대로입니다.
+>
+> | 필드 | 뜻 |
+> |---|---|
+> | `type` | `answer` 규정 답변 / `procedure` 절차 안내 / `clarify` 어떤 업무인지 되묻기 |
+> | `procedure` | `type` 이 `procedure` 일 때 3-4 응답과 같은 모양. `answer` 에는 요약이 들어감 |
+> | `options` | `type` 이 `clarify` 일 때 고를 수 있는 업무 이름 목록 |
+>
+> 도구 선택 정확도는 `uv run python -m scripts.eval_route` 로 확인합니다 (`data/eval/route_eval.csv`).
 
 ### 3-2. 청구 검증 (`POST /api/verify`) ★ 모양을 꼭 고정해야 하는 부분
 

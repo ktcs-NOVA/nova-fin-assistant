@@ -47,7 +47,9 @@ async function request(method, path, body) {
 
 // ---------- 화면에서 쓰는 함수 ----------
 
-/** 규정 Q&A (U-01·U-03): { answer, grounded, sources: [{ ref, regulation, article, revised_at, url }] }
+/** 규정 Q&A 챗봇 (U-01·U-02·U-03):
+ *  { type: 'answer'|'procedure'|'clarify', answer, grounded, sources: [{ ref, regulation, article, revised_at, url }],
+ *    procedure (type 이 procedure 일 때, getProcedure 응답과 같은 모양), options (type 이 clarify 일 때 업무 이름) }
  *  answer 안의 [1] 같은 번호는 sources[].ref 와 짝입니다. grounded 가 false 면 근거를 못 찾은 답변입니다. */
 export function askQa(question) {
   if (USE_MOCK) return mock.askQa(question)

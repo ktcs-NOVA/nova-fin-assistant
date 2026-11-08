@@ -14,10 +14,23 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 // 이 단어가 들어간 질문은 "근거 없음" 응답을 돌려줘서 경고 화면(U-03)을 확인할 수 있게 합니다.
 const UNGROUNDED_WORDS = ['주차', '연차', '휴가']
 
+// 이 단어가 들어간 질문은 절차 안내(U-02) 응답을 돌려줍니다. 실제로는 백엔드의 챗봇이 고릅니다.
+const PROCEDURE_WORDS = ['절차', '준비', '해야', '다음', '처리']
+
 export async function askQa(question) {
   await wait(600)
   if (!question?.trim()) throw new Error('질문을 입력해 주세요.')
-  return UNGROUNDED_WORDS.some((w) => question.includes(w)) ? qaUngroundedData : qaData
+  if (UNGROUNDED_WORDS.some((w) => question.includes(w))) return { type: 'answer', ...qaUngroundedData }
+  if (PROCEDURE_WORDS.some((w) => question.includes(w))) {
+    return {
+      type: 'procedure',
+      answer: procedureData.summary,
+      grounded: true,
+      sources: procedureData.sources,
+      procedure: procedureData,
+    }
+  }
+  return { type: 'answer', ...qaData }
 }
 
 export async function getProcedure(task) {

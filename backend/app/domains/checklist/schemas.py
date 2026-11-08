@@ -6,7 +6,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.domains.procedure.schemas import Fact
-from app.domains.qa.schemas import Source
+from app.domains.sources import Source
 
 
 class ChecklistItem(BaseModel):

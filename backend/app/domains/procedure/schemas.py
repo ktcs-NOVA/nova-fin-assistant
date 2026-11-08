@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.domains.qa.schemas import Source
+from app.domains.sources import Source
 
 
 class ProcedureRequest(BaseModel):

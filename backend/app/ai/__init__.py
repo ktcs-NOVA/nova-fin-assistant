@@ -8,7 +8,7 @@
 """
 
 from app.ai.embedding import embed_query, embed_texts
-from app.ai.llm import chat
+from app.ai.llm import chat, choose_tool
 from app.ai.masking import mask
 
-__all__ = ["chat", "embed_query", "embed_texts", "mask"]
+__all__ = ["chat", "choose_tool", "embed_query", "embed_texts", "mask"]

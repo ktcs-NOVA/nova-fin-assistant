@@ -20,9 +20,9 @@ from app.domains.procedure.tasks import (
     DELEGATION,
     NO_APPROVAL_ROW,
     NO_APPROVAL_ROW_BASIS,
+    TASKS,
     Cite,
     Item,
-    TASKS,
     ProcedureTask,
     match_task,
 )
@@ -264,6 +264,15 @@ def get_procedure_by_name(db: Session, name: str) -> dict | None:
     """화면에 보여 준 업무 이름으로 절차를 다시 만듭니다 (체크리스트 저장용). 없는 업무면 None."""
     task = next((t for t in TASKS if t.name == name), None)
     return _answer_task(db, task) if task else None
+
+
+def get_procedure_for_task(db: Session, name: str, question: str) -> dict | None:
+    """챗봇이 절차 안내 도구를 고른 경우. 질문과 함께 질의 로그를 남깁니다."""
+    started = time.perf_counter()
+    result = get_procedure_by_name(db, name)
+    if result is not None:
+        _save_log(db, question, result, int((time.perf_counter() - started) * 1000))
+    return result
 
 
 def _save_log(db: Session, question: str, result: dict, latency_ms: int) -> None:
