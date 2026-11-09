@@ -122,6 +122,21 @@ export function calcTravel(req) {
   return request('POST', '/api/travel-calc', req)
 }
 
+// ---------- 정산 제출 (직원 → 관리자 검토 대기함) ----------
+
+/** 검증을 마친 청구 내역을 제출(검토 요청). claim 은 verifyClaim 에 보낸 것과 같은 모양,
+ *  extra: { purpose, account, verify_result }. 돌려주는 것은 관리자 목록 한 건과 같은 모양 (id 가 S-2026-00N). */
+export function createSubmission(claim, extra = {}) {
+  if (USE_MOCK) return mock.createSubmission(claim, extra)
+  return request('POST', '/api/submissions', { ...claim, ...extra })
+}
+
+/** 내 제출 내역: { total, items: [...] } (로그인한 사번 기준) */
+export function listMySubmissions() {
+  if (USE_MOCK) return mock.listMySubmissions()
+  return request('GET', '/api/submissions')
+}
+
 // ---------- 관리자 (M-01 정산 검토 대기함) ----------
 
 /** 제출 건 목록: { total, items: [{ id, submitter, dept, type, purpose, amount, date, verdict, status, step, items[] }] } */
@@ -185,8 +200,11 @@ export function pickSuggestion(lines) {
   return { account: top.account, sub_accounts, confidence: top.confidence, basis: top.basis }
 }
 
-// 검토 상태 값 (백엔드와 합의 필요)
+// 검토 상태 값 (백엔드 app/core/constants.py 와 동일)
 export const STATUS = { PENDING: '검토 대기', APPROVED: '승인', REJECTED: '반려' }
+
+// 직원이 결의서에 적는 계정과목 후보 (M-05 에서 AI 제안과 비교). 백엔드 voucher.py 의 과목명과 같게 유지
+export const ACCOUNTS = ['여비교통비', '업무추진비', '조직관리비', '소모품비', '도서인쇄비', '통신비', '교육훈련비', '지급수수료', '차량유지비']
 
 // ---------- 영수증 인식 (U-06 영수증 자동 정리) ----------
 

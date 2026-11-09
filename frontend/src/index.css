@@ -269,6 +269,14 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
   .info-grid { grid-template-columns: 70px 1fr; }
 }
 
+/* ---------- 검토 요청(제출) 패널 (청구 검증 결과 아래) ---------- */
+.submit-panel { margin-top: 12px; display: grid; gap: 10px; }
+.submit-panel h3 { margin: 0; font-size: 15px; }
+.submit-panel .hint { margin: 0; }
+.submit-fields { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
+.submit-done { border-color: var(--good); background: var(--good-soft); }
+@media (max-width: 760px) { .submit-fields { grid-template-columns: 1fr; } }
+
 /* ---------- 계정과목 검토 (M-05) ---------- */
 .account-card { display: grid; gap: 12px; }
 .account-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }

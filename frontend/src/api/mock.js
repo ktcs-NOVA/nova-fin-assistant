@@ -143,6 +143,38 @@ import submissionsData from '../mocks/submissions.json'
 // 메모리 안에서만 바뀌는 상태 (새로고침하면 초기화)
 const submissions = structuredClone(submissionsData.items)
 
+// 직원 제출(목업): 목록 맨 앞에 새 건을 넣어 관리자 화면에서 바로 보이게 함
+export async function createSubmission(claim, extra = {}) {
+  await wait(500)
+  const items = claim.items ?? []
+  if (!items.length) throw new Error('items가 비어 있습니다.')
+  const verify = extra.verify_result ?? (await verifyClaim(claim))
+  const year = new Date().getFullYear()
+  const seq = submissions.filter((s) => s.id.startsWith(`S-${year}-`)).length + 1
+  const first = items[0]
+  const sub = {
+    id: `S-${year}-${String(seq).padStart(3, '0')}`,
+    submitter: '박철환', dept: '총무인사부',  // 목업은 로그인 계정을 모름
+    type: claim.trip_type,
+    purpose: extra.purpose || (claim.trip?.region ? `${claim.trip.region} 출장 여비 정산` : `${claim.trip_type} 지출 정산`),
+    merchant: first.merchant ?? null,
+    date: first.date ?? claim.trip?.start_date ?? new Date().toISOString().slice(0, 10),
+    time: first.time ?? null,
+    amount: items.reduce((a, it) => a + Number(it.amount || 0), 0),
+    account: extra.account ?? null,
+    submitted_at: new Date().toISOString().slice(0, 10),
+    step: 5, verdict: verify.overall, status: '검토 대기', items: verify.items,
+  }
+  submissions.unshift(sub)
+  return sub
+}
+
+export async function listMySubmissions() {
+  await wait(300)
+  const mine = submissions.filter((s) => s.submitter === '박철환')
+  return { total: mine.length, items: mine }
+}
+
 export async function listSubmissions() {
   await wait(400)
   return { total: submissions.length, items: submissions }
