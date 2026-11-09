@@ -337,6 +337,39 @@ app.add_middleware(
 
 참고 구현: `experiments/receipt-ocr/extract_receipts.py` 의 `Receipt` 모델과 `PROMPT` 가 이 모양 그대로이고, `server.py` 가 이 주소를 그대로 제공하는 테스트 서버입니다. 백엔드에 옮기실 때 그대로 가져다 쓰셔도 됩니다. 11장 테스트에서 전 필드 정답률 100% 였습니다 (`experiments/receipt-ocr/README.md`).
 
+### 3-9. 정산 제출 · 검토 대기함 (`/api/submissions`, `/api/admin/submissions`) — M-01, 2026-11-09 추가
+
+직원이 청구 검증(U-04)을 마친 내역을 제출하면 DB(`submissions`·`expenses`·`trips`)에 저장되고, 회계 관리자가 목록·상세에서 승인/반려합니다.
+사용자는 `X-Employee-No` 헤더의 사번으로 구분합니다(로그인 화면에서 고른 계정). 관리자 주소는 `role=admin` 계정만 쓸 수 있고, 직원이 부르면 403.
+
+| 하는 일 | 방식 | 주소 | 누가 | 프론트가 보내는 것 |
+|---|---|---|---|---|
+| 제출(검토 요청) | POST | `/api/submissions` | 직원 | `/api/verify` 요청과 같은 청구 내역 + `purpose`(건명), `account`(계정과목), `verify_result`(이미 받은 판정, 없으면 서버가 다시 검증) |
+| 내 제출 내역 | GET | `/api/submissions` | 직원 | 없음 |
+| 검토 대기함 목록 | GET | `/api/admin/submissions` | 관리자 | 없음 |
+| 제출 건 상세 | GET | `/api/admin/submissions/{code}` | 관리자 | 없음 (`code` 는 `S-2026-003` 같은 번호) |
+| 승인/반려 저장 | POST | `/api/admin/submissions/{code}/decision` | 관리자 | `{ "decision": "승인" \| "반려", "message": "반려 사유" }` (반려는 message 필수, 이미 처리된 건은 409) |
+| 반려 메시지 초안 | POST | `/api/admin/submissions/{code}/reject-draft` | 관리자 | `{ "issue_fields": ["식비", ...], "extra_issues": [{ field, verdict, message, basis, fix }] }` |
+
+제출·상세가 돌려주는 한 건 (목록은 `{ "total": N, "items": [...] }`). `frontend/src/mocks/submissions.json` 의 한 건과 같은 키:
+```json
+{
+  "id": "S-2026-003", "submitter": "박철환", "dept": "총무인사부", "type": "국내출장",
+  "purpose": "출장 여비 정산 (2026-10-20, 광역시)", "merchant": null, "date": "2026-10-20", "time": null,
+  "amount": 271800, "account": "업무추진비", "submitted_at": "2026-11-09", "step": 5,
+  "verdict": "보완 필요", "status": "검토 대기",
+  "items": [ { "field": "식비", "verdict": "보완 필요", "message": "...", "basis": "여비규정 제11조 제4항", "fix": "..." } ],
+  "expenses": [ { "field": "숙박비", "amount": 98000, "date": "2026-10-20", "payment": "여비 지급", "nights": 1, "breakfast_included": true } ],
+  "decision_message": null, "decided_at": null
+}
+```
+
+- `items` 는 제출 시점의 AI 판정(U-04 응답의 `items`)을 그대로 저장한 것. `expenses` 는 직원이 적은 지출 항목.
+- `step` 은 상단 처리 단계: 제출되면 5(관리자 검토), 승인/반려되면 6.
+- 반려 초안은 선택한 판정 항목의 메시지·근거·수정 방법으로 먼저 만들고, OpenAI 키가 있으면 LLM 이 안내문 형태로 다듬습니다. 근거 조항은 새로 만들지 않고 판정에 있던 것만 씁니다. 응답 `{ "message", "sources": ["여비규정 제11조 제4항", ...] }`.
+- 판정 없이 들어온 건(시드 예시 등)은 조회할 때 지출 항목으로 검증을 한 번 돌려 채웁니다.
+- 코드: `backend/app/domains/submissions/`, 마이그레이션 `0004` (`submissions.account`).
+
 ## 4. 에러일 때 돌려주는 모양 (함께 정할 것)
 
 백엔드가 실패했을 때도 프론트가 "문제가 생겼습니다"를 띄워야 합니다. 아래처럼 통일하면 프론트는 성공/실패 두 경우만 처리하면 됩니다.

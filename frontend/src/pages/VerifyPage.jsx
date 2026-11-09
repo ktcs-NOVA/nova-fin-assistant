@@ -12,6 +12,7 @@
 import { useState } from 'react'
 import { verifyClaim } from '../api/client.js'
 import VerifyResult from '../components/VerifyResult.jsx'
+import SubmitPanel from '../components/SubmitPanel.jsx'
 
 const TRIP_TYPES = ['국내출장', '근무지 내 출장', '법인카드', '업무추진비']
 const GRADES = ['직원 3급 이하', '직원 1·2급', '임원/본부장', '감사', '사장']
@@ -267,7 +268,10 @@ export default function VerifyPage({ prefill }) {
         <div className="verify-result">
           {error && <div className="error">{error}</div>}
           {result ? (
-            <VerifyResult result={result} />
+            <>
+              <VerifyResult result={result} />
+              <SubmitPanel claim={buildRequest()} result={result} />
+            </>
           ) : (
             !loading && <div className="empty">청구 내역을 입력하고 "검증하기"를 누르면 항목별 판정이 여기에 표시됩니다.</div>
           )}
