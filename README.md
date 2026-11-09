@@ -23,6 +23,7 @@ nova-fin-assistant/
 | 검증 결과 카드 (판정 3단계) | 완료 |
 | 영수증 등록 화면 (U-06) — 샘플 11장 + 내 사진 + 카메라 촬영, 인식값 수정, 지출 건 초안, "청구 검증으로 보내기"(법인카드 건으로 U-04 폼에 채움) | 완료 (실제 인식은 `experiments/receipt-ocr/server.py` 또는 백엔드) |
 | 관리자 정산 검토 대기함 (M-01) 와이어프레임 | 완료 (목업 데이터) |
+| 로그인(계정 선택) 화면 — 팀원 이름을 고르면 직원/관리자 화면으로 분리 진입, 고른 사번을 `X-Employee-No` 헤더로 전송 | 완료 (시연용, 비밀번호 없음. 계정은 `backend/scripts/seed.py` 와 동일) |
 | 관리자 계정과목 검토 카드 (M-05) — 직원 입력 vs AI 제안 비교, 불일치면 반려 사유 후보 추가 | 완료 (제안은 `POST /api/voucher-draft` 재사용, 목록·상세는 목업) |
 | 백엔드 서버 · DB(PostgreSQL + pgvector) · 실행 스크립트 | 완료 |
 | 규정 Q&A RAG (규정 적재 → 검색 → 답변 + 근거 조항) | 뼈대 완료 |
@@ -108,6 +109,7 @@ frontend/src/
 │   ├── VerdictBadge.jsx    # 판정 3단계 뱃지
 │   ├── ResultCard.jsx      # 검증 결과 카드 한 장
 │   ├── VerifyResult.jsx    # 종합 판정 + 카드 목록
+│   ├── LoginPage.jsx (pages/)  # 로그인: 계정 선택 → 역할별 화면 (auth/accounts.js 가 계정 목록)
 │   ├── QaAnswer.jsx        # 규정 Q&A 답변 (본문 [1] 인용 ↔ 근거 목록 연결)
 │   ├── ProcedureGuide.jsx  # 업무절차 안내 (필요 서류 · 순서 · 기한 · 결재자)
 │   ├── SourceList.jsx      # 근거 조항 목록 (조항 · 개정일 · 원문 링크)

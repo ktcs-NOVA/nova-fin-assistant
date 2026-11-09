@@ -1,9 +1,9 @@
-// 전체 틀: 상단 헤더(로고 + 역할 전환 + 메뉴 탭) + 본문 영역
+// 전체 틀: 상단 헤더(로고 + 메뉴 탭 + 로그인 사용자) + 본문 영역
 // 어떤 화면을 보여줄지는 App.jsx가 정하고, 여기서는 틀만 그립니다.
 
 import { USE_MOCK, API_BASE } from '../api/client.js'
 
-export default function Layout({ roles, role, onRoleChange, pages, current, onChange, children }) {
+export default function Layout({ user, roleLabel, onLogout, pages, current, onChange, children }) {
   return (
     <div className="app">
       <header className="header">
@@ -21,15 +21,6 @@ export default function Layout({ roles, role, onRoleChange, pages, current, onCh
         </span>
 
         <div className="header-right">
-          {/* 역할 전환 (로그인 대신 시연용) */}
-          <div className="role-switch" role="group" aria-label="역할">
-            {roles.map((r) => (
-              <button key={r.id} className={r.id === role ? 'on' : ''} onClick={() => onRoleChange(r.id)}>
-                {r.label}
-              </button>
-            ))}
-          </div>
-
           <nav className="nav" aria-label="주요 메뉴">
             {pages.map((p) => (
               <button
@@ -42,6 +33,13 @@ export default function Layout({ roles, role, onRoleChange, pages, current, onCh
               </button>
             ))}
           </nav>
+
+          {/* 로그인한 계정. 역할은 로그인에서 정해지며 여기서 바꿀 수 없음 */}
+          <div className="user-chip" title={`${user.department} · ${user.employee_no}`}>
+            <span className={`user-role ${user.role}`}>{roleLabel}</span>
+            <span className="user-name">{user.name}</span>
+            <button type="button" className="user-logout" onClick={onLogout}>로그아웃</button>
+          </div>
         </div>
       </header>
 

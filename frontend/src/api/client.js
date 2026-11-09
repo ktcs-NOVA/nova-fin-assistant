@@ -6,6 +6,7 @@
 // 설정은 frontend/.env (공통) 또는 frontend/.env.local (내 PC 전용) 에 적습니다.
 
 import * as mock from './mock.js'
+import { loadUser } from '../auth/accounts.js'
 
 export const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000'
 export const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
@@ -21,9 +22,14 @@ export const VERDICT = {
 async function request(method, path, body) {
   let res
   try {
+    // 로그인한 사번을 함께 보내 백엔드가 그 사람의 데이터(체크리스트 등)로 처리하게 함. 없으면 백엔드 기본 직원.
+    const user = loadUser()
     res = await fetch(API_BASE + path, {
       method,
-      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      headers: {
+        ...(body ? { 'Content-Type': 'application/json' } : {}),
+        ...(user ? { 'X-Employee-No': user.employee_no } : {}),
+      },
       body: body ? JSON.stringify(body) : undefined,
     })
   } catch {

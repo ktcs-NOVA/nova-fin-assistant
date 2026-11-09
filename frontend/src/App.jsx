@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import Layout from './components/Layout.jsx'
+import LoginPage from './pages/LoginPage.jsx'
 import QaPage from './pages/QaPage.jsx'
 import VerifyPage from './pages/VerifyPage.jsx'
 import ChecklistPage from './pages/ChecklistPage.jsx'
 import ReceiptPage from './pages/ReceiptPage.jsx'
 import TravelCalcPage from './pages/TravelCalcPage.jsx'
 import ReviewPage from './pages/admin/ReviewPage.jsx'
+import { loadUser, saveUser, clearUser } from './auth/accounts.js'
 
 // 역할별 메뉴. 화면을 추가하려면 해당 역할 목록에 한 줄 추가하고 pages/ 에 파일을 만들면 됩니다.
-// 실제 로그인은 없고, 헤더의 역할 전환으로 시연합니다.
+// 어느 역할 화면으로 들어갈지는 로그인(계정 선택)에서 정해지고, 안에서는 역할을 바꿀 수 없습니다.
 const MENUS = {
   employee: {
     label: '직원',
@@ -31,19 +33,29 @@ const MENUS = {
 }
 
 export default function App() {
-  const [role, setRole] = useState('admin')
-  const [current, setCurrent] = useState(MENUS.admin.home)
+  const [user, setUser] = useState(() => loadUser())   // 로그인한 계정 (브라우저에 기억)
+  const [current, setCurrent] = useState(() => (user ? MENUS[user.role].home : null))
   // 영수증 등록(U-06)·출장비 계산(U-05)에서 "청구 검증으로 보내기"를 누르면 여기에 담겨 청구 검증(U-04) 폼의 초기값이 됩니다.
   const [verifyPrefill, setVerifyPrefill] = useState(null)
 
-  const menu = MENUS[role]
-  const Page = (menu.pages.find((p) => p.id === current) ?? menu.pages[0]).component
-
-  function changeRole(next) {
-    setRole(next)
-    setCurrent(MENUS[next].home)
+  function login(account) {
+    saveUser(account)
+    setUser(account)
+    setCurrent(MENUS[account.role].home)
     setVerifyPrefill(null)
   }
+
+  function logout() {
+    clearUser()
+    setUser(null)
+    setCurrent(null)
+    setVerifyPrefill(null)
+  }
+
+  if (!user) return <LoginPage onLogin={login} />
+
+  const menu = MENUS[user.role]
+  const Page = (menu.pages.find((p) => p.id === current) ?? menu.pages[0]).component
 
   function changePage(id) {
     setCurrent(id)
@@ -52,19 +64,11 @@ export default function App() {
 
   function sendToVerify(prefill) {
     setVerifyPrefill(prefill)
-    setRole('employee')
     setCurrent('verify')
   }
 
   return (
-    <Layout
-      roles={Object.entries(MENUS).map(([id, m]) => ({ id, label: m.label }))}
-      role={role}
-      onRoleChange={changeRole}
-      pages={menu.pages}
-      current={current}
-      onChange={changePage}
-    >
+    <Layout user={user} roleLabel={menu.label} onLogout={logout} pages={menu.pages} current={current} onChange={changePage}>
       <Page onNavigate={changePage} onSendToVerify={sendToVerify} prefill={verifyPrefill} />
     </Layout>
   )
