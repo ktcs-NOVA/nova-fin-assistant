@@ -57,6 +57,7 @@ cp .env.example .env
 docker compose up -d --wait
 uv run alembic upgrade head
 uv run python -m scripts.seed      # 처음 한 번
+uv run python -m scripts.seed_demo # 시연용 관리자 검토함 27건 (scripts/data/demo_submissions.json, 다시 넣을 땐 --reset)
 uv run python -m scripts.ingest    # 처음 한 번
 uv run uvicorn app.main:app --reload
 ```
