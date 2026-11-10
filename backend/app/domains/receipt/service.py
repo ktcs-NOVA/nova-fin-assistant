@@ -10,6 +10,7 @@ import re
 import time
 
 from app.ai import llm
+from app.ai.masking import mask
 from app.core.config import settings
 from app.core.errors import AppError
 from app.domains.receipt.schemas import PURPOSES, ReceiptRequest, ReceiptResponse
@@ -39,6 +40,7 @@ SYSTEM = f"""당신은 한국 영수증(카드 매출전표 또는 간이 영수
 - 날짜는 YYYY-MM-DD, 시각은 24시간 HH:MM 으로 통일합니다. (예: 2026.10.20 / 26-10-20 → 2026-10-20, 오후 7:35 → 19:35)
 - 금액은 쉼표와 '원'을 빼고 정수로 적습니다. 합계는 최종 결제 금액(할인·포인트 적용 후)입니다.
 - 숫자 0 과 영문 O, 1 과 l 처럼 헷갈리는 부분, 흐려서 추정한 부분은 notes 에 적어 주세요.
+- notes 에는 카드번호·승인번호·전화번호·사업자번호·가맹점번호·사람 이름을 적지 마세요. "카드번호가 가려져 있음" 처럼 사실만 적습니다.
 
 답 형식 (키 이름은 이대로):
 {{"merchant": null, "business_type": null, "date": null, "time": null, "total_amount": null, "card_number": null,
@@ -53,7 +55,7 @@ MOCK_RESULT = {
     "time": "14:31",
     "total_amount": 6000,
     "card_last4": None,
-    "approval_no": "00000000",
+    "approval_no": "****0000",
     "items": [{"name": "아메리카노", "amount": 6000}],
     "purpose_candidates": ["식비", "회의비"],
     "confidence": "low",
@@ -78,8 +80,18 @@ def _decode_image(req: ReceiptRequest) -> bytes:
     return image
 
 
+def _mask_tail(value, keep: int = 4) -> str | None:
+    """승인번호처럼 식별용 번호는 뒷자리만 남깁니다 ("30004889" → "****4889"). 숫자가 없으면 None."""
+    if value is None:
+        return None
+    digits = re.sub(r"[^\d]", "", str(value))
+    if not digits:
+        return None
+    return "****" + digits[-keep:]
+
+
 def _clean(data: dict) -> dict:
-    """모델 출력을 응답 형식에 맞게 다듬습니다 (용도 후보는 목록 안의 값만, 금액은 정수)."""
+    """모델 출력을 응답 형식에 맞게 다듬습니다 (용도 후보는 목록 안의 값만, 금액은 정수, 개인정보는 가림)."""
     out = dict(data)
     cands = [p for p in (out.get("purpose_candidates") or []) if p in PURPOSES]
     out["purpose_candidates"] = list(dict.fromkeys(cands))[:3] or ["기타"]
@@ -109,6 +121,10 @@ def _clean(data: dict) -> dict:
             tail = raw.rsplit("*", 1)[-1] if "*" in raw else raw
             digits = re.sub(r"[^\d]", "", tail)
             out["card_last4"] = digits[-4:] if len(digits) >= 4 else None
+    # 승인번호는 뒷 4자리만, 메모 문장에 섞인 카드·전화·사업자번호는 가립니다 (PM 요청 2026-11-10)
+    out["approval_no"] = _mask_tail(out.get("approval_no"))
+    if out.get("notes"):
+        out["notes"] = mask(str(out["notes"]))
     return out
 
 

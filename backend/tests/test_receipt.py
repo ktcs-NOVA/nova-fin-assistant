@@ -72,3 +72,23 @@ def test_clean_masked_card_is_unknown():
     assert _clean({"card_number": "************1234"})["card_last4"] == "1234"
     assert "card_number" not in _clean({"card_number": "1234"})
     assert _clean({"card_number": "3600"})["card_last4"] is None  # 카드번호 길이가 아니면 버림
+
+
+def test_clean_masks_personal_numbers():
+    out = _clean({
+        "approval_no": "30004889",
+        "notes": "카드번호는 52393000******** 로 가려짐. 가맹점 전화 010-3927-6159, 대표번호 1588-1234, "
+                 "사업자번호 311-10-30169, 매장 전화 02-541-5488. 날짜 2026-11-01 은 그대로.",
+    })
+    assert out["approval_no"] == "****4889"
+    for secret in ("52393000", "3927-6159", "1588-1234", "311-10-30169", "541-5488"):
+        assert secret not in out["notes"]
+    assert "2026-11-01" in out["notes"]
+    assert _clean({"approval_no": "[30004889] KICC로제출"})["approval_no"] == "****4889"
+    assert _clean({"approval_no": None})["approval_no"] is None
+    assert _clean({"approval_no": "없음"})["approval_no"] is None
+
+
+def test_mock_result_has_no_full_numbers():
+    r = client.post("/api/receipt", json={"media_type": "image/png", "image_base64": PNG})
+    assert r.json()["approval_no"].startswith("****")
