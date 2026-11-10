@@ -295,9 +295,9 @@ app.add_middleware(
 
 ---
 
-### 3-8. 영수증 인식 (`POST /api/receipt`) — U-06, 2026-11-03 추가
+### 3-8. 영수증 인식 (`POST /api/receipt`) — U-06, 2026-11-03 추가 · **2026-11-10 백엔드 구현 완료**
 
-프론트의 "영수증 등록" 화면이 사진 1장을 보내면, 백엔드가 Vision 모델로 값을 읽어 돌려줍니다.
+프론트의 "영수증 등록" 화면이 사진 1장을 보내면, 백엔드가 팀 공용 OpenAI 키(`gpt-4o-mini`, 이미지 입력)로 값을 읽어 돌려줍니다 (`app/domains/receipt/`). 키가 없으면 `notes` 에 `[목업 AI]` 가 붙은 예시 값을 돌려줍니다.
 프론트는 사진을 base64 문자열로 보냅니다. (multipart 가 편하시면 말씀해 주세요. 프론트 쪽 한 줄만 바꾸면 됩니다.)
 
 프론트가 보내는 것:
@@ -335,7 +335,9 @@ app.add_middleware(
 | `confidence` | `high` / `medium` / `low`. 프론트는 `medium` 이하를 노란 배지로 표시합니다 |
 | `notes` | 흐림·잘림·추정한 부분. 화면에 "AI 메모"로 그대로 보여줍니다 |
 
-참고 구현: `experiments/receipt-ocr/extract_receipts.py` 의 `Receipt` 모델과 `PROMPT` 가 이 모양 그대로이고, `server.py` 가 이 주소를 그대로 제공하는 테스트 서버입니다. 백엔드에 옮기실 때 그대로 가져다 쓰셔도 됩니다. 11장 테스트에서 전 필드 정답률 100% 였습니다 (`experiments/receipt-ocr/README.md`).
+오류: 지원하지 않는 형식·빈 사진·10MB 초과는 400, API 키 문제는 500, 호출 제한은 429, 그 밖의 인식 실패는 502 (`{"error": ...}`).
+
+지시문과 출력 형식은 `experiments/receipt-ocr/extract_receipts.py` (Claude 로 11장 전 필드 정답률 100%) 에서 가져왔습니다. 공용 GPT 로 바꾼 뒤의 정답률은 아직 재측정 전입니다. 실험 서버(`server.py`)는 더 이상 켤 필요가 없습니다.
 
 ### 3-9. 정산 제출 · 검토 대기함 (`/api/submissions`, `/api/admin/submissions`) — M-01, 2026-11-09 추가
 
