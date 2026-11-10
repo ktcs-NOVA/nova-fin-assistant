@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     # OpenAI (비어 있으면 목업 AI)
     openai_api_key: str = ""
     llm_model: str = "gpt-4o-mini"
+    # 영수증 사진 판독 모델. 11장 측정(2026-11-10)에서 gpt-4o 와 정답률이 같아(89%) 싼 쪽을 기본으로 둡니다
+    receipt_model: str = "gpt-4o-mini"
     embedding_model: str = "text-embedding-3-small"
     # 임베딩 차원은 DB 컬럼 크기와 같아야 함 (models/knowledge.py, alembic 마이그레이션)
     embedding_dim: int = 1536

@@ -52,7 +52,7 @@ def test_receipt_empty_image_is_400():
 
 def test_clean_normalizes_model_output():
     out = _clean({
-        "total_amount": "6,000원", "card_last4": "**** 1234", "confidence": "확실",
+        "total_amount": "6,000원", "card_last4": "****-****-****-1234", "confidence": "확실",
         "purpose_candidates": ["식비", "선물", "식비", "회의비", "기타"],
         "items": [{"name": "라떼", "amount": "6,000"}, "garbage"],
     })
@@ -68,3 +68,7 @@ def test_clean_masked_card_is_unknown():
     assert _clean({"card_last4": "5239-3000-1234-5678"})["card_last4"] == "5678"
     assert _clean({"card_last4": "5239-****-****-5678"})["card_last4"] == "5678"
     assert _clean({"card_last4": "12"})["card_last4"] is None
+    assert _clean({"card_number": "5239-3000-****-****"})["card_last4"] is None
+    assert _clean({"card_number": "************1234"})["card_last4"] == "1234"
+    assert "card_number" not in _clean({"card_number": "1234"})
+    assert _clean({"card_number": "3600"})["card_last4"] is None  # 카드번호 길이가 아니면 버림

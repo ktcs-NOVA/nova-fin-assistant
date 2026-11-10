@@ -337,7 +337,7 @@ app.add_middleware(
 
 오류: 지원하지 않는 형식·빈 사진·10MB 초과는 400, API 키 문제는 500, 호출 제한은 429, 그 밖의 인식 실패는 502 (`{"error": ...}`).
 
-지시문과 출력 형식은 `experiments/receipt-ocr/extract_receipts.py` (Claude 로 11장 전 필드 정답률 100%) 에서 가져왔습니다. 공용 GPT 로 바꾼 뒤의 정답률은 아직 재측정 전입니다. 실험 서버(`server.py`)는 더 이상 켤 필요가 없습니다.
+정답률 (2026-11-10, 샘플 11장, `uv run python -m scripts.eval_receipt`): 날짜·합계 100%, 가맹점 82%, 시각 82~91%, 용도 후보 82%, 전체 89%. `gpt-4o-mini` 와 `gpt-4o` 가 같아서 기본은 mini 입니다 (`RECEIPT_MODEL` 로 변경). 지난 Claude 실험(100%)보다 낮으므로 화면의 "저장 전 직접 수정" 단계가 중요합니다. 가려진 카드번호는 모델 출력 대신 백엔드가 별표 뒤 숫자만 뒷자리로 인정합니다. 실험 서버(`experiments/receipt-ocr/server.py`)는 더 이상 켤 필요가 없습니다.
 
 ### 3-9. 정산 제출 · 검토 대기함 (`/api/submissions`, `/api/admin/submissions`) — M-01, 2026-11-09 추가
 

@@ -20,28 +20,29 @@ ALLOWED_MEDIA = {"image/jpeg", "image/png", "image/webp"}
 MAX_BYTES = 10 * 1024 * 1024
 
 SYSTEM = f"""당신은 한국 영수증(카드 매출전표 또는 간이 영수증) 판독기입니다.
-사진에서 아래 값을 읽어 JSON 객체 하나로만 답하세요. 사진에 없는 값은 지어내지 말고 null 로 두세요.
+사진에서 값을 읽어 JSON 객체 하나로만 답하세요. 아래 설명문을 값으로 베끼지 말고, 사진에 없는 값은 지어내지 말고 null 로 두세요.
 
-{{
-  "merchant": "가맹점(상호)명. 못 읽으면 null",
-  "business_type": "업종 추정. 예: 음식점, 카페, 편의점, 주유소, 숙박, 택시, 서점. 모르면 null",
-  "date": "결제 날짜 YYYY-MM-DD. 못 읽으면 null",
-  "time": "결제 시각 HH:MM (24시간). 못 읽으면 null",
-  "total_amount": 최종 결제(합계) 금액, 원 단위 정수. 못 읽으면 null,
-  "card_last4": "카드번호 마지막 4자리. 별표(*)로 가려져 있으면 null",
-  "approval_no": "승인번호. 없으면 null",
-  "items": [{{"name": "품목명, 영수증에 적힌 그대로", "amount": 품목 금액(원) 또는 null}}],
-  "purpose_candidates": ["이 지출의 용도 후보, 가능성 높은 순 1~3개"],
-  "confidence": "high | medium | low (전체 판독 신뢰도)",
-  "notes": "흐림·잘림·추정한 부분 등 사람이 확인해야 할 메모. 없으면 null"
-}}
+키와 뜻
+- merchant: 가맹점(상호)명 (문자열)
+- business_type: 업종 추정. 예: 음식점, 카페, 편의점, 주유소, 숙박, 택시, 서점 (문자열)
+- date: 결제 날짜 YYYY-MM-DD (문자열)
+- time: 결제 시각 HH:MM, 24시간 (문자열)
+- total_amount: 최종 결제(합계) 금액, 원 단위 정수 (숫자)
+- card_number: 카드번호를 영수증에 적힌 그대로, 별표(*)와 구분자까지 포함 (문자열). 가려진 자리를 추측하지 마세요
+- approval_no: 승인번호 (문자열)
+- items: 품목 목록 [{{"name": 품목명 그대로, "amount": 품목 금액 정수 또는 null}}]. 없으면 []
+- purpose_candidates: 이 지출의 용도 후보, 가능성 높은 순 1~3개. 다음 중에서만: {", ".join(PURPOSES)}
+- confidence: 전체 판독 신뢰도 "high" | "medium" | "low"
+- notes: 흐림·잘림·추정한 부분 등 사람이 확인해야 할 메모 (문자열). 없으면 null
 
 규칙
 - 날짜는 YYYY-MM-DD, 시각은 24시간 HH:MM 으로 통일합니다. (예: 2026.10.20 / 26-10-20 → 2026-10-20, 오후 7:35 → 19:35)
 - 금액은 쉼표와 '원'을 빼고 정수로 적습니다. 합계는 최종 결제 금액(할인·포인트 적용 후)입니다.
-- 카드번호는 마지막 4자리만 적습니다. 별표(*)로 가려져 있으면 null.
-- 용도 후보는 다음 중에서만 고릅니다: {", ".join(PURPOSES)}
 - 숫자 0 과 영문 O, 1 과 l 처럼 헷갈리는 부분, 흐려서 추정한 부분은 notes 에 적어 주세요.
+
+답 형식 (키 이름은 이대로):
+{{"merchant": null, "business_type": null, "date": null, "time": null, "total_amount": null, "card_number": null,
+  "approval_no": null, "items": [], "purpose_candidates": [], "confidence": "medium", "notes": null}}
 """
 
 # 키가 없을 때 화면 흐름을 확인할 수 있게 돌려주는 예시 값 (가상)
@@ -97,12 +98,17 @@ def _clean(data: dict) -> dict:
             amt = int(digits) if digits else None
         items.append({"name": str(it.get("name") or ""), "amount": amt})
     out["items"] = items
-    if out.get("card_last4") is not None:
-        raw = str(out["card_last4"])
-        # 별표 뒤에 남은 숫자만 뒷자리로 인정 ("**** 1234" → 1234, "52393000****" → 모름)
-        tail = raw.rsplit("*", 1)[-1] if "*" in raw else raw
-        digits = re.sub(r"[^\d]", "", tail)
-        out["card_last4"] = digits[-4:] if len(digits) >= 4 else None
+    # 카드 뒷 4자리: 모델에게는 적힌 그대로(card_number)를 받고 여기서 뒷자리를 정합니다.
+    # 별표 뒤에 남은 숫자만 뒷자리로 인정 ("**** 1234" → 1234, "5239-3000-****-****" → 모름)
+    # 카드번호처럼 보이지 않는 짧은 값(승인번호 조각 등)은 버립니다: 숫자·별표가 8자 이상이어야 함
+    raw = out.pop("card_number", None) or out.get("card_last4")
+    out["card_last4"] = None
+    if raw is not None:
+        raw = str(raw)
+        if len(re.sub(r"[^\d*]", "", raw)) >= 8:
+            tail = raw.rsplit("*", 1)[-1] if "*" in raw else raw
+            digits = re.sub(r"[^\d]", "", tail)
+            out["card_last4"] = digits[-4:] if len(digits) >= 4 else None
     return out
 
 
@@ -113,7 +119,8 @@ def recognize(req: ReceiptRequest) -> dict:
 
     t0 = time.time()
     try:
-        data = llm.read_image_json(SYSTEM, base64.standard_b64encode(image).decode("ascii"), req.media_type)
+        data = llm.read_image_json(SYSTEM, base64.standard_b64encode(image).decode("ascii"), req.media_type,
+                                   model=settings.receipt_model)
     except Exception as e:  # openai 예외 종류별 안내
         name = type(e).__name__
         log.warning("receipt %s 인식 실패: %s", req.filename, e)
@@ -127,7 +134,7 @@ def recognize(req: ReceiptRequest) -> dict:
     if not data:
         raise AppError("영수증을 읽지 못했습니다. 사진을 더 밝고 선명하게 찍어 다시 올려 주세요.", 502)
     result = ReceiptResponse.model_validate(_clean(data)).model_dump()
-    result["_meta"] = {"model": settings.llm_model, "seconds": elapsed, "bytes": len(image)}
+    result["_meta"] = {"model": settings.receipt_model, "seconds": elapsed, "bytes": len(image)}
     log.info("receipt %s (%d KB) → %s / %s원 / %s (%.1fs)", req.filename, len(image) // 1024,
              result.get("merchant"), result.get("total_amount"), result.get("confidence"), elapsed)
     return result
