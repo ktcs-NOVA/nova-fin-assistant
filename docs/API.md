@@ -315,14 +315,14 @@ app.add_middleware(
   "time": "10:59",
   "total_amount": 20000,
   "card_last4": null,
-  "approval_no": "22989793",
+  "approval_no": "****9793",
   "items": [
     { "name": "아메리카노Hot", "amount": 4000 },
     { "name": "감자크림스프", "amount": 5000 }
   ],
   "purpose_candidates": ["식비", "회의비"],
   "confidence": "high",
-  "notes": "카드번호 뒷자리가 마스킹되어 card_last4 는 null."
+  "notes": "카드번호 뒷자리가 가려져 있어 card_last4 는 null."
 }
 ```
 
@@ -330,14 +330,17 @@ app.add_middleware(
 |---|---|
 | `date` / `time` | `YYYY-MM-DD` / 24시간 `HH:MM` |
 | `total_amount` | 쉼표·원 없는 정수 (최종 결제 금액) |
-| `card_last4` | 가려져 있으면 `null` (대부분의 영수증이 그렇습니다) |
+| `card_last4` | 뒷 4자리만. 가려져 있으면 `null` (대부분의 영수증이 그렇습니다) |
+| `approval_no` | 뒷 4자리만 `****4889` 형태로. 중복 청구 확인용이라 끝자리면 충분합니다 |
 | `purpose_candidates` | `식비 회의비 교통비 숙박비 주유비 소모품비 도서비 경조사비 기타` 중 1~3개, 가능성 높은 순 |
 | `confidence` | `high` / `medium` / `low`. 프론트는 `medium` 이하를 노란 배지로 표시합니다 |
-| `notes` | 흐림·잘림·추정한 부분. 화면에 "AI 메모"로 그대로 보여줍니다 |
+| `notes` | 흐림·잘림·추정한 부분. 화면에 "AI 메모"로 그대로 보여줍니다. 카드·전화·사업자번호가 섞여 있으면 백엔드가 `[카드번호]` 식으로 가립니다 |
 
 오류: 지원하지 않는 형식·빈 사진·10MB 초과는 400, API 키 문제는 500, 호출 제한은 429, 그 밖의 인식 실패는 502 (`{"error": ...}`).
 
 정답률 (2026-11-10, 샘플 11장, `uv run python -m scripts.eval_receipt`): 날짜·합계 100%, 가맹점 82%, 시각 82~91%, 용도 후보 82%, 전체 89%. `gpt-4o-mini` 와 `gpt-4o` 가 같아서 기본은 mini 입니다 (`RECEIPT_MODEL` 로 변경). 지난 Claude 실험(100%)보다 낮으므로 화면의 "저장 전 직접 수정" 단계가 중요합니다. 가려진 카드번호는 모델 출력 대신 백엔드가 별표 뒤 숫자만 뒷자리로 인정합니다. 실험 서버(`experiments/receipt-ocr/server.py`)는 더 이상 켤 필요가 없습니다.
+
+개인정보 (2026-11-10 PM 요청): 응답의 승인번호는 뒷 4자리만, 메모의 카드·전화·사업자번호는 가려서 내보냅니다(`app/ai/masking.py`). 화면의 샘플 사진 11장(`frontend/public/receipts/`)도 카드번호·승인번호·전화번호·대표자명·사업자번호를 검게 칠한 판본으로 바꿨습니다. 원본은 깃에 올라가지 않는 `experiments/receipt-ocr/receipts/` 에만 두고, 정답률 측정(`scripts.eval_receipt`)은 원본으로 합니다. 그래서 화면에서 샘플을 고르면 승인번호·카드 뒷자리는 비어 나오는 것이 정상입니다.
 
 ### 3-9. 정산 제출 · 검토 대기함 (`/api/submissions`, `/api/admin/submissions`) — M-01, 2026-11-09 추가
 
