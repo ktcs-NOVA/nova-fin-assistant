@@ -89,7 +89,7 @@ export default function ReviewDetail({ id, onBack, onDecided }) {
         <span className="hint">{sub.id}</span>
       </div>
 
-      <Stepper current={sub.step} />
+      <Stepper current={sub.step} status={sub.status} />
 
       {/* 제출 정보 */}
       <div className="card info-card">

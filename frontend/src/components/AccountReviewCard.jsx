@@ -61,7 +61,7 @@ export default function AccountReviewCard({ submission, suggestion, loading, err
     <div className={`card account-card state-${state}`}>
       <div className="account-head">
         <span className={`account-state ${state}`}>{STATE_LABEL[state]}</span>
-        <span className="hint">AI 제안은 U-07 결의서 초안 규칙(suggest_account)에서 가져옵니다.</span>
+        <span className="hint">AI 제안은 결의서 초안 작성 규칙을 기준으로 합니다.</span>
       </div>
 
       <div className="account-compare">

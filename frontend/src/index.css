@@ -242,6 +242,9 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .stepper li.done { color: var(--ink); }
 .stepper li.now { border-color: var(--brand); background: var(--brand-soft); color: var(--ink); font-weight: 600; }
 .stepper li.now .step-no { background: var(--brand); color: var(--brand-ink); }
+.stepper li.rejected { border-color: var(--bad); background: var(--bad-soft); }
+.stepper li.rejected .step-no { background: var(--bad); color: #fff; }
+.stepper li.skip { opacity: .55; border-style: dashed; }
 
 /* ---------- 상세 ---------- */
 .section-title { font-size: 15px; color: var(--muted); margin: 20px 0 8px; }

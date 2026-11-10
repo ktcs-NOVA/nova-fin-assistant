@@ -1,9 +1,11 @@
 // M-01 정산 검토 대기함 (목록)
 // 확인이 필요한 건(보완 필요 → 담당자 확인 필요 → 확인 가능 순)이 위로 오고,
 // 판정·상태로 거를 수 있습니다. 행을 누르면 상세(ReviewDetail)로 들어갑니다.
+// 문제 항목에는 AI 판정 항목 외에 계정과목 불일치(M-05)도 포함해, 상세·반려 사유와 개수가 맞도록 합니다.
 
 import { useEffect, useMemo, useState } from 'react'
-import { listSubmissions, VERDICT, STATUS } from '../../api/client.js'
+import { listSubmissions, suggestAccount, VERDICT, STATUS } from '../../api/client.js'
+import { compareAccount, ACCOUNT_FIELD } from '../../components/AccountReviewCard.jsx'
 import VerdictBadge from '../../components/VerdictBadge.jsx'
 import StatusTag from '../../components/StatusTag.jsx'
 import ReviewDetail from './ReviewDetail.jsx'
@@ -18,31 +20,41 @@ export default function ReviewPage() {
   const [verdictFilter, setVerdictFilter] = useState('확인 필요') // '전체' | '확인 필요' | 각 판정
   const [statusFilter, setStatusFilter] = useState(STATUS.PENDING)
   const [selectedId, setSelectedId] = useState(null)
+  const [acctIssue, setAcctIssue] = useState({})   // id → 계정과목 불일치·미입력 여부 (M-05, 따로 받아 채움)
 
   function load() {
     return listSubmissions()
-      .then((data) => { setRows(data.items); setError('') })
+      .then((data) => {
+        setRows(data.items)
+        setError('')
+        // 계정과목 제안은 건별로 따로 받음. 실패한 건은 그냥 비워 둠 (목록은 그대로 보임)
+        Promise.allSettled(data.items.map((s) => suggestAccount(s).then((d) => [s.id, !!compareAccount(s, d).issue])))
+          .then((rs) => setAcctIssue(Object.fromEntries(rs.filter((r) => r.status === 'fulfilled').map((r) => r.value))))
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false))
   }
   // 외부(API)에서 데이터를 가져오는 동기화라 effect 사용. setState는 응답 후(비동기)에만 호출됨.
   useEffect(() => { load() }, [])
 
+  // 확인 필요 = AI 판정이 확인 가능이 아니거나, 계정과목이 AI 제안과 다름
+  const needsCheck = (r) => r.verdict !== VERDICT.OK || !!acctIssue[r.id]
+
   const counts = useMemo(() => ({
     total: rows.length,
     pending: rows.filter((r) => r.status === STATUS.PENDING).length,
-    needs: rows.filter((r) => r.status === STATUS.PENDING && r.verdict !== VERDICT.OK).length,
-  }), [rows])
+    needs: rows.filter((r) => r.status === STATUS.PENDING && needsCheck(r)).length,
+  }), [rows, acctIssue])
 
   const visible = useMemo(() => rows
     .filter((r) => statusFilter === '전체' || r.status === statusFilter)
     .filter((r) => {
       if (verdictFilter === '전체') return true
-      if (verdictFilter === '확인 필요') return r.verdict !== VERDICT.OK
+      if (verdictFilter === '확인 필요') return needsCheck(r)
       return r.verdict === verdictFilter
     })
     .sort((a, b) => ORDER[a.verdict] - ORDER[b.verdict] || a.submitted_at.localeCompare(b.submitted_at)),
-  [rows, statusFilter, verdictFilter])
+  [rows, statusFilter, verdictFilter, acctIssue])
 
   if (selectedId) {
     return (
@@ -109,7 +121,7 @@ export default function ReviewPage() {
             </thead>
             <tbody>
               {visible.map((r) => {
-                const problems = r.items.filter((it) => it.verdict !== VERDICT.OK)
+                const problems = [...r.items.filter((it) => it.verdict !== VERDICT.OK).map((it) => it.field), ...(acctIssue[r.id] ? [ACCOUNT_FIELD] : [])]
                 return (
                   <tr key={r.id} className="clickable" onClick={() => setSelectedId(r.id)}>
                     <td>{r.submitted_at.slice(5)}</td>
@@ -120,7 +132,7 @@ export default function ReviewPage() {
                     <td className="num">{won(r.amount)}</td>
                     <td><VerdictBadge verdict={r.verdict} /></td>
                     <td className="ellipsis muted-text">
-                      {problems.length ? problems.map((p) => p.field).join(', ') : '없음'}
+                      {problems.length ? problems.join(', ') : '없음'}
                     </td>
                     <td><StatusTag status={r.status} /></td>
                   </tr>
