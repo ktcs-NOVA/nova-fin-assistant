@@ -16,6 +16,7 @@ from app.core.errors import register_error_handlers
 from app.domains.checklist.router import router as checklist_router
 from app.domains.procedure.router import router as procedure_router
 from app.domains.qa.router import router as qa_router
+from app.domains.receipt.router import router as receipt_router
 from app.domains.submissions.router import router as submissions_router
 from app.domains.travel.router import router as travel_router
 from app.domains.verify import service as verify_service
@@ -63,4 +64,5 @@ app.include_router(checklist_router)  # GET  /api/checklist
 app.include_router(procedure_router)  # POST /api/procedure  (U-02, 예시 응답)
 app.include_router(travel_router)  # POST /api/travel-calc  (U-05 출장비 계산)
 app.include_router(voucher_router)  # POST /api/voucher-draft  (U-07 결의서 초안)
+app.include_router(receipt_router)  # POST /api/receipt  (U-06 영수증 인식)
 app.include_router(submissions_router)  # /api/submissions (직원 제출) · /api/admin/submissions (M-01 검토)

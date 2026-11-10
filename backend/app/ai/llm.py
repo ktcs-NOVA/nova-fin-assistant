@@ -67,3 +67,38 @@ def choose_tool(system: str, user: str, tools: list[dict]) -> tuple[str, dict] |
     except json.JSONDecodeError:
         args = {}
     return calls[0].function.name, args if isinstance(args, dict) else {}
+
+
+def read_image_json(system: str, image_base64: str, media_type: str, *, detail: str = "high", model: str | None = None) -> dict:
+    """사진 1장 + 지시문 → JSON(dict). 영수증 인식(U-06)처럼 사진에서 값을 뽑을 때 씁니다.
+
+    목업 모드면 빈 dict 를 돌려주므로 호출한 쪽에서 예시 값을 채우세요.
+    detail="high" 는 작은 글씨(영수증)를 읽기 위해 원본 해상도로 보냅니다. model 을 주지 않으면 llm_model.
+    """
+    if settings.ai_mock:
+        return {}
+
+    resp = _client().chat.completions.create(
+        model=model or settings.llm_model,
+        messages=[
+            {"role": "system", "content": system},
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:{media_type};base64,{image_base64}", "detail": detail},
+                    },
+                    {"type": "text", "text": "위 사진을 읽고 지시문의 JSON 형식으로만 답하세요."},
+                ],
+            },
+        ],
+        response_format={"type": "json_object"},
+        temperature=0.0,
+    )
+    text = resp.choices[0].message.content or "{}"
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        return {}
+    return data if isinstance(data, dict) else {}
