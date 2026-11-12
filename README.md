@@ -24,7 +24,7 @@ nova-fin-assistant/
 | 영수증 등록 화면 (U-06) — 샘플 11장 + 내 사진 + 카메라 촬영, 인식값 수정, 지출 건 초안, "청구 검증으로 보내기"(법인카드 건으로 U-04 폼에 채움) | 완료 (실제 인식은 백엔드 `POST /api/receipt`, 공용 OpenAI 키 · 11/10 / 샘플 사진·응답 개인정보 마스킹 · 11/10) |
 | 관리자 정산 검토 대기함 (M-01) 와이어프레임 | 완료 (목업 데이터) |
 | 로그인·회원가입 화면 — 사번(또는 이메일)+비밀번호로 `POST /api/auth/login`, 가입은 항상 직원 역할. 모든 API 는 `Authorization: Bearer <token>` 으로 사용자 구분 (`X-Employee-No` 제거) | 완료 (11/12 PM 요청. 시드 계정 비밀번호 `nova1234`, 팀원은 `alembic upgrade head` + 시드 재실행 필요. `docs/API.md` 3-10) |
-| 시연용 관리자 검토함 데이터 27건 (판정별 9건, 가상 직원 27명) | 완료 (`backend/scripts/seed_demo.py` → `scripts/data/demo_submissions.json`, 팀원 11/10 패키지 기준. AI 판정은 엔진 실제 결과, 엑셀 기대와 다른 6건은 적재 시 출력) |
+| 시연용 관리자 검토함 데이터 — 출장 27건 + 점심·회식·회의비 17건 (가상 직원 44명) | 완료 (`backend/scripts/seed_demo.py` → `scripts/data/demo_submissions.json`·`demo_meet_cases.json`. 11/10 패키지 + 종원 11/12 자료. AI 판정은 엔진 실제 결과, 기대와 다른 건은 적재 시 출력. FAQ 22개는 `data/eval/qa_eval.csv`. `docs/U-04_점심회식회의비_확장.md`) |
 | 정산 제출 → 관리자 검토 대기함 실제 연결 — 직원이 검증 결과를 제출(건명·계정과목)하면 DB 에 저장되어 관리자 목록·상세에 뜨고 승인/반려·반려 초안(LLM) 저장 | 완료 (`/api/submissions`, `/api/admin/submissions/*`) |
 | 관리자 계정과목 검토 카드 (M-05) — 직원 입력 vs AI 제안 비교, 불일치면 반려 사유 후보 추가 | 완료 (제안은 `POST /api/voucher-draft` 재사용, 목록·상세는 목업) |
 | 백엔드 서버 · DB(PostgreSQL + pgvector) · 실행 스크립트 | 완료 |
