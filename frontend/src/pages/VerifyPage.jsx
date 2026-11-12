@@ -28,7 +28,7 @@ const seatOptions = (f) => (f.includes('철도') || f.includes('KTX') ? ['일반
 const today = () => new Date().toISOString().slice(0, 10)
 
 const emptyItem = () => ({
-  field: '', amount: '', date: '', note: '', nights: '', breakfast_included: false, seat_class: '',
+  field: '', amount: '', date: '', note: '', nights: '', breakfast_included: false, seat_class: '', exception_reason: '',
   // 영수증에서 넘어올 때만 채워지는 칸 (PM 엔진의 법인카드 규칙용)
   merchant: '', merchant_type: '', time: '', payment: '', receipt_file: '',
 })
@@ -87,6 +87,8 @@ export default function VerifyPage({ prefill }) {
       if (isLodging(it.field)) {
         if (it.nights) row.nights = Number(it.nights)
         row.breakfast_included = it.breakfast_included
+        // 숙박 상한 초과 시 특례 사유 (여비규정 제11조⑥) — 있으면 담당자 확인으로 판정됨
+        if (it.exception_reason.trim()) row.exception_reason = it.exception_reason.trim()
       }
       if (seatOptions(it.field) && it.seat_class) row.seat_class = it.seat_class
       // 영수증에서 온 항목: 가맹점·업종·시각·결제수단을 그대로 실어 법인카드 규칙(심야·제한업종)을 받게 함
@@ -242,6 +244,10 @@ export default function VerifyPage({ prefill }) {
                             <input type="checkbox" checked={it.breakfast_included} onChange={(e) => editItem(i, 'breakfast_included', e.target.checked)} />
                             숙박에 조식이 포함됨
                           </span>
+                        </label>
+                        <label className="field">
+                          <span className="field-label">특례 사유 <em>상한 초과 시</em></span>
+                          <input type="text" value={it.exception_reason} placeholder="예: 행사 기간 숙소 부족" onChange={(e) => editItem(i, 'exception_reason', e.target.value)} />
                         </label>
                       </>
                     )}

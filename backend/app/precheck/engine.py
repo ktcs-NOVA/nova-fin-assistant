@@ -195,21 +195,33 @@ def _check_lodging(item, grade, ctx):
 
     if amount <= cap:
         return out
-    if amount <= extra_cap:
-        out.append(_finding(item, R.CHECK,
-                            f"{ctx['region']} 숙박비 상한 {_won(cap)}({nights}박)을 {_won(amount - cap)} 초과했습니다. "
-                            f"부득이한 사유가 있으면 상한의 30%({_won(extra_cap)})까지 추가 지급할 수 있습니다.",
-                            "여비규정 제11조 제6항, 별표 1",
-                            f"부득이한 사유가 없으면 상한 {_won(cap)}으로 수정 (초과분 본인 부담). "
-                            "사유(행사 기간 숙소 부족 등)가 있으면 소명 후 담당자 판단",
-                            "T-LODGING-EXTRA"))
+
+    # 확정 기준(5주차): 별표 1 상한을 넘으면 상한액으로 수정 안내가 기본.
+    # 특례 사유(exception_reason)를 입력했다면 제11조⑥ 특례(상한의 30%까지) 검토를 위해 담당자 확인으로 넘긴다.
+    reason = (item.get("exception_reason") or "").strip()
+    if reason:
+        if amount <= extra_cap:
+            out.append(_finding(item, R.CHECK,
+                                f"{ctx['region']} 숙박비 상한 {_won(cap)}({nights}박)을 {_won(amount - cap)} 초과했고, "
+                                f"특례 사유가 입력되어 있습니다. 사유: {reason}",
+                                "여비규정 제11조 제6항, 별표 1",
+                                f"사유의 타당성을 담당자가 확인 (특례 인정 시 최대 {_won(extra_cap)}까지). "
+                                f"인정되지 않으면 상한 {_won(cap)}으로 수정",
+                                "T-LODGING-EXTRA"))
+        else:
+            out.append(_finding(item, R.FIX,
+                                f"특례 사유가 있어도 숙박비는 {ctx['region']} 상한 {_won(cap)}({nights}박)의 130%({_won(extra_cap)})까지만 "
+                                f"인정됩니다. 청구액 {_won(amount)}은 이를 넘었습니다.",
+                                "여비규정 제11조 제6항, 별표 1",
+                                f"숙박비 청구액을 {_won(extra_cap)} 이하로 수정 (특례 인정은 담당자 확인)",
+                                "T-LODGING-CAP"))
     else:
         out.append(_finding(item, R.FIX,
                             f"숙박비는 {ctx['region']} 상한 {_won(cap)}({nights}박)까지만 지급합니다. "
-                            f"실제 결제액 {_won(amount)}을 그대로 청구해 30% 추가 한도({_won(extra_cap)})도 넘었습니다.",
+                            f"청구액 {_won(amount)}이 {_won(amount - cap)} 초과했습니다.",
                             "여비규정 제11조 제6항, 별표 1",
                             f"숙박비 청구액을 상한 {_won(cap)}으로 수정 (초과분 본인 부담). "
-                            f"부득이한 사유를 승인받아도 최대 {_won(extra_cap)}까지만 인정",
+                            "행사 기간 숙소 부족 등 부득이한 사유가 있으면 특례 사유를 입력",
                             "T-LODGING-CAP"))
     return out
 
