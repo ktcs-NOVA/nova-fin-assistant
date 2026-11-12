@@ -13,6 +13,7 @@ from app.models.knowledge import Chunk, Document
 from app.models.log import QueryLog
 from app.models.submission import Review, Submission
 from app.models.user import User
+from app.models.work_document import WorkDocument
 
 __all__ = [
     "Checklist",
@@ -26,4 +27,5 @@ __all__ = [
     "Submission",
     "Trip",
     "User",
+    "WorkDocument",
 ]
