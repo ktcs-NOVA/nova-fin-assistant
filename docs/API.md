@@ -290,7 +290,7 @@ app.add_middleware(
 ```
 
 - `kind` 는 `document`(필요 서류) 또는 `step`(작성 순서)입니다.
-- 사용자는 `X-Employee-No` 헤더의 사번으로 구분하고, 없으면 데모 직원 `E1001` 로 처리합니다. 시연용이며 실제 로그인이 아닙니다.
+- 사용자는 `Authorization: Bearer <token>` 헤더의 로그인 토큰으로 구분합니다 (3-10). 토큰이 없으면 401.
 - 내용은 저장 시점의 복사본입니다. 규정이 개정되어도 저장한 내용은 바뀌지 않습니다.
 
 ---
@@ -345,7 +345,7 @@ app.add_middleware(
 ### 3-9. 정산 제출 · 검토 대기함 (`/api/submissions`, `/api/admin/submissions`) — M-01, 2026-11-09 추가
 
 직원이 청구 검증(U-04)을 마친 내역을 제출하면 DB(`submissions`·`expenses`·`trips`)에 저장되고, 회계 관리자가 목록·상세에서 승인/반려합니다.
-사용자는 `X-Employee-No` 헤더의 사번으로 구분합니다(로그인 화면에서 고른 계정). 관리자 주소는 `role=admin` 계정만 쓸 수 있고, 직원이 부르면 403.
+사용자는 `Authorization: Bearer <token>` 헤더의 로그인 토큰으로 구분합니다 (3-10). 관리자 주소는 `role=admin` 계정만 쓸 수 있고, 직원이 부르면 403.
 
 | 하는 일 | 방식 | 주소 | 누가 | 프론트가 보내는 것 |
 |---|---|---|---|---|
@@ -374,6 +374,32 @@ app.add_middleware(
 - 반려 초안은 선택한 판정 항목의 메시지·근거·수정 방법으로 먼저 만들고, OpenAI 키가 있으면 LLM 이 안내문 형태로 다듬습니다. 근거 조항은 새로 만들지 않고 판정에 있던 것만 씁니다. 응답 `{ "message", "sources": ["여비규정 제11조 제4항", ...] }`.
 - 판정 없이 들어온 건(시드 예시 등)은 조회할 때 지출 항목으로 검증을 한 번 돌려 채웁니다.
 - 코드: `backend/app/domains/submissions/`, 마이그레이션 `0004` (`submissions.account`).
+
+### 3-10. 로그인 · 회원가입 (`/api/auth/*`) — 2026-11-12 PM 요청, 백엔드·프론트 구현 완료
+
+로그인 화면에서 사번(또는 이메일)과 비밀번호로 들어갑니다. **그 외 모든 API 는 `Authorization: Bearer <token>` 헤더로 사용자를 구분**하고,
+예전 `X-Employee-No` 헤더는 없앴습니다 (보내도 무시되고 401). 토큰은 7일 뒤 만료되며 서버는 토큰을 저장하지 않습니다 (`AUTH_SECRET` 으로 서명).
+
+| 하는 일 | 방식 | 주소 | 보내는 것 | 받는 것 |
+|---|---|---|---|---|
+| 회원가입 | POST | `/api/auth/signup` | `{ name, employee_no, department, grade, email, password }` | 로그인과 같은 모양 (201) |
+| 로그인 | POST | `/api/auth/login` | `{ login_id, password }` — `login_id` 는 사번 또는 이메일 | `{ token, user: { employee_no, name, department, grade, role } }` |
+| 내 계정 | GET | `/api/auth/me` | (토큰) | `user` 와 같은 모양 |
+
+- 회원가입은 **항상 직원(`employee`) 역할**로 만들고, 관리자는 가입으로 만들 수 없습니다 (시드로만). 사번·이메일이 이미 있으면 409.
+  비밀번호는 4자 이상, 이메일은 `a@b.c` 모양만 확인합니다. 사번은 대문자로, 이메일은 소문자로 저장합니다.
+- 로그인 실패는 401 이고, **사번이 없는 경우와 비밀번호가 틀린 경우를 구분하지 않습니다** (같은 메시지).
+- 토큰이 없으면 `{"error": "로그인이 필요합니다."}`, 잘못되거나 만료면 `{"error": "로그인이 만료되었거나 올바르지 않습니다. …"}` (둘 다 401). 프론트는 이때 세션을 지우고 로그인 화면으로 돌립니다.
+- **DB 변경**: `users` 에 `email`(unique)·`password_hash` 추가 (alembic `0005`). 시드 계정 5개는 이메일 `<사번 소문자>@kobc.example`, 비밀번호 **`nova1234`** (`scripts/seed.py` 의 `DEMO_PASSWORD`).
+  **팀원 로컬 DB 는 `uv run alembic upgrade head` → `uv run python -m scripts.seed` 를 다시 실행해야** 로그인됩니다 (시드는 비밀번호가 없는 기존 계정에만 채우므로 다른 데이터는 그대로).
+
+```bash
+curl -s -X POST localhost:8000/api/auth/login -H 'Content-Type: application/json' -d '{"login_id":"E1001","password":"nova1234"}'
+# {"token":"RTEwMDE.1764...,"user":{"employee_no":"E1001","name":"노은비",...,"role":"employee"}}
+curl -s localhost:8000/api/checklists -H 'Authorization: Bearer <token>'
+```
+
+---
 
 ## 4. 에러일 때 돌려주는 모양 (함께 정할 것)
 

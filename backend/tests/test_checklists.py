@@ -8,14 +8,20 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.exc import OperationalError
 
+from app.core.auth import TOKEN_INVALID
 from app.core.db import SessionLocal
+from app.core.security import create_token
 from app.domains.checklist.saved import items_from_procedure
 from app.main import app
 from app.models import User
 from app.rag import retriever
 
-client = TestClient(app)
-OTHER_USER = {"X-Employee-No": "E1002"}
+def auth(employee_no: str) -> dict:
+    return {"Authorization": f"Bearer {create_token(employee_no)}"}
+
+
+client = TestClient(app, headers=auth("E1001"))
+OTHER_USER = auth("E1002")
 TASK = "국내 출장비 정산"
 
 
@@ -102,8 +108,8 @@ def test_delete_removes_checklist(saved):
 def test_unknown_task_and_user_are_rejected(saved):
     r = client.post("/api/checklists", json={"task": "연차 신청"})
     assert r.status_code == 400 and "저장할 수 있는 업무" in r.json()["error"]
-    r = client.get("/api/checklists", headers={"X-Employee-No": "NOSUCHUSER"})
-    assert r.status_code == 401 and "scripts.seed" in r.json()["error"]
+    r = client.get("/api/checklists", headers=auth("NOSUCHUSER"))
+    assert r.status_code == 401 and r.json()["error"] == TOKEN_INVALID
 
 
 def test_blank_task_is_400():

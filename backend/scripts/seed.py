@@ -19,6 +19,7 @@ from app.core.constants import (
     STATUS_PENDING,
 )
 from app.core.db import SessionLocal
+from app.core.security import hash_password
 from app.models import Expense, Submission, Trip, User
 
 KST = ZoneInfo("Asia/Seoul")
@@ -35,6 +36,10 @@ USERS = [
 # 연락처도 가상입니다. 실제 담당자가 정해지면 이 값과 위 계정을 바꾸세요.
 PHONES = {CONTACT_EMPLOYEE_NO: "000-0000-0000"}
 
+# 시연 계정 공통 비밀번호 · 이메일 (로그인 화면 안내문과 같아야 함). 가상 도메인입니다.
+DEMO_PASSWORD = "nova1234"
+EMAIL_DOMAIN = "kobc.example"
+
 
 def seed_users(db) -> dict[str, User]:
     users = {}
@@ -50,6 +55,11 @@ def seed_users(db) -> dict[str, User]:
                 phone=PHONES.get(no),
             )
             db.add(user)
+        # 로그인 정보가 없는 계정(옛 시드 포함)에 이메일·비밀번호를 채움. 팀원은 시드를 다시 실행해야 로그인됨
+        if not user.email:
+            user.email = f"{no.lower()}@{EMAIL_DOMAIN}"
+        if not user.password_hash:
+            user.password_hash = hash_password(DEMO_PASSWORD)
         users[no] = user
     db.flush()
     return users
