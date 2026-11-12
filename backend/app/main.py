@@ -15,6 +15,7 @@ from app.core.db import engine
 from app.core.errors import register_error_handlers
 from app.domains.auth.router import router as auth_router
 from app.domains.checklist.router import router as checklist_router
+from app.domains.documents.router import router as documents_router
 from app.domains.procedure.router import router as procedure_router
 from app.domains.qa.router import router as qa_router
 from app.domains.receipt.router import router as receipt_router
@@ -67,4 +68,5 @@ app.include_router(procedure_router)  # POST /api/procedure  (U-02, 예시 응�
 app.include_router(travel_router)  # POST /api/travel-calc  (U-05 출장비 계산)
 app.include_router(voucher_router)  # POST /api/voucher-draft  (U-07 결의서 초안)
 app.include_router(receipt_router)  # POST /api/receipt  (U-06 영수증 인식)
+app.include_router(documents_router)  # /api/documents (문서 작업: 출장보고서·회의록·출장원)
 app.include_router(submissions_router)  # /api/submissions (직원 제출) · /api/admin/submissions (M-01 검토)
