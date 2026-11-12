@@ -55,6 +55,9 @@ def seed_users(db) -> dict[str, User]:
                 phone=PHONES.get(no),
             )
             db.add(user)
+        else:
+            # 옛 시드(예: '데모직원1')로 만들어진 시연 계정의 이름·부서·직급·역할을 이 목록과 맞춤
+            user.name, user.department, user.grade, user.role = name, dept, grade, role
         # 로그인 정보가 없는 계정(옛 시드 포함)에 이메일·비밀번호를 채움. 팀원은 시드를 다시 실행해야 로그인됨
         if not user.email:
             user.email = f"{no.lower()}@{EMAIL_DOMAIN}"

@@ -50,8 +50,8 @@ export default function HomePage({ user, onNavigate }) {
           <span className="tile-go">{rows === null ? '불러오는 중…' : `검토 대기 ${pendingCount}건 · 보완 ${fixCount}건`}</span>
         </button>
         <button type="button" className="tile" onClick={() => onNavigate('checklist')}>
-          <span className="tile-title">내 체크리스트</span>
-          <span className="tile-desc">규정 Q&A에서 저장한 업무 절차를 이어서 확인해요.</span>
+          <span className="tile-title">문서 작업</span>
+          <span className="tile-desc">저장해 둔 업무 절차와 서류 목록을 이어서 확인하고 채워요.</span>
           <span className="tile-go">열기 →</span>
         </button>
       </div>

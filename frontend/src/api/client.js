@@ -141,6 +141,13 @@ export function calcTravel(req) {
   return request('POST', '/api/travel-calc', req)
 }
 
+/** 회사 → 도착지 경로 (네이버 지도 API, 서버에서 호출): { destination, distance_km(편도), duration_min }
+ *  백엔드에 /api/route 가 생기기 전에는 실패하므로, 화면은 거리를 직접 입력하도록 안내합니다. */
+export function lookupRoute(destination) {
+  if (USE_MOCK) return mock.lookupRoute(destination)
+  return request('POST', '/api/route', { destination })
+}
+
 // ---------- 정산 제출 (직원 → 관리자 검토 대기함) ----------
 
 /** 검증을 마친 청구 내역을 제출(검토 요청). claim 은 verifyClaim 에 보낸 것과 같은 모양,

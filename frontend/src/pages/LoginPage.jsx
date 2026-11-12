@@ -5,6 +5,9 @@
 import { useState } from 'react'
 import { DEMO_ACCOUNTS, DEMO_PASSWORD, GRADES, ROLE, ROLE_LABEL } from '../auth/accounts.js'
 import { login, signup, USE_MOCK, API_BASE } from '../api/client.js'
+import Icon from '../components/Icons.jsx'
+import PasswordField from '../components/PasswordField.jsx'
+import EmailField from '../components/EmailField.jsx'
 
 const EMPTY_SIGNUP = { name: '', employeeNo: '', department: '', grade: GRADES[0], email: '', password: '' }
 
@@ -64,7 +67,7 @@ export default function LoginPage({ onLogin }) {
   async function submitSignup(e) {
     e.preventDefault()
     const missing = ['name', 'employeeNo', 'department', 'email', 'password'].find((k) => !form[k].trim())
-    if (missing) { setError('모든 칸을 채워 주세요.'); return }
+    if (missing) { setError(missing === 'email' ? '이메일 아이디와 도메인을 모두 입력해 주세요.' : '모든 칸을 채워 주세요.'); return }
     if (form.password.length < 4) { setError('비밀번호는 4자 이상이어야 합니다.'); return }
     setLoading(true); setError('')
     try {
@@ -93,7 +96,7 @@ export default function LoginPage({ onLogin }) {
       <section className="login-pane">
         <div className="login-panel">
           <div className="login-top">
-            <span className="logo-mark">經</span>
+            <span className="logo-mark"><Icon name="logo" size={20} /></span>
             <span className={`mode ${USE_MOCK ? 'mock' : 'live'}`} title={USE_MOCK ? '가짜 응답으로 동작 중' : API_BASE}>
               {USE_MOCK ? '목업 모드' : '백엔드 연결'}
             </span>
@@ -140,13 +143,13 @@ export default function LoginPage({ onLogin }) {
                     {GRADES.map((g) => <option key={g} value={g}>{g}</option>)}
                   </select>
                 </label>
-                <label className="field">
+                <label className="field field-wide">
                   <span className="field-label">이메일</span>
-                  <input type="email" value={form.email} onChange={setField('email')} autoComplete="email" />
+                  <EmailField onChange={(email) => setForm((f) => ({ ...f, email }))} />
                 </label>
                 <label className="field">
                   <span className="field-label">비밀번호 <em>4자 이상</em></span>
-                  <input type="password" value={form.password} onChange={setField('password')} autoComplete="new-password" />
+                  <PasswordField value={form.password} onChange={setField('password')} autoComplete="new-password" />
                 </label>
               </div>
               <button className="btn primary login-submit" type="submit" disabled={loading}>{loading ? '만드는 중…' : '가입하고 시작하기'}</button>
@@ -161,7 +164,7 @@ export default function LoginPage({ onLogin }) {
               </label>
               <label className="field">
                 <span className="field-label">비밀번호</span>
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" placeholder="비밀번호를 입력하세요" />
+                <PasswordField value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" placeholder="비밀번호를 입력하세요" />
               </label>
               <button className="btn primary login-submit" type="submit" disabled={loading}>{loading ? '확인 중…' : isAdmin ? '관리자로 로그인' : '로그인'}</button>
               {isAdmin

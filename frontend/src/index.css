@@ -616,3 +616,51 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 }
 .hint.center { text-align: center; }
 .link-btn { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; color: var(--brand); text-decoration: underline; cursor: pointer; }
+
+/* ---------- 출장: 달력 · 경로 ---------- */
+.daterange { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }
+.cal { width: 100%; max-width: 320px; border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--panel); }
+.cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.cal-dow { font-size: 12px; color: var(--muted); padding: 4px 0; }
+.cal-dow.sun { color: var(--bad); }
+.cal-day { border: 0; background: none; color: var(--ink); height: 38px; border-radius: 8px; font-size: 14px; }
+.cal-day:hover { background: var(--brand-soft); }
+.cal-day.range { background: var(--brand-soft); border-radius: 0; }
+.cal-day.sel { background: var(--brand); color: var(--brand-ink); font-weight: 700; }
+.cal-summary { margin: 0; display: grid; gap: 10px; min-width: 200px; }
+.cal-summary div { display: grid; gap: 2px; }
+.cal-summary dt { font-size: 12px; color: var(--muted); }
+.cal-summary dd { margin: 0; font-weight: 600; }
+.route { display: grid; gap: 12px; }
+.route-origin { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+.route-search { display: flex; gap: 8px; align-items: flex-end; }
+.route-search .field { flex: 1; }
+
+
+/* ---------- 비밀번호 보기 · 뒤로가기 · 아이콘 타일 · 영수증 시작 버튼 ---------- */
+.logo-mark svg { display: block; }
+.pw-wrap { position: relative; display: block; }
+.pw-wrap input { width: 100%; padding-right: 44px; }
+.pw-eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: 0; background: none; color: var(--muted); width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; }
+.pw-eye:hover { background: var(--bg); color: var(--ink); }
+.crumb-back { display: inline-flex; align-items: center; gap: 2px; margin-right: 10px; padding: 4px 10px 4px 6px !important; border: 1px solid var(--line) !important; background: var(--panel) !important; font-weight: 600; }
+.tile-icon { width: 54px; height: 54px; border-radius: 14px; display: grid; place-items: center; background: var(--brand-soft); color: var(--brand); }
+.tile-icon.ico-meal { background: var(--warn-soft); color: var(--warn); }
+.tile-icon.ico-meeting { background: #ece9fb; color: #4a3fa8; }
+.tile-icon.ico-card { background: #e0f3f1; color: #0b6b62; }
+@media (prefers-color-scheme: dark) { .tile-icon.ico-meeting { background: #26224a; color: #b4abf5; } .tile-icon.ico-card { background: #12302d; color: #6fd2c6; } }
+.start-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0 8px; }
+.start-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 28px 12px; border: 1.5px dashed var(--line); border-radius: 14px; background: var(--panel); color: var(--brand); text-align: center; cursor: pointer; }
+.start-btn:hover { border-color: var(--brand); background: var(--brand-soft); }
+.start-btn b { color: var(--ink); font-size: 16px; }
+.start-btn small { color: var(--muted); }
+.start-btn input { display: none; }
+.sample-toggle { display: block; margin: 6px 0 10px; font-size: 13px; font-weight: 600; }
+
+/* 이메일 선택 입력 */
+.field-wide { grid-column: 1 / -1; }
+.email-wrap { display: flex; align-items: center; gap: 6px; }
+.email-wrap input { flex: 1; min-width: 0; }
+.email-wrap select { flex: 1; min-width: 0; }
+.email-at { color: var(--muted); font-weight: 600; }
