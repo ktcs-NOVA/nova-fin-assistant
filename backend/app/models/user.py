@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class User(TimestampMixin, Base):
-    """직원 · 관리자. 로그인 없이 화면 상단 토글로 역할을 고르는 데모 계정."""
+    """직원 · 관리자. 사번(또는 이메일)과 비밀번호로 로그인합니다 (POST /api/auth/login)."""
 
     __tablename__ = "users"
 
@@ -23,6 +23,8 @@ class User(TimestampMixin, Base):
     grade: Mapped[str] = mapped_column(String(20))
     role: Mapped[str] = mapped_column(String(10), default="employee", server_default="employee")
     phone: Mapped[str | None] = mapped_column(String(20))  # 연락처
+    email: Mapped[str | None] = mapped_column(String(100), unique=True)  # 로그인 아이디로도 씀
+    password_hash: Mapped[str | None] = mapped_column(String(200))  # core/security.py 형식. 없으면 로그인 불가
 
     expenses: Mapped[list["Expense"]] = relationship(back_populates="user")
     submissions: Mapped[list["Submission"]] = relationship(back_populates="user")
