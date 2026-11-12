@@ -110,12 +110,27 @@ class TravelRules(unittest.TestCase):
                   ])
         self.assertEqual(res["overall"], OK)
 
-    def test_lodging_within_30_percent_needs_review(self):
+    def test_lodging_over_cap_without_reason_is_fix(self):
+        """상한 초과 + 특례 사유 없음 -> 상한액으로 수정 안내"""
         res = run(trip={"region": "기타"}, items=[{"field": "숙박비", "amount": 100000, "nights": 1}])
-        self.assertEqual(find(res, "T-LODGING-EXTRA")["verdict"], CHECK)
+        hit = find(res, "T-LODGING-CAP")
+        self.assertEqual(hit["verdict"], FIX)
+        self.assertIn("상한 80,000원으로 수정", hit["fix"])
 
-    def test_lodging_over_30_percent(self):
-        res = run(trip={"region": "기타"}, items=[{"field": "숙박비", "amount": 120000, "nights": 1}])
+    def test_lodging_over_cap_with_reason_needs_review(self):
+        """상한 초과 + 특례 사유 입력(130% 이내) -> 담당자 확인 필요"""
+        res = run(trip={"region": "기타"},
+                  items=[{"field": "숙박비", "amount": 100000, "nights": 1,
+                          "exception_reason": "행사 기간 숙소 부족"}])
+        hit = find(res, "T-LODGING-EXTRA")
+        self.assertEqual(hit["verdict"], CHECK)
+        self.assertIn("행사 기간 숙소 부족", hit["message"])
+
+    def test_lodging_over_30_percent_even_with_reason(self):
+        """특례 사유가 있어도 130%(104,000원) 초과는 보완 필요"""
+        res = run(trip={"region": "기타"},
+                  items=[{"field": "숙박비", "amount": 120000, "nights": 1,
+                          "exception_reason": "행사 기간 숙소 부족"}])
         hit = find(res, "T-LODGING-CAP")
         self.assertEqual(hit["verdict"], FIX)
         self.assertIn("104,000원", hit["fix"])
