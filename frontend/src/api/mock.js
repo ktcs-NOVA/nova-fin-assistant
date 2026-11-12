@@ -7,6 +7,7 @@ import qaUngroundedData from '../mocks/qa-ungrounded.json'
 import procedureData from '../mocks/procedure.json'
 import checklistData from '../mocks/checklist.json'
 import receiptsData from '../mocks/receipts.json'
+import { DEMO_ACCOUNTS, DEMO_PASSWORD, ROLE } from '../auth/accounts.js'
 
 // 실제 서버처럼 잠깐 기다렸다가 응답 (로딩 표시를 테스트하기 위해)
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -259,4 +260,30 @@ export async function recognizeReceipt({ filename }) {
     throw new Error('목업 모드에서는 샘플 사진 11장만 인식할 수 있습니다. 직접 올린 사진은 백엔드 연결 모드(VITE_USE_MOCK=false)에서 인식됩니다.')
   }
   return structuredClone(found.result)
+}
+
+// ---------- 로그인 (목업) ----------
+// 시연 계정(auth/accounts.js)은 공통 비밀번호로 들어가고, 가입한 계정은 새로고침 전까지만 기억합니다.
+
+const signedUp = []
+
+export async function login(loginId, password) {
+  await wait(400)
+  const key = String(loginId ?? '').trim().toLowerCase()
+  const user = [...DEMO_ACCOUNTS, ...signedUp].find(
+    (a) => a.employee_no.toLowerCase() === key || (a.email ?? `${a.employee_no.toLowerCase()}@kobc.example`) === key,
+  )
+  const ok = user && (signedUp.includes(user) ? user.password === password : password === DEMO_PASSWORD)
+  if (!ok) throw new Error('사번(또는 이메일)이나 비밀번호가 맞지 않습니다.')
+  const { password: _pw, email: _em, ...out } = user
+  return { token: `mock.${out.employee_no}`, user: out }
+}
+
+export async function signup({ name, employeeNo, department, grade, email, password }) {
+  await wait(500)
+  const no = String(employeeNo ?? '').trim().toUpperCase()
+  if ([...DEMO_ACCOUNTS, ...signedUp].some((a) => a.employee_no === no)) throw new Error(`이미 가입된 사번입니다: ${no}`)
+  const user = { employee_no: no, name: name.trim(), department: department.trim(), grade, role: ROLE.EMPLOYEE, email: email.trim().toLowerCase(), password }
+  signedUp.push(user)
+  return login(no, password)
 }

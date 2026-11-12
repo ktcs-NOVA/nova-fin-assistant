@@ -6,7 +6,7 @@
 // 설정은 frontend/.env (공통) 또는 frontend/.env.local (내 PC 전용) 에 적습니다.
 
 import * as mock from './mock.js'
-import { loadUser } from '../auth/accounts.js'
+import { loadSession, clearSession, UNAUTHORIZED_EVENT } from '../auth/accounts.js'
 
 export const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000'
 export const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
@@ -22,13 +22,13 @@ export const VERDICT = {
 async function request(method, path, body) {
   let res
   try {
-    // 로그인한 사번을 함께 보내 백엔드가 그 사람의 데이터(체크리스트 등)로 처리하게 함. 없으면 백엔드 기본 직원.
-    const user = loadUser()
+    // 로그인 토큰을 함께 보내 백엔드가 그 사람으로 처리하게 함 (로그인·회원가입 요청에는 토큰이 없음)
+    const token = loadSession()?.token
     res = await fetch(API_BASE + path, {
       method,
       headers: {
         ...(body ? { 'Content-Type': 'application/json' } : {}),
-        ...(user ? { 'X-Employee-No': user.employee_no } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: body ? JSON.stringify(body) : undefined,
     })
@@ -45,10 +45,29 @@ async function request(method, path, body) {
     } catch {
       /* 본문이 JSON이 아니면 기본 메시지 사용 */
     }
+    // 로그인한 상태에서 토큰이 거절되면(만료·서버 비밀값 변경·시드 재실행) 세션을 지우고 로그인 화면으로
+    if (res.status === 401 && loadSession() && !path.startsWith('/api/auth/login') && !path.startsWith('/api/auth/signup')) {
+      clearSession()
+      window.dispatchEvent(new Event(UNAUTHORIZED_EVENT))
+    }
     throw new Error(message)
   }
 
   return res.status === 204 ? null : res.json()
+}
+
+// ---------- 로그인 (POST /api/auth/*) ----------
+
+/** 로그인. login_id 는 사번 또는 이메일. 성공: { token, user: { employee_no, name, department, grade, role } }. 실패: 401 (사번 없음·비밀번호 틀림 구분 없음) */
+export function login(loginId, password) {
+  if (USE_MOCK) return mock.login(loginId, password)
+  return request('POST', '/api/auth/login', { login_id: loginId, password })
+}
+
+/** 회원가입. 항상 직원 역할로 만들어지고 응답은 로그인과 같은 모양. 관리자는 가입으로 만들 수 없음 */
+export function signup({ name, employeeNo, department, grade, email, password }) {
+  if (USE_MOCK) return mock.signup({ name, employeeNo, department, grade, email, password })
+  return request('POST', '/api/auth/signup', { name, employee_no: employeeNo, department, grade, email, password })
 }
 
 // ---------- 화면에서 쓰는 함수 ----------
