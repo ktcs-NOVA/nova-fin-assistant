@@ -182,6 +182,10 @@ button { font: inherit; cursor: pointer; }
 .user-logout:hover { background: var(--bg); color: var(--ink); }
 
 /* ---------- 로그인 (계정 선택) ---------- */
+.login-form { display: grid; gap: 12px; }
+.login-form .field input, .login-form .field select { font-size: 15px; padding: 9px 12px; }
+.login-submit { width: 100%; padding: 11px; font-size: 15px; }
+.login-demo h2 { font-size: 13px; color: var(--muted); margin: 0 0 8px; font-weight: 600; display: flex; gap: 8px; align-items: baseline; }
 .login-accounts { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
 .login-account { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "avatar name" "avatar meta"; column-gap: 10px; row-gap: 2px; align-items: center; text-align: left; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--ink); font: inherit; cursor: pointer; transition: border-color .12s, background .12s; }
 .login-account:hover { border-color: var(--brand); background: var(--brand-soft); }
@@ -190,7 +194,6 @@ button { font: inherit; cursor: pointer; }
 .login-account.admin .login-avatar { background: var(--warn); color: #fff; }
 .login-name { grid-area: name; font-weight: 700; font-size: 16px; }
 .login-meta { grid-area: meta; color: var(--muted); font-size: 13px; }
-.nav { margin-left: 0; }
 
 /* ---------- 요약 숫자 ---------- */
 .stat-row { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
@@ -547,25 +550,6 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .badge.type-감액 { background: var(--bad-soft); color: var(--bad); }
 .notes-box li + li { margin-top: 4px; }
 
-/* ---------- 출장: 달력 · 경로 ---------- */
-.daterange { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }
-.cal { width: 100%; max-width: 320px; border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--panel); }
-.cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
-.cal-dow { font-size: 12px; color: var(--muted); padding: 4px 0; }
-.cal-dow.sun { color: var(--bad); }
-.cal-day { border: 0; background: none; color: var(--ink); height: 38px; border-radius: 8px; font-size: 14px; }
-.cal-day:hover { background: var(--brand-soft); }
-.cal-day.range { background: var(--brand-soft); border-radius: 0; }
-.cal-day.sel { background: var(--brand); color: var(--brand-ink); font-weight: 700; }
-.cal-summary { margin: 0; display: grid; gap: 10px; min-width: 200px; }
-.cal-summary div { display: grid; gap: 2px; }
-.cal-summary dt { font-size: 12px; color: var(--muted); }
-.cal-summary dd { margin: 0; font-weight: 600; }
-.route { display: grid; gap: 12px; }
-.route-origin { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
-.route-search { display: flex; gap: 8px; align-items: flex-end; }
-.route-search .field { flex: 1; }
 
 /* ---------- 헤더 보강: 로고 버튼 · 규정 물어보기 링크 ---------- */
 .logo-btn { border: 0; background: none; padding: 0; color: inherit; text-align: left; cursor: pointer; }
@@ -590,21 +574,18 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .login-hero li { display: flex; align-items: center; gap: 12px; font-size: 15.5px; }
 .login-hero .check { width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,.2); display: grid; place-items: center; font-size: 14px; font-weight: 700; flex: none; }
 .login-pane { flex: 1 1 460px; display: flex; align-items: center; justify-content: center; padding: 40px 24px; background: var(--bg); }
-.login-form { width: 100%; max-width: 420px; display: grid; gap: 22px; }
+.login-panel { width: 100%; max-width: 420px; display: grid; gap: 22px; }
 .login-top { display: flex; align-items: center; justify-content: space-between; }
 .login-q { font-size: 14px; font-weight: 700; color: var(--muted); margin-bottom: 10px; }
 .seg { display: flex; background: var(--line); border-radius: 14px; padding: 4px; }
 .seg button { flex: 1; border: 0; background: none; padding: 11px; border-radius: 11px; font-weight: 700; font-size: 16px; color: var(--muted); }
 .seg button.on { background: var(--panel); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
-.login-fields { display: grid; gap: 8px; }
-.login-fields h2 { font-size: 24px; margin-bottom: 4px; }
-.login-fields label { font-size: 13.5px; font-weight: 700; margin-top: 6px; }
+.login-head h2 { font-size: 24px; margin-bottom: 4px; }
 .input { font: inherit; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--ink); width: 100%; }
 .input:focus { outline: 2px solid var(--brand); outline-offset: 1px; border-color: var(--brand); }
 .btn.block { display: block; width: 100%; padding: 14px; font-size: 16px; border-radius: 12px; margin-top: 8px; }
-.login-error { color: var(--bad); font-size: 13.5px; margin: 0; }
-.login-pick-label { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
 .login-pane .login-accounts { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); margin-bottom: 8px; }
+.login-pane .login-form .btn.primary { margin-top: 4px; }
 
 /* ---------- 홈·유형 선택 타일 ---------- */
 .home h1 { font-size: 26px; }
@@ -633,3 +614,26 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
   .login-hero { padding: 32px 24px; }
   .login-hero h1 { font-size: 24px; }
 }
+.hint.center { text-align: center; }
+.link-btn { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; color: var(--brand); text-decoration: underline; cursor: pointer; }
+
+/* ---------- 출장: 달력 · 경로 ---------- */
+.daterange { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }
+.cal { width: 100%; max-width: 320px; border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--panel); }
+.cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.cal-dow { font-size: 12px; color: var(--muted); padding: 4px 0; }
+.cal-dow.sun { color: var(--bad); }
+.cal-day { border: 0; background: none; color: var(--ink); height: 38px; border-radius: 8px; font-size: 14px; }
+.cal-day:hover { background: var(--brand-soft); }
+.cal-day.range { background: var(--brand-soft); border-radius: 0; }
+.cal-day.sel { background: var(--brand); color: var(--brand-ink); font-weight: 700; }
+.cal-summary { margin: 0; display: grid; gap: 10px; min-width: 200px; }
+.cal-summary div { display: grid; gap: 2px; }
+.cal-summary dt { font-size: 12px; color: var(--muted); }
+.cal-summary dd { margin: 0; font-weight: 600; }
+.route { display: grid; gap: 12px; }
+.route-origin { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+.route-search { display: flex; gap: 8px; align-items: flex-end; }
+.route-search .field { flex: 1; }
+
