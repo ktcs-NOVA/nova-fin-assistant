@@ -121,6 +121,38 @@ export function deleteChecklist(checklistId) {
   return request('DELETE', `/api/checklists/${checklistId}`)
 }
 
+// ---------- 문서 작업: 출장보고서·회의록·출장원 (/api/documents) ----------
+export const DOC_KINDS = ['출장보고서', '회의록', '출장원']
+
+/** 내 서류 목록(최근 수정 순): [{ id, kind, title, status: '작성 중'|'작성 완료', fields, draft, confirmed, created_at, updated_at }] */
+export function listDocuments() {
+  if (USE_MOCK) return mock.listDocuments()
+  return request('GET', '/api/documents')
+}
+
+/** 새 서류 저장. fields 는 { 항목: 값 } (값은 글자·숫자·글자 목록) */
+export function createDocument({ kind, title, fields }) {
+  if (USE_MOCK) return mock.createDocument({ kind, title, fields })
+  return request('POST', '/api/documents', { kind, title, fields })
+}
+
+/** 입력값·제목·초안·확인 여부를 저장. 보낸 항목만 바뀝니다. 내용이 바뀌면 확인 완료는 자동으로 풀려요. */
+export function updateDocument(id, patch) {
+  if (USE_MOCK) return mock.updateDocument(id, patch)
+  return request('PATCH', `/api/documents/${id}`, patch)
+}
+
+/** 저장된 입력값으로 초안 만들기. 필요한 칸이 비어 있으면 어떤 칸인지 알려주는 오류를 던집니다. */
+export function draftDocument(id) {
+  if (USE_MOCK) return mock.draftDocument(id)
+  return request('POST', `/api/documents/${id}/draft`)
+}
+
+export function deleteDocument(id) {
+  if (USE_MOCK) return mock.deleteDocument(id)
+  return request('DELETE', `/api/documents/${id}`)
+}
+
 /** 체크리스트: { type, items: [{ id, text, basis }] } */
 export function getChecklist(type = '국내출장') {
   if (USE_MOCK) return mock.getChecklist(type)

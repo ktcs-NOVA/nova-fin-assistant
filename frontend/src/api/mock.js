@@ -107,6 +107,106 @@ export async function deleteChecklist(checklistId) {
   return null
 }
 
+// 문서 작업: 목업은 이 브라우저(localStorage)에 저장해서 새로고침해도 남습니다. 초안 계산은 백엔드 drafts.py 와 같은 규칙이에요.
+const DOCS_KEY = 'nova.mock.documents'
+const DOC_REQUIRED = {
+  출장보고서: { trip_start: '출장 시작일', trip_end: '출장 종료일', destination: '출장지', purpose: '출장 목적', work_notes: '주요 수행 내용' },
+  회의록: { meeting_title: '회의명', meeting_date: '회의 일시', attendees: '참석자', notes: '논의 내용 메모' },
+  출장원: { trip_start: '출장 시작일', trip_end: '출장 종료일', destination: '출장지', purpose: '출장 목적', total_amount: '정산 금액' },
+}
+const loadDocs = () => {
+  try { return JSON.parse(localStorage.getItem(DOCS_KEY)) ?? [] } catch { return [] }
+}
+const saveDocs = (rows) => {
+  try { localStorage.setItem(DOCS_KEY, JSON.stringify(rows)) } catch { /* 저장소를 못 쓰면 이번 화면에서만 유지 */ }
+}
+const num = (v) => { const n = Math.trunc(Number(v)); return Number.isFinite(n) ? n : 0 }
+const won = (v) => `${num(v).toLocaleString('ko-KR')}원`
+const ymd = (s) => { const [y, m, d] = String(s).slice(0, 10).split('-').map(Number); return y ? `${y}년 ${m}월 ${d}일` : String(s ?? '') }
+const nightsOf = (a, b) => Math.round((new Date(b) - new Date(a)) / 86400000)
+const periodText = (a, b) => {
+  const n = nightsOf(a, b)
+  if (Number.isNaN(n)) return `${a} ~ ${b}`
+  return `${n <= 0 ? ymd(a) : `${ymd(a)} ~ ${ymd(b)}`} (${n <= 0 ? '당일' : `${n}박 ${n + 1}일`})`
+}
+const txt = (f, k) => String(f[k] ?? '').trim()
+
+function mockDraftText(kind, f, who) {
+  if (kind === '출장보고서') {
+    const costs = [['교통비', 'transport_fee'], ['숙박비', 'lodging_fee'], ['일비', 'daily_fee'], ['식비', 'meal_fee']].filter(([, k]) => num(f[k]) > 0)
+    const lines = ['국내출장 결과 보고서', '', `출장자: ${who}`, `출장 기간: ${periodText(f.trip_start, f.trip_end)}`, `출장지: ${txt(f, 'destination')}`, `출장 목적: ${txt(f, 'purpose')}`, '', '수행 내용', txt(f, 'work_notes')]
+    if (costs.length) lines.push('', '경비 내역', ...costs.map(([l, k]) => `${l}: ${won(f[k])}`), `합계: ${won(costs.reduce((a, [, k]) => a + num(f[k]), 0))}`)
+    return lines.join('\n')
+  }
+  if (kind === '회의록') {
+    const people = (f.attendees ?? []).map((a) => String(a).trim()).filter(Boolean)
+    const lines = ['회의록', '', `회의명: ${txt(f, 'meeting_title')}`, `일시: ${ymd(f.meeting_date)}`]
+    if (txt(f, 'place')) lines.push(`장소: ${txt(f, 'place')}`)
+    lines.push(`참석자: ${people.length}명 (${people.join(', ')})`)
+    if (num(f.receipt_amount) > 0) lines.push(`회의 비용: ${won(f.receipt_amount)} · 1인당 ${won(Math.floor(num(f.receipt_amount) / people.length + 0.5))} (원 미만 반올림)`)
+    return [...lines, '', '논의 내용', txt(f, 'notes'), '', `작성자: ${who}`].join('\n')
+  }
+  return ['출장원 (정산)', '', `출장자: ${who}`, `출장 기간: ${periodText(f.trip_start, f.trip_end)}`, `출장지: ${txt(f, 'destination')}`, `출장 목적: ${txt(f, 'purpose')}`, `정산 금액: ${won(f.total_amount)}`, '', `서명: ${txt(f, 'signer_name') || '(서명 전)'}`].join('\n')
+}
+
+export async function listDocuments() {
+  await wait(200)
+  return loadDocs().sort((a, b) => b.updated_at.localeCompare(a.updated_at))
+}
+
+export async function createDocument({ kind, title, fields }) {
+  await wait(200)
+  const rows = loadDocs()
+  const now = new Date().toISOString()
+  const detail = txt(fields ?? {}, 'destination') || txt(fields ?? {}, 'meeting_title')
+  const doc = { id: Date.now(), kind, title: (title ?? '').trim() || (detail ? `${kind} · ${detail}` : kind), status: '작성 중', fields: fields ?? {}, draft: '', confirmed: false, created_at: now, updated_at: now }
+  saveDocs([doc, ...rows])
+  return structuredClone(doc)
+}
+
+export async function updateDocument(id, patch) {
+  await wait(150)
+  const rows = loadDocs()
+  const doc = rows.find((d) => d.id === id)
+  if (!doc) throw new Error('서류를 찾을 수 없습니다.')
+  let changed = false
+  if (patch.fields !== undefined && JSON.stringify(patch.fields) !== JSON.stringify(doc.fields)) { doc.fields = patch.fields; changed = true }
+  if (patch.draft !== undefined && patch.draft !== doc.draft) { doc.draft = patch.draft; changed = true }
+  if (patch.title?.trim()) doc.title = patch.title.trim()
+  if (patch.confirmed === true) {
+    if (!doc.draft.trim()) throw new Error('초안이 아직 없어서 확인 완료로 바꿀 수 없습니다.')
+    doc.confirmed = true
+  } else if (patch.confirmed === false || changed) doc.confirmed = false
+  doc.status = doc.confirmed ? '작성 완료' : '작성 중'
+  doc.updated_at = new Date().toISOString()
+  saveDocs(rows)
+  return structuredClone(doc)
+}
+
+export async function draftDocument(id) {
+  await wait(500)
+  const rows = loadDocs()
+  const doc = rows.find((d) => d.id === id)
+  if (!doc) throw new Error('서류를 찾을 수 없습니다.')
+  const lacking = Object.entries(DOC_REQUIRED[doc.kind]).filter(([k]) => {
+    const v = doc.fields[k]
+    return v == null || String(v).trim() === '' || (Array.isArray(v) && !v.length) || (k === 'total_amount' && !num(v))
+  }).map(([, label]) => label)
+  if (lacking.length) throw new Error(`초안을 만들려면 먼저 입력해 주세요: ${lacking.join(', ')}`)
+  doc.draft = mockDraftText(doc.kind, doc.fields, '데모 사용자 (재무팀)')
+  doc.confirmed = false
+  doc.status = '작성 중'
+  doc.updated_at = new Date().toISOString()
+  saveDocs(rows)
+  return structuredClone(doc)
+}
+
+export async function deleteDocument(id) {
+  await wait(150)
+  saveDocs(loadDocs().filter((d) => d.id !== id))
+  return null
+}
+
 // 경로 조회: 실제 거리는 네이버 지도 API가 계산합니다. 목업은 모양만 같은 예시값을 돌려줍니다.
 export async function lookupRoute(destination) {
   await wait(500)

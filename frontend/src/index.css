@@ -594,7 +594,8 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .tile-grid.hero { grid-template-columns: 1.4fr 1fr 1fr; }
 .tile-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .tile { display: flex; flex-direction: column; gap: 8px; text-align: left; padding: 22px; border: 1.5px solid var(--line); border-radius: 16px; background: var(--panel); color: var(--ink); transition: border-color .12s, box-shadow .12s; }
-.tile:hover { border-color: var(--brand); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+.tile:hover { border-color: var(--brand); background: var(--brand-soft); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+.count-red { color: var(--bad); font-weight: 800; }
 .tile.primary { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
 .tile-title { font-size: 20px; font-weight: 700; }
 .tile-desc { font-size: 14.5px; line-height: 1.6; color: var(--muted); }
@@ -664,3 +665,32 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .email-wrap input { flex: 1; min-width: 0; }
 .email-wrap select { flex: 1; min-width: 0; }
 .email-at { color: var(--muted); font-weight: 600; }
+
+/* ---------- 문서 작업 ---------- */
+.doc-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin: 14px 0 16px; }
+.doc-tabs button { font: inherit; background: none; border: 0; border-bottom: 3px solid transparent; padding: 9px 14px; color: var(--muted); cursor: pointer; font-weight: 600; }
+.doc-tabs button.on { color: var(--brand); border-bottom-color: var(--brand); }
+.doc-count { margin-left: 6px; font-size: 12px; background: var(--brand-soft); color: var(--brand); border-radius: 999px; padding: 2px 8px; }
+.doc-top { align-items: center; margin-top: 0; margin-bottom: 8px; }
+.doc-kinds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px; }
+.doc-kind { align-items: flex-start; }
+.doc-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.doc-item { display: flex; align-items: center; gap: 14px; padding: 14px 16px; }
+.doc-item .tile-icon { width: 44px; height: 44px; flex: none; }
+.doc-item-main { flex: 1; min-width: 0; }
+.doc-item-main .recent-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doc-actions { display: flex; gap: 6px; flex: none; }
+.doc-editor { display: flex; flex-direction: column; gap: 12px; }
+.doc-editor > .btn.small { align-self: flex-start; }
+.doc-editor-head { margin: 4px 0 0; }
+.doc-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+.doc-form .field textarea, .doc-draft-text { width: 100%; font: inherit; font-size: 14px; line-height: 1.6; color: inherit; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; resize: vertical; }
+.doc-draft-text { font-family: var(--mono); font-size: 13px; }
+.doc-note { background: var(--good-soft); color: var(--good); padding: 10px 14px; border-radius: 9px; font-size: 14px; }
+.doc-confirm { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 14px; }
+.doc-confirm input { width: 16px; height: 16px; accent-color: var(--brand); }
+@media (max-width: 640px) {
+  .doc-kinds, .doc-form { grid-template-columns: 1fr; }
+  .doc-item { flex-wrap: wrap; }
+  .doc-actions { width: 100%; justify-content: flex-end; }
+}
