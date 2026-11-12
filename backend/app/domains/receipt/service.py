@@ -71,7 +71,12 @@ def _decode_image(req: ReceiptRequest) -> bytes:
         raw = raw.split(",", 1)[-1]
     try:
         image = base64.standard_b64decode(raw)
-    except (ValueError, TypeError):
+    except (ValueError, TypeError) as e:
+        # 진단용: 어떤 값이 와서 실패했는지 (사진 내용은 남기지 않고 길이·앞뒤 몇 글자만)
+        log.warning(
+            "receipt %s image_base64 해독 실패: %s | media=%s len=%d head=%r tail=%r non_ascii=%s",
+            req.filename, e, req.media_type, len(raw), raw[:24], raw[-12:], not raw.isascii(),
+        )
         raise AppError("image_base64 를 해독할 수 없습니다.")
     if not image:
         raise AppError("사진 데이터가 비어 있습니다.")
