@@ -182,23 +182,14 @@ button { font: inherit; cursor: pointer; }
 .user-logout:hover { background: var(--bg); color: var(--ink); }
 
 /* ---------- 로그인 (계정 선택) ---------- */
-.login-page { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; background: var(--bg); }
-.login-box { width: 100%; max-width: 760px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 28px; display: grid; gap: 20px; }
-.login-brand { display: flex; align-items: center; gap: 12px; }
-.login-brand h1 { margin: 0; font-size: 20px; }
-.login-brand .mode { margin-left: auto; }
-.login-hint { margin: 0; color: var(--muted); font-size: 14px; }
-.login-group h2 { font-size: 13px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .login-accounts { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-.login-account { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "avatar name" "avatar meta" "enter enter"; column-gap: 10px; row-gap: 2px; align-items: center; text-align: left; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--ink); font: inherit; cursor: pointer; transition: border-color .12s, background .12s; }
+.login-account { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "avatar name" "avatar meta"; column-gap: 10px; row-gap: 2px; align-items: center; text-align: left; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--ink); font: inherit; cursor: pointer; transition: border-color .12s, background .12s; }
 .login-account:hover { border-color: var(--brand); background: var(--brand-soft); }
 .login-account.admin:hover { border-color: var(--warn); background: var(--warn-soft); }
 .login-avatar { grid-area: avatar; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: var(--brand); color: var(--brand-ink); font-weight: 700; }
 .login-account.admin .login-avatar { background: var(--warn); color: #fff; }
 .login-name { grid-area: name; font-weight: 700; font-size: 16px; }
 .login-meta { grid-area: meta; color: var(--muted); font-size: 13px; }
-.login-enter { grid-area: enter; margin-top: 8px; font-size: 13px; color: var(--brand); }
-.login-account.admin .login-enter { color: var(--warn); }
 .nav { margin-left: 0; }
 
 /* ---------- 요약 숫자 ---------- */
@@ -555,3 +546,71 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .badge.type-실비 { background: var(--brand-soft); color: var(--brand); }
 .badge.type-감액 { background: var(--bad-soft); color: var(--bad); }
 .notes-box li + li { margin-top: 4px; }
+
+
+/* ---------- 헤더 보강: 로고 버튼 · 규정 물어보기 링크 ---------- */
+.logo-btn { border: 0; background: none; padding: 0; color: inherit; text-align: left; cursor: pointer; }
+.logo-btn > span:last-child { display: flex; flex-direction: column; }
+.logo-name { font-weight: 700; line-height: 1.3; }
+.header-link { border: 0; background: none; color: var(--brand); font-weight: 600; padding: 6px 8px; border-radius: 8px; }
+.header-link:hover { background: var(--brand-soft); }
+
+/* ---------- 현재 위치(빵부스러기) ---------- */
+.crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; margin-bottom: 14px; font-size: 14px; color: var(--muted); }
+.crumbs button { border: 0; background: none; padding: 2px 4px; color: var(--brand); border-radius: 6px; }
+.crumbs button:hover { background: var(--brand-soft); }
+.crumb-sep { margin: 0 4px; }
+.crumbs [aria-current] { color: var(--ink); font-weight: 600; padding: 2px 4px; }
+
+/* ---------- 로그인 (좌: 소개 / 우: 폼) ---------- */
+.login-split { min-height: 100vh; display: flex; flex-wrap: wrap; }
+.login-hero { flex: 1 1 420px; background: var(--brand); color: var(--brand-ink); padding: 56px 52px; display: flex; flex-direction: column; justify-content: center; gap: 22px; }
+.login-hero h1 { font-size: 32px; line-height: 1.35; margin: 0; }
+.login-hero p { margin: 0; font-size: 16px; line-height: 1.7; opacity: .9; }
+.login-hero ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.login-hero li { display: flex; align-items: center; gap: 12px; font-size: 15.5px; }
+.login-hero .check { width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,.2); display: grid; place-items: center; font-size: 14px; font-weight: 700; flex: none; }
+.login-pane { flex: 1 1 460px; display: flex; align-items: center; justify-content: center; padding: 40px 24px; background: var(--bg); }
+.login-form { width: 100%; max-width: 420px; display: grid; gap: 22px; }
+.login-top { display: flex; align-items: center; justify-content: space-between; }
+.login-q { font-size: 14px; font-weight: 700; color: var(--muted); margin-bottom: 10px; }
+.seg { display: flex; background: var(--line); border-radius: 14px; padding: 4px; }
+.seg button { flex: 1; border: 0; background: none; padding: 11px; border-radius: 11px; font-weight: 700; font-size: 16px; color: var(--muted); }
+.seg button.on { background: var(--panel); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+.login-fields { display: grid; gap: 8px; }
+.login-fields h2 { font-size: 24px; margin-bottom: 4px; }
+.login-fields label { font-size: 13.5px; font-weight: 700; margin-top: 6px; }
+.input { font: inherit; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--ink); width: 100%; }
+.input:focus { outline: 2px solid var(--brand); outline-offset: 1px; border-color: var(--brand); }
+.btn.block { display: block; width: 100%; padding: 14px; font-size: 16px; border-radius: 12px; margin-top: 8px; }
+.login-error { color: var(--bad); font-size: 13.5px; margin: 0; }
+.login-pick-label { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.login-pane .login-accounts { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); margin-bottom: 8px; }
+
+/* ---------- 홈·유형 선택 타일 ---------- */
+.home h1 { font-size: 26px; }
+.home-sub { margin-top: 28px; font-size: 17px; }
+.tile-grid { display: grid; gap: 14px; margin-top: 18px; }
+.tile-grid.hero { grid-template-columns: 1.4fr 1fr 1fr; }
+.tile-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.tile { display: flex; flex-direction: column; gap: 8px; text-align: left; padding: 22px; border: 1.5px solid var(--line); border-radius: 16px; background: var(--panel); color: var(--ink); transition: border-color .12s, box-shadow .12s; }
+.tile:hover { border-color: var(--brand); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+.tile.primary { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.tile-title { font-size: 20px; font-weight: 700; }
+.tile-desc { font-size: 14.5px; line-height: 1.6; color: var(--muted); }
+.tile.primary .tile-desc { color: inherit; opacity: .9; }
+.tile-go { margin-top: auto; padding-top: 8px; font-weight: 700; font-size: 14px; color: var(--brand); }
+.tile.primary .tile-go { color: inherit; }
+.tile-docs { margin-top: auto; padding-top: 8px; font-size: 13px; font-weight: 600; color: var(--brand); }
+.notice-bar { display: flex; justify-content: space-between; gap: 12px; width: 100%; margin-top: 16px; padding: 13px 16px; border: 1px solid var(--warn); border-radius: 12px; background: var(--warn-soft); color: var(--warn); text-align: left; }
+.notice-go { font-weight: 700; white-space: nowrap; }
+.recent-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+.recent-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.recent-name { font-weight: 600; }
+.recent-link { border: 0; background: none; padding: 0; text-align: left; color: inherit; display: grid; gap: 2px; }
+.row-badges { display: flex; gap: 6px; }
+@media (max-width: 760px) {
+  .tile-grid.hero, .tile-grid.two { grid-template-columns: 1fr; }
+  .login-hero { padding: 32px 24px; }
+  .login-hero h1 { font-size: 24px; }
+}
