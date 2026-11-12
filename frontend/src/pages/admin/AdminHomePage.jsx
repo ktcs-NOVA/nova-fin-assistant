@@ -24,14 +24,18 @@ export default function AdminHomePage({ user, onNavigate }) {
 
   return (
     <div className="home">
-      <h1>{rows === null ? `${user.name} 님, 안녕하세요` : `${user.name} 님, 오늘 검토할 정산이 ${pending.length}건 있어요`}</h1>
+      <h1>
+        {rows === null ? `${user.name} 님, 안녕하세요` : (
+          <>{user.name} 님, 오늘 검토할 정산이 <span className="count-red">{pending.length}건</span> 있어요</>
+        )}
+      </h1>
       <p className="hint">AI가 먼저 점검한 결과를 보고, 승인 여부는 담당자가 결정해요.</p>
 
       <div className="tile-grid two">
-        <button type="button" className="tile primary" onClick={() => onNavigate('review')}>
+        <button type="button" className="tile" onClick={() => onNavigate('review')}>
           <span className="tile-title">검토 대기</span>
           <span className="tile-desc">새로 제출된 정산이에요. AI 판정이 함께 보여요.</span>
-          <span className="tile-go">{rows === null ? '불러오는 중…' : `${pending.length}건 · 확인 필요 ${needCheck}건`}</span>
+          <span className="tile-go">{rows === null ? '불러오는 중…' : <><span className="count-red">{pending.length}건</span> · 확인 필요 <span className="count-red">{needCheck}건</span></>}</span>
         </button>
         <button type="button" className="tile" onClick={() => onNavigate('review')}>
           <span className="tile-title">승인 완료</span>
