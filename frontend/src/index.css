@@ -657,3 +657,10 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .start-btn small { color: var(--muted); }
 .start-btn input { display: none; }
 .sample-toggle { display: block; margin: 6px 0 10px; font-size: 13px; font-weight: 600; }
+
+/* 이메일 선택 입력 */
+.field-wide { grid-column: 1 / -1; }
+.email-wrap { display: flex; align-items: center; gap: 6px; }
+.email-wrap input { flex: 1; min-width: 0; }
+.email-wrap select { flex: 1; min-width: 0; }
+.email-at { color: var(--muted); font-weight: 600; }

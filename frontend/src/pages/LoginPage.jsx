@@ -7,6 +7,7 @@ import { DEMO_ACCOUNTS, DEMO_PASSWORD, GRADES, ROLE, ROLE_LABEL } from '../auth/
 import { login, signup, USE_MOCK, API_BASE } from '../api/client.js'
 import Icon from '../components/Icons.jsx'
 import PasswordField from '../components/PasswordField.jsx'
+import EmailField from '../components/EmailField.jsx'
 
 const EMPTY_SIGNUP = { name: '', employeeNo: '', department: '', grade: GRADES[0], email: '', password: '' }
 
@@ -66,7 +67,7 @@ export default function LoginPage({ onLogin }) {
   async function submitSignup(e) {
     e.preventDefault()
     const missing = ['name', 'employeeNo', 'department', 'email', 'password'].find((k) => !form[k].trim())
-    if (missing) { setError('모든 칸을 채워 주세요.'); return }
+    if (missing) { setError(missing === 'email' ? '이메일 아이디와 도메인을 모두 입력해 주세요.' : '모든 칸을 채워 주세요.'); return }
     if (form.password.length < 4) { setError('비밀번호는 4자 이상이어야 합니다.'); return }
     setLoading(true); setError('')
     try {
@@ -142,9 +143,9 @@ export default function LoginPage({ onLogin }) {
                     {GRADES.map((g) => <option key={g} value={g}>{g}</option>)}
                   </select>
                 </label>
-                <label className="field">
+                <label className="field field-wide">
                   <span className="field-label">이메일</span>
-                  <input type="email" value={form.email} onChange={setField('email')} autoComplete="email" />
+                  <EmailField onChange={(email) => setForm((f) => ({ ...f, email }))} />
                 </label>
                 <label className="field">
                   <span className="field-label">비밀번호 <em>4자 이상</em></span>
