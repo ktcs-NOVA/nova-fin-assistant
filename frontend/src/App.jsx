@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Layout from './components/Layout.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import HomePage from './pages/HomePage.jsx'
@@ -11,7 +11,7 @@ import ReceiptPage from './pages/ReceiptPage.jsx'
 import TravelCalcPage from './pages/TravelCalcPage.jsx'
 import AdminHomePage from './pages/admin/AdminHomePage.jsx'
 import ReviewPage from './pages/admin/ReviewPage.jsx'
-import { loadUser, saveUser, clearUser } from './auth/accounts.js'
+import { loadSession, saveSession, clearSession, UNAUTHORIZED_EVENT } from './auth/accounts.js'
 
 // 화면 목록. 화면을 추가하려면 해당 역할의 pages 에 한 줄 넣고 pages/ 에 파일을 만들면 됩니다.
 // parent: 빵부스러기(현재 위치)에서 한 단계 위 화면. 없으면 맨 위(홈).
@@ -43,24 +43,31 @@ const MENUS = {
 }
 
 export default function App() {
-  const [user, setUser] = useState(() => loadUser())   // 로그인한 계정 (브라우저에 기억)
+  const [user, setUser] = useState(() => loadSession()?.user ?? null)   // 로그인한 계정 (토큰과 함께 브라우저에 기억)
   const [current, setCurrent] = useState(() => (user ? MENUS[user.role].home : null))
   // 영수증 등록(U-06)·출장비 계산(U-05)에서 "청구 검증으로 보내기"를 누르면 여기에 담겨 청구 검증(U-04) 폼의 초기값이 됩니다.
   const [verifyPrefill, setVerifyPrefill] = useState(null)
 
-  function login(account) {
-    saveUser(account)
-    setUser(account)
-    setCurrent(MENUS[account.role].home)
+  // 로그인·회원가입 응답 { token, user } 를 저장하고 역할에 맞는 첫 화면으로
+  function login(session) {
+    saveSession(session)
+    setUser(session.user)
+    setCurrent(MENUS[session.user.role].home)
     setVerifyPrefill(null)
   }
 
   function logout() {
-    clearUser()
+    clearSession()
     setUser(null)
     setCurrent(null)
     setVerifyPrefill(null)
   }
+
+  // API 가 토큰을 거절(401)하면 client.js 가 이 이벤트를 띄움 → 로그인 화면으로
+  useEffect(() => {
+    window.addEventListener(UNAUTHORIZED_EVENT, logout)
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, logout)
+  }, [])
 
   if (!user) return <LoginPage onLogin={login} />
 

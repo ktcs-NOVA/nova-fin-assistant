@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     # 임베딩 차원은 DB 컬럼 크기와 같아야 함 (models/knowledge.py, alembic 마이그레이션)
     embedding_dim: int = 1536
 
+    # 로그인 (POST /api/auth/*). 토큰 서명용 비밀 값 — 운영에서는 반드시 바꿀 것
+    auth_secret: str = "nova-dev-secret-change-me"
+    auth_token_days: int = 7
+
     # RAG
     rag_top_k: int = 5
     rag_min_score: float = 0.3

@@ -13,6 +13,7 @@ from sqlalchemy import text
 from app.core.config import settings
 from app.core.db import engine
 from app.core.errors import register_error_handlers
+from app.domains.auth.router import router as auth_router
 from app.domains.checklist.router import router as checklist_router
 from app.domains.procedure.router import router as procedure_router
 from app.domains.qa.router import router as qa_router
@@ -58,6 +59,7 @@ def health() -> dict:
 
 
 # ---------- 기능 라우터 등록: 새 기능은 여기 한 줄 ----------
+app.include_router(auth_router)  # POST /api/auth/signup · /api/auth/login · GET /api/auth/me
 app.include_router(qa_router)  # POST /api/qa
 app.include_router(verify_router)  # POST /api/verify  (규칙 엔진 연결)
 app.include_router(checklist_router)  # GET  /api/checklist
