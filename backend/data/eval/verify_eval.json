@@ -1,0 +1,2473 @@
+{
+ "version": "2026-11-12",
+ "verdict_names": [
+  "규정상 확인 가능",
+  "보완 필요",
+  "담당자 확인 필요"
+ ],
+ "cases": [
+  {
+   "id": "L01",
+   "category": "숙박",
+   "name": "서울 1박 150,000원, 사유 없음",
+   "source": "별표1, 확정 기준(5주차)",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "region": "서울"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 150000,
+      "nights": 1
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-LODGING-CAP": [
+      "보완 필요",
+      "제11조 제6항"
+     ]
+    }
+   },
+   "mapping": [
+    "M06"
+   ]
+  },
+  {
+   "id": "L02",
+   "category": "숙박",
+   "name": "광역시 1박 95,000원, 사유 없음",
+   "source": "별표1, 확정 기준(5주차)",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "region": "광역시"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 95000,
+      "nights": 1
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-LODGING-CAP": [
+      "보완 필요",
+      "제11조 제6항"
+     ]
+    }
+   },
+   "mapping": [
+    "M06"
+   ]
+  },
+  {
+   "id": "L03",
+   "category": "숙박",
+   "name": "광역시 1박 95,000원, 특례 사유 있음",
+   "source": "제11조제6항 특례",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "region": "광역시"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 95000,
+      "nights": 1,
+      "exception_reason": "행사 기간 숙소 부족"
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "담당자 확인 필요",
+    "rules": {
+     "T-LODGING-EXTRA": [
+      "담당자 확인 필요",
+      "제11조 제6항"
+     ]
+    }
+   },
+   "mapping": [
+    "M06"
+   ]
+  },
+  {
+   "id": "L04",
+   "category": "숙박",
+   "name": "기타 1박 120,000원, 특례 사유 있어도 130%(104,000원) 초과",
+   "source": "제11조제6항 특례 한도",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "region": "기타"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 120000,
+      "nights": 1,
+      "exception_reason": "행사 기간 숙소 부족"
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-LODGING-CAP": [
+      "보완 필요",
+      "제11조 제6항"
+     ]
+    }
+   },
+   "mapping": [
+    "M06"
+   ]
+  },
+  {
+   "id": "L05",
+   "category": "숙박",
+   "name": "기타 1박 80,000원 (상한과 같음)",
+   "source": "별표1 경계",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "region": "기타"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 80000,
+      "nights": 1
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "규정상 확인 가능",
+    "rules": {}
+   },
+   "mapping": []
+  },
+  {
+   "id": "L06",
+   "category": "숙박",
+   "name": "기타 2박 합계 150,000원 (합계 상한 160,000원 이내)",
+   "source": "제14조제2항",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-22",
+     "region": "기타"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 150000,
+      "nights": 2
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "규정상 확인 가능",
+    "rules": {}
+   },
+   "mapping": []
+  },
+  {
+   "id": "L07",
+   "category": "숙박",
+   "name": "서울 1박 100,001원 (상한 +1원), 사유 없음",
+   "source": "종원 TC13",
+   "note": "TC13 원본은 담당자 확인이지만 5주차 확정 기준(특례 사유 없으면 상한액 수정)을 적용함",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "region": "서울"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 100001,
+      "nights": 1
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-LODGING-CAP": [
+      "보완 필요",
+      "제11조 제6항"
+     ]
+    }
+   },
+   "mapping": [
+    "M06"
+   ]
+  },
+  {
+   "id": "L08",
+   "category": "숙박",
+   "name": "출장지 지역 정보 없음",
+   "source": "별표1",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 80000,
+      "nights": 1
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "담당자 확인 필요",
+    "rules": {
+     "T-LODGING-REGION": [
+      "담당자 확인 필요",
+      "별표 1"
+     ]
+    }
+   },
+   "mapping": []
+  },
+  {
+   "id": "L09",
+   "category": "숙박",
+   "name": "숙박 영수증 없음 (금액은 상한 이내)",
+   "source": "제11조제1항, 종원 M03",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "region": "광역시"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 85000,
+      "nights": 1,
+      "receipt": false
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-LODGING-RECEIPT": [
+      "보완 필요",
+      "제11조 제1항"
+     ]
+    }
+   },
+   "mapping": [
+    "M03"
+   ]
+  },
+  {
+   "id": "L10",
+   "category": "숙박",
+   "name": "본부장 서울 250,000원 (임원급은 실비)",
+   "source": "별표1 임원급 실비",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "grade": "임원·본부장",
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "region": "서울"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 250000,
+      "nights": 1
+     }
+    ],
+    "trip_type": "국내출장"
+   },
+   "expect": {
+    "overall": "규정상 확인 가능",
+    "rules": {}
+   },
+   "mapping": []
+  },
+  {
+   "id": "L11",
+   "category": "숙박",
+   "name": "세종 1박 90,000원 (세종은 광역시 기준)",
+   "source": "별표1 주4",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "region": "세종"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 90000,
+      "nights": 1
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "규정상 확인 가능",
+    "rules": {}
+   },
+   "mapping": []
+  },
+  {
+   "id": "L12",
+   "category": "숙박",
+   "name": "제주 1박 85,000원 (제주는 기타 80,000원), 사유 없음",
+   "source": "별표1 주4",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "region": "제주"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 85000,
+      "nights": 1
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-LODGING-CAP": [
+      "보완 필요",
+      "제11조 제6항"
+     ]
+    }
+   },
+   "mapping": [
+    "M06"
+   ]
+  },
+  {
+   "id": "M01",
+   "category": "식비",
+   "name": "조식 포함 숙박인데 식비 27,000원 전액",
+   "source": "종원 TC05, M08",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "region": "서울"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 95000,
+      "nights": 1,
+      "breakfast_included": true
+     },
+     {
+      "field": "식비",
+      "amount": 27000,
+      "days": 1
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-MEAL-BREAKFAST": [
+      "보완 필요",
+      "제11조 제4항"
+     ]
+    }
+   },
+   "mapping": [
+    "M08"
+   ]
+  },
+  {
+   "id": "M02",
+   "category": "식비",
+   "name": "조식 포함 숙박, 식비 18,000원 (1/3 차감 반영)",
+   "source": "제11조제4항",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "region": "서울"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 95000,
+      "nights": 1,
+      "breakfast_included": true
+     },
+     {
+      "field": "식비",
+      "amount": 18000,
+      "days": 1
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "규정상 확인 가능",
+    "rules": {}
+   },
+   "mapping": []
+  },
+  {
+   "id": "M03",
+   "category": "식비",
+   "name": "2일 식비 70,000원 (한도 54,000원)",
+   "source": "별표1",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "region": "서울"
+    },
+    "items": [
+     {
+      "field": "식비",
+      "amount": 70000,
+      "days": 2
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-MEAL-CAP": [
+      "보완 필요",
+      "제14조 제1항"
+     ]
+    }
+   },
+   "mapping": []
+  },
+  {
+   "id": "M04",
+   "category": "식비",
+   "name": "무료 식사 2식 제공인데 식비 27,000원 전액",
+   "source": "종원 TC17, M10",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "region": "서울"
+    },
+    "items": [
+     {
+      "field": "식비",
+      "amount": 27000,
+      "days": 1,
+      "meals_provided": 2
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-MEAL-PROVIDED": [
+      "보완 필요",
+      "제15조 제2항"
+     ]
+    }
+   },
+   "mapping": [
+    "M10"
+   ]
+  },
+  {
+   "id": "M05",
+   "category": "식비",
+   "name": "2일 식비 54,000원 (한도와 같음)",
+   "source": "별표1 경계",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "region": "서울"
+    },
+    "items": [
+     {
+      "field": "식비",
+      "amount": 54000,
+      "days": 2
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "규정상 확인 가능",
+    "rules": {}
+   },
+   "mapping": []
+  },
+  {
+   "id": "P01",
+   "category": "일비",
+   "name": "업무용차량 이용인데 일비 60,000원(2일) 전액",
+   "source": "종원 TC07, M16",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "vehicle": "업무용차량"
+    },
+    "items": [
+     {
+      "field": "일비",
+      "amount": 60000
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-PERDIEM-CAR": [
+      "보완 필요",
+      "제14조 제1항"
+     ]
+    }
+   },
+   "mapping": [
+    "M16"
+   ]
+  },
+  {
+   "id": "P02",
+   "category": "일비",
+   "name": "대중교통 일비 60,000원(2일)",
+   "source": "별표1",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "vehicle": "대중교통"
+    },
+    "items": [
+     {
+      "field": "일비",
+      "amount": 60000
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "규정상 확인 가능",
+    "rules": {}
+   },
+   "mapping": []
+  },
+  {
+   "id": "P03",
+   "category": "일비",
+   "name": "일비 75,000원 (2일 한도 60,000원)",
+   "source": "별표1",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21"
+    },
+    "items": [
+     {
+      "field": "일비",
+      "amount": 75000
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-PERDIEM-CAP": [
+      "보완 필요",
+      "제14조 제1항"
+     ]
+    }
+   },
+   "mapping": []
+  },
+  {
+   "id": "P04",
+   "category": "일비",
+   "name": "렌트차량 1일 일비 30,000원",
+   "source": "제14조제1항",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-20",
+     "vehicle": "렌트차량"
+    },
+    "items": [
+     {
+      "field": "일비",
+      "amount": 30000
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-PERDIEM-CAR": [
+      "보완 필요",
+      "제14조 제1항"
+     ]
+    }
+   },
+   "mapping": [
+    "M16"
+   ]
+  },
+  {
+   "id": "T01",
+   "category": "교통",
+   "name": "3급 이하 KTX 특실",
+   "source": "종원 TC11, TC10, M20",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "items": [
+     {
+      "field": "철도운임(KTX)",
+      "amount": 59800,
+      "seat_class": "특실"
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-TRANS-RAIL-CLASS": [
+      "보완 필요",
+      "별표 1"
+     ]
+    }
+   },
+   "mapping": [
+    "M20"
+   ]
+  },
+  {
+   "id": "T02",
+   "category": "교통",
+   "name": "3급 이하 KTX 일반실",
+   "source": "별표1",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "items": [
+     {
+      "field": "철도운임(KTX)",
+      "amount": 47000,
+      "seat_class": "일반"
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "규정상 확인 가능",
+    "rules": {}
+   },
+   "mapping": []
+  },
+  {
+   "id": "T03",
+   "category": "교통",
+   "name": "1·2급 KTX 특실 (허용)",
+   "source": "별표1",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "grade": "직원 1·2급",
+    "items": [
+     {
+      "field": "철도운임(KTX)",
+      "amount": 59800,
+      "seat_class": "특실"
+     }
+    ],
+    "trip_type": "국내출장"
+   },
+   "expect": {
+    "overall": "규정상 확인 가능",
+    "rules": {}
+   },
+   "mapping": []
+  },
+  {
+   "id": "T04",
+   "category": "교통",
+   "name": "직원 국내 항공 비즈니스",
+   "source": "종원 TC12, M20",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "items": [
+     {
+      "field": "항공운임",
+      "amount": 180000,
+      "seat_class": "비즈니스"
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-TRANS-AIR-CLASS": [
+      "보완 필요",
+      "별표 1"
+     ]
+    }
+   },
+   "mapping": [
+    "M20"
+   ]
+  },
+  {
+   "id": "T05",
+   "category": "교통",
+   "name": "KTX 48,000원 승차권·영수증 없음",
+   "source": "종원 TC03, M03",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "items": [
+     {
+      "field": "철도운임(KTX)",
+      "amount": 48000,
+      "seat_class": "일반",
+      "receipt": false
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-TRANS-RECEIPT": [
+      "보완 필요",
+      "제10조 제1항"
+     ]
+    }
+   },
+   "mapping": [
+    "M03"
+   ]
+  },
+  {
+   "id": "T06",
+   "category": "교통",
+   "name": "자가용 이용, 승인 확인 안 됨",
+   "source": "종원 M13, TC14",
+   "note": "M13은 담당자 확인, TC14는 보완 필요로 적혀 있어 두 시트가 다름. M13 기준을 따름",
+   "disputed": true,
+   "request": {
+    "trip": {
+     "vehicle": "자가용"
+    },
+    "items": [
+     {
+      "field": "교통비(자가용)",
+      "amount": 40000
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "담당자 확인 필요",
+    "rules": {
+     "T-TRANS-PRIVATE-APPROVAL": [
+      "담당자 확인 필요",
+      "제13조 제5항"
+     ]
+    }
+   },
+   "mapping": [
+    "M13"
+   ]
+  },
+  {
+   "id": "T07",
+   "category": "교통",
+   "name": "자가용 승인 있음, 실비 60,000원 > 철도 운임 50,000원",
+   "source": "종원 TC15, M14",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "vehicle": "자가용",
+     "private_car_approved": true
+    },
+    "items": [
+     {
+      "field": "교통비(자가용)",
+      "amount": 60000,
+      "public_fare": 50000
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-TRANS-PRIVATE-CAP": [
+      "보완 필요",
+      "제13조 제6항"
+     ]
+    }
+   },
+   "mapping": [
+    "M14"
+   ]
+  },
+  {
+   "id": "T08",
+   "category": "교통",
+   "name": "자가용 승인 있음, 실비 40,000원 ≤ 운임 50,000원",
+   "source": "제13조제6항",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "vehicle": "자가용",
+     "private_car_approved": true
+    },
+    "items": [
+     {
+      "field": "교통비(자가용)",
+      "amount": 40000,
+      "public_fare": 50000
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "규정상 확인 가능",
+    "rules": {}
+   },
+   "mapping": [
+    "M14"
+   ]
+  },
+  {
+   "id": "T09",
+   "category": "교통",
+   "name": "동승자 교통비 청구",
+   "source": "종원 TC08, M15",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "items": [
+     {
+      "field": "교통비",
+      "amount": 30000,
+      "note": "동승자 교통비"
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-TRANS-PASSENGER": [
+      "보완 필요",
+      "제13조 제7항"
+     ]
+    }
+   },
+   "mapping": [
+    "M15"
+   ]
+  },
+  {
+   "id": "T10",
+   "category": "교통",
+   "name": "업무용 차량 구간 교통비 22,000원",
+   "source": "종원 TC07, M12",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "vehicle": "업무용차량"
+    },
+    "items": [
+     {
+      "field": "교통비",
+      "amount": 22000,
+      "note": "업무용차량 구간"
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-TRANS-COMPANYCAR": [
+      "보완 필요",
+      "제13조 제3항"
+     ]
+    }
+   },
+   "mapping": [
+    "M12"
+   ]
+  },
+  {
+   "id": "T11",
+   "category": "교통",
+   "name": "KTX 영수증 대신 결재문서, 인가요금 30,000원 < 청구 35,000원",
+   "source": "실무자 의견(2026-11 코칭)",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "items": [
+     {
+      "field": "철도운임(KTX)",
+      "amount": 35000,
+      "seat_class": "일반",
+      "receipt": false,
+      "substitute_approved": true,
+      "authorized_fare": 30000
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-TRANS-SUBSTITUTE-FARE": [
+      "보완 필요",
+      ""
+     ]
+    }
+   },
+   "mapping": []
+  },
+  {
+   "id": "T12",
+   "category": "교통",
+   "name": "KTX 영수증 대신 결재문서, 인가요금 미입력",
+   "source": "실무자 의견(2026-11 코칭)",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "items": [
+     {
+      "field": "철도운임(KTX)",
+      "amount": 35000,
+      "seat_class": "일반",
+      "receipt": false,
+      "substitute_approved": true
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "담당자 확인 필요",
+    "rules": {
+     "T-TRANS-SUBSTITUTE-CHECK": [
+      "담당자 확인 필요",
+      ""
+     ]
+    }
+   },
+   "mapping": []
+  },
+  {
+   "id": "S01",
+   "category": "정산기한",
+   "name": "출장 종료 후 18일 만에 정산",
+   "source": "종원 M01, TC01",
+   "note": "종원 시트는 보완 필요, 엔진·규칙표는 담당자 확인(지연 사유 소명)",
+   "disputed": true,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-01",
+     "end_date": "2026-10-02",
+     "settlement_date": "2026-10-20",
+     "region": "기타"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 70000,
+      "nights": 1
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-LATE-SETTLEMENT": [
+      "보완 필요",
+      "제3조의2"
+     ]
+    }
+   },
+   "mapping": [
+    "M01"
+   ]
+  },
+  {
+   "id": "S02",
+   "category": "정산기한",
+   "name": "출장 종료 후 정확히 15일째 정산 (기한 이내)",
+   "source": "제3조의2제2항 경계",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-01",
+     "end_date": "2026-10-02",
+     "settlement_date": "2026-10-17",
+     "region": "기타"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 70000,
+      "nights": 1
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "규정상 확인 가능",
+    "rules": {}
+   },
+   "mapping": []
+  },
+  {
+   "id": "S03",
+   "category": "정산기한",
+   "name": "출장 종료 후 16일째 정산 (1일 초과)",
+   "source": "종원 TC01",
+   "note": "S01과 같은 이유로 기준 확정 필요",
+   "disputed": true,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-01",
+     "end_date": "2026-10-02",
+     "settlement_date": "2026-10-18",
+     "region": "기타"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 70000,
+      "nights": 1
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-LATE-SETTLEMENT": [
+      "보완 필요",
+      "제3조의2"
+     ]
+    }
+   },
+   "mapping": [
+    "M01"
+   ]
+  },
+  {
+   "id": "I01",
+   "category": "근무지내",
+   "name": "왕복 7.9km, 3시간, 교통비 15,000원",
+   "source": "종원 TC06, M11",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip_type": "근무지 내 출장",
+    "trip": {
+     "hours": 3,
+     "round_trip_km": 7.9
+    },
+    "items": [
+     {
+      "field": "교통비",
+      "amount": 15000
+     }
+    ],
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-INTRA-DISTANCE": [
+      "보완 필요",
+      "제16조 제1항"
+     ]
+    }
+   },
+   "mapping": [
+    "M11"
+   ]
+  },
+  {
+   "id": "I02",
+   "category": "근무지내",
+   "name": "왕복 8.0km 정확히, 3시간, 교통비 15,000원 (경계, 탈락 아님)",
+   "source": "종원 TC06 경계",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip_type": "근무지 내 출장",
+    "trip": {
+     "hours": 3,
+     "round_trip_km": 8
+    },
+    "items": [
+     {
+      "field": "교통비",
+      "amount": 15000
+     }
+    ],
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "규정상 확인 가능",
+    "rules": {}
+   },
+   "mapping": [
+    "M11"
+   ]
+  },
+  {
+   "id": "I03",
+   "category": "근무지내",
+   "name": "근무지 내 출장인데 식비 청구",
+   "source": "제16조제1항",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip_type": "근무지 내 출장",
+    "trip": {
+     "hours": 5,
+     "round_trip_km": 20
+    },
+    "items": [
+     {
+      "field": "식비",
+      "amount": 9000
+     }
+    ],
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-INTRA-ONLY-FARE": [
+      "보완 필요",
+      "제16조 제1항"
+     ]
+    }
+   },
+   "mapping": [
+    "M11"
+   ]
+  },
+  {
+   "id": "I04",
+   "category": "근무지내",
+   "name": "3시간 출장 교통비 20,000원 (정액 15,000원)",
+   "source": "M11",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip_type": "근무지 내 출장",
+    "trip": {
+     "hours": 3,
+     "round_trip_km": 12
+    },
+    "items": [
+     {
+      "field": "교통비",
+      "amount": 20000
+     }
+    ],
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-INTRA-FARE": [
+      "보완 필요",
+      "제16조 제1항"
+     ]
+    }
+   },
+   "mapping": [
+    "M11"
+   ]
+  },
+  {
+   "id": "I05",
+   "category": "근무지내",
+   "name": "5시간 출장 교통비 30,000원 (정액과 같음)",
+   "source": "M11 경계",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip_type": "근무지 내 출장",
+    "trip": {
+     "hours": 5,
+     "round_trip_km": 20
+    },
+    "items": [
+     {
+      "field": "교통비",
+      "amount": 30000
+     }
+    ],
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "규정상 확인 가능",
+    "rules": {}
+   },
+   "mapping": [
+    "M11"
+   ]
+  },
+  {
+   "id": "C01",
+   "category": "법인카드",
+   "name": "유흥주점 사용",
+   "source": "카드 지침 제10조제3항",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip_type": "법인카드",
+    "items": [
+     {
+      "field": "회식비",
+      "amount": 120000,
+      "date": "2026-10-22",
+      "time": "20:00",
+      "payment": "법인카드",
+      "merchant": "OO 유흥주점",
+      "merchant_type": "유흥주점"
+     }
+    ],
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "C-BANNED-MERCHANT": [
+      "보완 필요",
+      "제10조"
+     ]
+    }
+   },
+   "mapping": []
+  },
+  {
+   "id": "C02",
+   "category": "법인카드",
+   "name": "23:30 사용, 사유서 없음",
+   "source": "카드 지침 제10조제4항2호",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip_type": "법인카드",
+    "items": [
+     {
+      "field": "회의 식대",
+      "amount": 80000,
+      "date": "2026-10-21",
+      "time": "23:30",
+      "payment": "법인카드"
+     }
+    ],
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "C-ODD-HOURS": [
+      "보완 필요",
+      "제10조"
+     ]
+    }
+   },
+   "mapping": []
+  },
+  {
+   "id": "C03",
+   "category": "법인카드",
+   "name": "23:30 사용, 사유서 있음",
+   "source": "카드 지침 제10조제4항2호",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip_type": "법인카드",
+    "items": [
+     {
+      "field": "회의 식대",
+      "amount": 80000,
+      "date": "2026-10-21",
+      "time": "23:30",
+      "payment": "법인카드",
+      "reason_doc": true
+     }
+    ],
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "담당자 확인 필요",
+    "rules": {
+     "C-ODD-HOURS": [
+      "담당자 확인 필요",
+      "제10조"
+     ]
+    }
+   },
+   "mapping": []
+  },
+  {
+   "id": "C04",
+   "category": "법인카드",
+   "name": "한글날(10/9) 공휴일 사용, 사유서 없음",
+   "source": "카드 지침 제10조제4항1호",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip_type": "법인카드",
+    "items": [
+     {
+      "field": "회의 식대",
+      "amount": 60000,
+      "date": "2026-10-09",
+      "time": "12:30",
+      "payment": "법인카드"
+     }
+    ],
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "C-HOLIDAY": [
+      "보완 필요",
+      "제10조"
+     ]
+    }
+   },
+   "mapping": []
+  },
+  {
+   "id": "C05",
+   "category": "법인카드",
+   "name": "토요일(10/24) 사용, 사유서 없음",
+   "source": "카드 지침 제10조제4항1호",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip_type": "법인카드",
+    "items": [
+     {
+      "field": "회의 식대",
+      "amount": 60000,
+      "date": "2026-10-24",
+      "time": "12:30",
+      "payment": "법인카드"
+     }
+    ],
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "C-HOLIDAY": [
+      "보완 필요",
+      "제10조"
+     ]
+    }
+   },
+   "mapping": []
+  },
+  {
+   "id": "C06",
+   "category": "법인카드",
+   "name": "개인카드 사용분을 법인비용으로 청구",
+   "source": "카드 지침 제7조제6항",
+   "note": "'회의 식대'는 업무추진비로 분류되므로 업무추진비의 법인카드 외 지출(B-CARD-ONLY)도 함께 해당",
+   "disputed": false,
+   "request": {
+    "trip_type": "법인카드",
+    "items": [
+     {
+      "field": "회의 식대",
+      "amount": 50000,
+      "date": "2026-10-22",
+      "time": "12:30",
+      "payment": "개인카드"
+     }
+    ],
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "C-PERSONAL-CARD": [
+      "보완 필요",
+      "제7조"
+     ],
+     "B-CARD-ONLY": [
+      "보완 필요",
+      "제4조"
+     ]
+    }
+   },
+   "mapping": []
+  },
+  {
+   "id": "C07",
+   "category": "법인카드",
+   "name": "기타주점(호프) 사용, 사유서 없음",
+   "source": "카드 지침 제10조제4항4호",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip_type": "법인카드",
+    "items": [
+     {
+      "field": "회식비",
+      "amount": 90000,
+      "date": "2026-10-22",
+      "time": "19:00",
+      "payment": "법인카드",
+      "merchant": "OO호프",
+      "merchant_type": "기타주점업"
+     }
+    ],
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "C-OTHER-BAR": [
+      "보완 필요",
+      "제10조"
+     ]
+    }
+   },
+   "mapping": []
+  },
+  {
+   "id": "C08",
+   "category": "법인카드",
+   "name": "평일 낮 한식당 점심 (정상)",
+   "source": "정상 사례",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip_type": "법인카드",
+    "items": [
+     {
+      "field": "회의 식대",
+      "amount": 60000,
+      "date": "2026-10-22",
+      "time": "12:20",
+      "payment": "법인카드",
+      "merchant": "OO식당",
+      "merchant_type": "한식"
+     }
+    ],
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "규정상 확인 가능",
+    "rules": {}
+   },
+   "mapping": []
+  },
+  {
+   "id": "B01",
+   "category": "업무추진비",
+   "name": "62만원 사전결재 없음",
+   "source": "업무추진비 지침 제3조제4항",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip_type": "업무추진비",
+    "items": [
+     {
+      "field": "업무추진비(간담회)",
+      "amount": 620000,
+      "date": "2026-10-22",
+      "payment": "법인카드",
+      "attendees": [
+       "해양수산부 OOO 과장"
+      ]
+     }
+    ],
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "B-PRE-APPROVAL": [
+      "보완 필요",
+      "제3조"
+     ]
+    }
+   },
+   "mapping": []
+  },
+  {
+   "id": "B02",
+   "category": "업무추진비",
+   "name": "120만원 사전결재 있음, 일상감사 없음",
+   "source": "업무추진비 지침 제3조제4항",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip_type": "업무추진비",
+    "items": [
+     {
+      "field": "업무추진비(간담회)",
+      "amount": 1200000,
+      "date": "2026-10-22",
+      "payment": "법인카드",
+      "pre_approved": true,
+      "attendees": [
+       "해양수산부 OOO 과장"
+      ]
+     }
+    ],
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "B-DAILY-AUDIT": [
+      "보완 필요",
+      "제3조"
+     ]
+    }
+   },
+   "mapping": []
+  },
+  {
+   "id": "B03",
+   "category": "업무추진비",
+   "name": "45만원 참석자 기재, 정상",
+   "source": "정상 사례",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip_type": "업무추진비",
+    "items": [
+     {
+      "field": "업무추진비(간담회)",
+      "amount": 450000,
+      "date": "2026-10-22",
+      "payment": "법인카드",
+      "attendees": [
+       "해양수산부 OOO 과장"
+      ],
+      "counterpart_info": true
+     }
+    ],
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "규정상 확인 가능",
+    "rules": {}
+   },
+   "mapping": []
+  },
+  {
+   "id": "B04",
+   "category": "업무추진비",
+   "name": "같은 날 같은 거래처 30만원 + 30만원 분할결제",
+   "source": "업무추진비 지침 제3조제5항",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip_type": "업무추진비",
+    "items": [
+     {
+      "field": "업무추진비(간담회)",
+      "amount": 300000,
+      "date": "2026-10-22",
+      "payment": "법인카드",
+      "merchant": "OO식당",
+      "attendees": [
+       "해양수산부 OOO 과장"
+      ]
+     },
+     {
+      "field": "업무추진비(간담회)",
+      "amount": 300000,
+      "date": "2026-10-22",
+      "payment": "법인카드",
+      "merchant": "OO식당",
+      "attendees": [
+       "해양수산부 OOO 과장"
+      ]
+     }
+    ],
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "B-SPLIT-PAYMENT": [
+      "보완 필요",
+      "제3조"
+     ]
+    }
+   },
+   "mapping": []
+  },
+  {
+   "id": "B05",
+   "category": "업무추진비",
+   "name": "30만원 상대방 정보 없음",
+   "source": "업무추진비 지침 제8조제1항",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip_type": "업무추진비",
+    "items": [
+     {
+      "field": "업무추진비(간담회)",
+      "amount": 300000,
+      "date": "2026-10-22",
+      "payment": "법인카드"
+     }
+    ],
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "B-COUNTERPART": [
+      "보완 필요",
+      "제8조"
+     ]
+    }
+   },
+   "mapping": []
+  },
+  {
+   "id": "B06",
+   "category": "업무추진비",
+   "name": "경조금 6만원 (한도 5만원)",
+   "source": "업무추진비 지침 제7조",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip_type": "업무추진비",
+    "items": [
+     {
+      "field": "경조금",
+      "amount": 60000,
+      "date": "2026-10-22",
+      "payment": "법인카드"
+     }
+    ],
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "B-CONDOLENCE-CAP": [
+      "보완 필요",
+      "제7조"
+     ]
+    }
+   },
+   "mapping": []
+  },
+  {
+   "id": "B07",
+   "category": "업무추진비",
+   "name": "화환 12만원 (한도 10만원)",
+   "source": "업무추진비 지침 제7조",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip_type": "업무추진비",
+    "items": [
+     {
+      "field": "화환",
+      "amount": 120000,
+      "date": "2026-10-22",
+      "payment": "법인카드"
+     }
+    ],
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "B-WREATH-CAP": [
+      "보완 필요",
+      "제7조"
+     ]
+    }
+   },
+   "mapping": []
+  },
+  {
+   "id": "B08",
+   "category": "업무추진비",
+   "name": "업무추진비를 현금으로 지출",
+   "source": "업무추진비 지침 제4조제1항",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip_type": "업무추진비",
+    "items": [
+     {
+      "field": "업무추진비(간담회)",
+      "amount": 200000,
+      "date": "2026-10-22",
+      "payment": "현금",
+      "attendees": [
+       "해양수산부 OOO 과장"
+      ]
+     }
+    ],
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "B-CARD-ONLY": [
+      "보완 필요",
+      "제4조"
+     ]
+    }
+   },
+   "mapping": []
+  },
+  {
+   "id": "X01",
+   "category": "복합",
+   "name": "서울 1박 출장, 모두 규정 이내",
+   "source": "정상 사례",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "region": "서울",
+     "settlement_date": "2026-10-25"
+    },
+    "items": [
+     {
+      "field": "철도운임(KTX)",
+      "amount": 47000,
+      "seat_class": "일반"
+     },
+     {
+      "field": "일비",
+      "amount": 60000
+     },
+     {
+      "field": "식비",
+      "amount": 54000
+     },
+     {
+      "field": "숙박비",
+      "amount": 95000,
+      "nights": 1
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "규정상 확인 가능",
+    "rules": {}
+   },
+   "mapping": []
+  },
+  {
+   "id": "X02",
+   "category": "복합",
+   "name": "조식 포함 식비 미차감 + 숙박 상한 초과 동시",
+   "source": "여러 규칙 동시 탐지",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "region": "서울"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 150000,
+      "nights": 1,
+      "breakfast_included": true
+     },
+     {
+      "field": "식비",
+      "amount": 27000,
+      "days": 1
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-LODGING-CAP": [
+      "보완 필요",
+      "제11조 제6항"
+     ],
+     "T-MEAL-BREAKFAST": [
+      "보완 필요",
+      "제11조 제4항"
+     ]
+    }
+   },
+   "mapping": []
+  },
+  {
+   "id": "X03",
+   "category": "복합",
+   "name": "자가용 승인 없음 + 동승자 교통비",
+   "source": "종원 TC08",
+   "note": "TC08은 '보완 필요 + 담당자 확인 필요' 복합 결과",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "vehicle": "자가용"
+    },
+    "items": [
+     {
+      "field": "교통비(자가용)",
+      "amount": 40000
+     },
+     {
+      "field": "교통비",
+      "amount": 20000,
+      "note": "동승자 교통비"
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-TRANS-PRIVATE-APPROVAL": [
+      "담당자 확인 필요",
+      "제13조 제5항"
+     ],
+     "T-TRANS-PASSENGER": [
+      "보완 필요",
+      "제13조 제7항"
+     ]
+    }
+   },
+   "mapping": []
+  },
+  {
+   "id": "Q01",
+   "category": "경계·변형",
+   "name": "특례 사유 있고 숙박비가 정확히 130%(104,000원)",
+   "source": "제11조제6항 경계",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "region": "기타"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 104000,
+      "nights": 1,
+      "exception_reason": "행사 기간 숙소 부족"
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "담당자 확인 필요",
+    "rules": {
+     "T-LODGING-EXTRA": [
+      "담당자 확인 필요",
+      "제11조 제6항"
+     ]
+    }
+   },
+   "mapping": [
+    "M06"
+   ]
+  },
+  {
+   "id": "Q02",
+   "category": "경계·변형",
+   "name": "특례 사유 있고 숙박비 104,001원 (130% +1원)",
+   "source": "제11조제6항 경계",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "region": "기타"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 104001,
+      "nights": 1,
+      "exception_reason": "행사 기간 숙소 부족"
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-LODGING-CAP": [
+      "보완 필요",
+      "제11조 제6항"
+     ]
+    }
+   },
+   "mapping": [
+    "M06"
+   ]
+  },
+  {
+   "id": "Q03",
+   "category": "경계·변형",
+   "name": "기타 2박 170,000원 (합계 상한 160,000원), 사유 없음",
+   "source": "제14조제2항",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-22",
+     "region": "기타"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 170000,
+      "nights": 2
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-LODGING-CAP": [
+      "보완 필요",
+      "제11조 제6항"
+     ]
+    }
+   },
+   "mapping": [
+    "M06"
+   ]
+  },
+  {
+   "id": "Q04",
+   "category": "경계·변형",
+   "name": "항목 메모에만 '조식 포함 숙박'이라고 적은 식비 27,000원",
+   "source": "API.md 7절 사례 (메모 문장 입력)",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "region": "기타"
+    },
+    "items": [
+     {
+      "field": "식비",
+      "amount": 27000,
+      "date": "2026-10-20",
+      "note": "조식 포함 숙박"
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-MEAL-BREAKFAST": [
+      "보완 필요",
+      "제11조 제4항"
+     ]
+    }
+   },
+   "mapping": [
+    "M08"
+   ]
+  },
+  {
+   "id": "Q05",
+   "category": "경계·변형",
+   "name": "메모에만 '특실 이용'이라고 적은 KTX 운임",
+   "source": "별표1 (메모 문장 입력)",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "items": [
+     {
+      "field": "KTX 운임",
+      "amount": 59800,
+      "note": "특실 이용"
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-TRANS-RAIL-CLASS": [
+      "보완 필요",
+      "별표 1"
+     ]
+    }
+   },
+   "mapping": [
+    "M20"
+   ]
+  },
+  {
+   "id": "Q06",
+   "category": "경계·변형",
+   "name": "조식 포함 + 행사 점심 제공인데 식비 18,000원 (조식분만 차감)",
+   "source": "종원 TC17 (조식+점심 각각 공제)",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "region": "서울"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 95000,
+      "nights": 1,
+      "breakfast_included": true
+     },
+     {
+      "field": "식비",
+      "amount": 18000,
+      "days": 1,
+      "meals_provided": 1
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {
+     "T-MEAL-BREAKFAST": [
+      "보완 필요",
+      "제11조 제4항"
+     ]
+    }
+   },
+   "mapping": [
+    "M08"
+   ]
+  },
+  {
+   "id": "N01",
+   "category": "오류유형 확대",
+   "name": "카드 매입 통보가 늦어 7일 예외 적용 (지연 증빙 있음)",
+   "source": "종원 M02, TC02",
+   "note": "M02는 담당자 확인, TC02는 규정상 확인 가능(기한 규칙 단독)으로 시트끼리 다름",
+   "disputed": true,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-30",
+     "end_date": "2026-11-01",
+     "settlement_date": "2026-11-22",
+     "region": "기타"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 70000,
+      "nights": 1,
+      "card_notice_at": "2026-11-17",
+      "late_notice_proof": true
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "담당자 확인 필요",
+    "rules": {}
+   },
+   "mapping": [
+    "M02"
+   ]
+  },
+  {
+   "id": "N02",
+   "category": "오류유형 확대",
+   "name": "신청 금액 50,000원, 영수증 금액 45,000원, 차이 사유 없음",
+   "source": "종원 M05",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "region": "기타"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 50000,
+      "nights": 1,
+      "receipt_amount": 45000
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {}
+   },
+   "mapping": [
+    "M05"
+   ]
+  },
+  {
+   "id": "N03",
+   "category": "오류유형 확대",
+   "name": "숙박 부대비 8,000원 + 숙박비 85,000원 (총액이 광역시 상한 90,000원 초과)",
+   "source": "종원 M07, 제11조제5항",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "region": "광역시"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 85000,
+      "nights": 1
+     },
+     {
+      "field": "숙박 부대비",
+      "amount": 8000
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {}
+   },
+   "mapping": [
+    "M07"
+   ]
+  },
+  {
+   "id": "N04",
+   "category": "오류유형 확대",
+   "name": "무료 숙박이 제공된 밤인데 숙박비 80,000원 청구",
+   "source": "종원 M09, TC09, 제15조제2항제1호",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "region": "기타"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 80000,
+      "nights": 1,
+      "lodging_provided": true,
+      "note": "숙박 무료 제공"
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {}
+   },
+   "mapping": [
+    "M09"
+   ]
+  },
+  {
+   "id": "N05",
+   "category": "오류유형 확대",
+   "name": "교육출장 일비 3일 청구 (출발·복귀일 합계 2일 한도)",
+   "source": "종원 M17, 제14조제1항 단서",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-22",
+     "training_flag": true
+    },
+    "items": [
+     {
+      "field": "일비",
+      "amount": 90000,
+      "note": "교육출장"
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "보완 필요",
+    "rules": {}
+   },
+   "mapping": [
+    "M17"
+   ]
+  },
+  {
+   "id": "N06",
+   "category": "오류유형 확대",
+   "name": "주최 측이 교통비를 지원했는데 교통비도 청구",
+   "source": "종원 M18, 제15조제1항",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21"
+    },
+    "items": [
+     {
+      "field": "교통비",
+      "amount": 30000,
+      "note": "주최 측 교통비 지원",
+      "third_party_subsidy": 30000
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "담당자 확인 필요",
+    "rules": {}
+   },
+   "mapping": [
+    "M18"
+   ]
+  },
+  {
+   "id": "N07",
+   "category": "오류유형 확대",
+   "name": "숙박 영수증 날짜(10/25)가 출장 일정(10/20~21)과 다름",
+   "source": "종원 M21",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-20",
+     "end_date": "2026-10-21",
+     "region": "기타"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 70000,
+      "nights": 1,
+      "date": "2026-10-25"
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "담당자 확인 필요",
+    "rules": {}
+   },
+   "mapping": [
+    "M21"
+   ]
+  },
+  {
+   "id": "N08",
+   "category": "오류유형 확대",
+   "name": "개정일(2026-10-21) 이전 출장(10/15)",
+   "source": "종원 TC18, 부칙",
+   "note": "",
+   "disputed": false,
+   "request": {
+    "trip": {
+     "start_date": "2026-10-15",
+     "end_date": "2026-10-16",
+     "region": "기타"
+    },
+    "items": [
+     {
+      "field": "숙박비",
+      "amount": 70000,
+      "nights": 1
+     }
+    ],
+    "trip_type": "국내출장",
+    "grade": "직원 3급 이하"
+   },
+   "expect": {
+    "overall": "담당자 확인 필요",
+    "rules": {}
+   },
+   "mapping": [
+    "TC18"
+   ]
+  }
+ ]
+}
