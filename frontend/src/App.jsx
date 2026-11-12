@@ -6,7 +6,7 @@ import TypePage from './pages/TypePage.jsx'
 import MyStatusPage from './pages/MyStatusPage.jsx'
 import QaPage from './pages/QaPage.jsx'
 import VerifyPage from './pages/VerifyPage.jsx'
-import ChecklistPage from './pages/ChecklistPage.jsx'
+import DocumentsPage from './pages/DocumentsPage.jsx'
 import ReceiptPage from './pages/ReceiptPage.jsx'
 import TravelCalcPage from './pages/TravelCalcPage.jsx'
 import AdminHomePage from './pages/admin/AdminHomePage.jsx'
@@ -27,7 +27,7 @@ const MENUS = {
       travel: { label: '출장비 계산', component: TravelCalcPage, parent: 'type' },   // U-05
       verify: { label: '청구 검증', component: VerifyPage, parent: 'type' },         // U-04
       mystatus: { label: '내 정산 현황', component: MyStatusPage, parent: 'home' },
-      checklist: { label: '문서 작업', component: ChecklistPage, parent: 'home' }, // U-02
+      checklist: { label: '문서 작업', component: DocumentsPage, parent: 'home' }, // U-02
       qa: { label: '규정 물어보기', component: QaPage, parent: 'home' },             // U-01
     },
   },
