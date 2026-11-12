@@ -7,6 +7,8 @@
 
 import { useState } from 'react'
 import { calcTravel } from '../api/client.js'
+import DateRangePicker from '../components/DateRangePicker.jsx'
+import RouteField from '../components/RouteField.jsx'
 
 const TRIP_TYPES = ['국내출장', '근무지 내 출장']
 const GRADES = ['직원 3급 이하', '직원 1·2급', '임원/본부장', '감사', '사장']
@@ -68,6 +70,11 @@ export default function TravelCalcPage({ onSendToVerify }) {
   const editFare = (i, k, v) => setFares((list) => list.map((f, idx) => (idx === i ? { ...f, [k]: v } : f)))
   const addFare = () => setFares((list) => [...list, emptyFare()])
   const removeFare = (i) => setFares((list) => list.filter((_, idx) => idx !== i))
+
+  // 경로 조회로 받은 편도 거리 → 자가용이면 왕복 운행거리(km)로 채움 (직접 고칠 수 있음)
+  function applyDistance(oneWayKm) {
+    if (privateCar && oneWayKm) editCar('distance_km', String(Math.round(oneWayKm * 2)))
+  }
 
   function load(sample) {
     setTripType(sample.trip_type)
@@ -221,16 +228,23 @@ export default function TravelCalcPage({ onSendToVerify }) {
           ) : (
             <>
               <div className="card">
-                <h2>2. 출장 정보</h2>
+                <h2>2. 출장 기간 *</h2>
+                <p className="hint">달력에서 출발일과 도착일을 차례로 눌러 고르세요.</p>
+                <DateRangePicker
+                  start={trip.start_date}
+                  end={trip.end_date}
+                  onChange={({ start, end }) => setTrip((t) => ({ ...t, start_date: start, end_date: end }))}
+                />
+              </div>
+
+              <div className="card">
+                <h2>3. 경로</h2>
+                <RouteField onDistance={applyDistance} />
+              </div>
+
+              <div className="card">
+                <h2>4. 출장 정보</h2>
                 <div className="form-grid">
-                  <label className="field">
-                    <span className="field-label">출장 시작일 *</span>
-                    <input type="date" value={trip.start_date} onChange={(e) => editTrip('start_date', e.target.value)} />
-                  </label>
-                  <label className="field">
-                    <span className="field-label">출장 종료일 *</span>
-                    <input type="date" value={trip.end_date} onChange={(e) => editTrip('end_date', e.target.value)} />
-                  </label>
                   <label className="field">
                     <span className="field-label">출장지 지역 <em>숙박비 상한</em></span>
                     <select value={trip.region} onChange={(e) => editTrip('region', e.target.value)}>
@@ -270,7 +284,7 @@ export default function TravelCalcPage({ onSendToVerify }) {
 
               <div className="card">
                 <div className="card-head">
-                  <h2>3. 교통 운임 <span className="hint">(선택)</span></h2>
+                  <h2>5. 교통 운임 <span className="hint">(선택)</span></h2>
                   <button type="button" className="btn" onClick={addFare}>+ 운임 추가</button>
                 </div>
                 <p className="hint">이미 알고 있는 기차·항공·버스 요금을 넣으면 실비로 합산됩니다. 자가용은 아래에서 따로 계산합니다.</p>
@@ -304,7 +318,7 @@ export default function TravelCalcPage({ onSendToVerify }) {
 
               {privateCar && (
                 <div className="card">
-                  <h2>4. 자가용 정보</h2>
+                  <h2>6. 자가용 정보</h2>
                   <p className="hint">
                     연료비 = 운행거리 ÷ 연비 × 출장 당일 단가 (실무자 의견 반영 산식). 운행거리는 <b>사무실(근무지)</b>에서 출장지까지 네이버 길찾기 km 기준이며 집 출발은 인정되지 않습니다.
                     연료비 + 통행료는 같은 구간 철도·버스 운임을 넘을 수 없습니다.

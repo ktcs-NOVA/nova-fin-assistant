@@ -106,6 +106,12 @@ export async function deleteChecklist(checklistId) {
   return null
 }
 
+// 경로 조회: 실제 거리는 네이버 지도 API가 계산합니다. 목업은 모양만 같은 예시값을 돌려줍니다.
+export async function lookupRoute(destination) {
+  await wait(500)
+  return { destination, distance_km: 410, duration_min: 160 }
+}
+
 // 출장비 계산(U-05): 실제 계산은 백엔드(PM 의 travel_calc 엔진)가 합니다.
 // 목업은 규칙을 흉내 내지 않고, 모양만 같은 "(예시)" 응답을 돌려줍니다.
 export async function calcTravel(req) {
