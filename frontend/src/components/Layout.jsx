@@ -2,13 +2,14 @@
 // 어떤 화면을 보여줄지는 App.jsx가 정하고, 여기서는 틀만 그립니다.
 
 import { USE_MOCK, API_BASE } from '../api/client.js'
+import Icon from './Icons.jsx'
 
 export default function Layout({ user, roleLabel, onLogout, onHome, onAsk, crumbs, children }) {
   return (
     <div className="app">
       <header className="header">
         <button type="button" className="logo logo-btn" onClick={onHome} aria-label="홈으로">
-          <span className="logo-mark">經</span>
+          <span className="logo-mark"><Icon name="logo" size={20} /></span>
           <span>
             <span className="logo-name">경비 정산 사전검증</span>
             <span className="logo-sub">한국해양진흥공사 · 팀 NOVA</span>
@@ -35,6 +36,9 @@ export default function Layout({ user, roleLabel, onLogout, onHome, onAsk, crumb
       <main className="main">
         {crumbs.length > 1 && (
           <nav className="crumbs" aria-label="현재 위치">
+            <button type="button" className="crumb-back" onClick={crumbs[crumbs.length - 2].go}>
+              <Icon name="back" size={16} />뒤로
+            </button>
             {crumbs.map((c, i) => (
               <span key={c.id}>
                 {i > 0 && <span className="crumb-sep" aria-hidden="true">›</span>}

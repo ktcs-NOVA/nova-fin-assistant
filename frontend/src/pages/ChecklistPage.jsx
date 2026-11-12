@@ -168,7 +168,7 @@ export default function ChecklistPage({ onNavigate }) {
   return (
     <section>
       <div className="page-title">
-        <h1>내 체크리스트</h1>
+        <h1>문서 작업</h1>
         <span className="desc">저장한 업무의 할 일을 확인하고 체크합니다.</span>
       </div>
 

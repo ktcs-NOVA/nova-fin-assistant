@@ -13,6 +13,7 @@ import { useState } from 'react'
 import { recognizeReceipt, PURPOSES, USE_MOCK } from '../api/client.js'
 import receiptsData from '../mocks/receipts.json'
 import CameraCapture from '../components/CameraCapture.jsx'
+import Icon from '../components/Icons.jsx'
 
 const SAMPLES = receiptsData.samples
 const imageUrl = (file) => `${import.meta.env.BASE_URL}receipts/${file}`
@@ -52,6 +53,7 @@ export default function ReceiptPage({ onSendToVerify }) {
   const [error, setError] = useState('')
   const [draft, setDraft] = useState(null)      // 지출 건 초안
   const [camera, setCamera] = useState(false)   // 촬영 뷰파인더 열림
+  const [showSamples, setShowSamples] = useState(false)  // 샘플 영수증 목록 펼침 (시연용)
 
   function pickSample(s) {
     setPhoto({ file: s.file, url: imageUrl(s.file), sample: true, label: s.label })
@@ -160,52 +162,62 @@ export default function ReceiptPage({ onSendToVerify }) {
         {/* ---------- 왼쪽: 사진 ---------- */}
         <div className="card">
           <h2>1. 영수증 사진</h2>
-          <p className="hint">
-            샘플을 고르거나 내 사진을 올려 주세요.
-            {USE_MOCK && ' 목업 모드에서는 샘플 11장만 인식됩니다 (1차 테스트에서 받은 실제 결과).'}
-          </p>
 
-          <div className="thumb-grid" role="list">
-            {SAMPLES.map((s) => (
-              <button
-                key={s.file}
-                type="button"
-                role="listitem"
-                className={`thumb ${photo?.file === s.file ? 'on' : ''}`}
-                onClick={() => pickSample(s)}
-                title={s.label}
-              >
-                <img src={imageUrl(s.file)} alt={s.label} loading="lazy" />
-                <span>{s.label}</span>
+          {/* 사진이 아직 없을 때: 찍기 / 업로드 두 갈래 */}
+          {!photo && !camera && (
+            <>
+              <p className="hint">영수증을 어떻게 가져올까요?</p>
+              <div className="start-row">
+                <button type="button" className="start-btn" onClick={() => setCamera(true)}>
+                  <Icon name="camera" size={34} />
+                  <b>영수증 사진 찍기</b>
+                  <small>카메라로 바로 찍어요</small>
+                </button>
+                <label className="start-btn">
+                  <input type="file" accept="image/jpeg,image/png,image/webp" onChange={pickOwn} />
+                  <Icon name="upload" size={34} />
+                  <b>영수증 업로드</b>
+                  <small>jpg · png · webp</small>
+                </label>
+              </div>
+              <button type="button" className="link-btn sample-toggle" onClick={() => setShowSamples((v) => !v)}>
+                {showSamples ? '샘플 영수증 닫기' : '샘플 영수증으로 해보기'}
               </button>
-            ))}
-          </div>
-
-          <div className="upload-row">
-            <label className="upload">
-              <input type="file" accept="image/jpeg,image/png,image/webp" onChange={pickOwn} />
-              <span className="btn">내 사진 올리기</span>
-            </label>
-            <button type="button" className="btn" onClick={() => setCamera(true)} disabled={camera}>
-              카메라로 찍기
-            </button>
-            <span className="hint">jpg · png · webp</span>
-          </div>
+              {showSamples && (
+                <>
+                  {USE_MOCK && <p className="hint">목업 모드에서는 샘플 11장만 인식됩니다 (1차 테스트에서 받은 실제 결과).</p>}
+                  <div className="thumb-grid" role="list">
+                    {SAMPLES.map((s) => (
+                      <button key={s.file} type="button" role="listitem" className="thumb" onClick={() => pickSample(s)} title={s.label}>
+                        <img src={imageUrl(s.file)} alt={s.label} loading="lazy" />
+                        <span>{s.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </>
+          )}
 
           {camera && <CameraCapture onCapture={pickShot} onClose={() => setCamera(false)} />}
 
+          {/* 사진을 고르면(찍기·업로드·샘플) 그 영수증이 보임 */}
           {photo && !camera && (
-            <div className="preview">
-              <img className="preview-img" src={photo.url} alt={photo.label} />
-              <div className="preview-name">{photo.label}</div>
-            </div>
+            <>
+              <div className="preview">
+                <img className="preview-img" src={photo.url} alt={photo.label} />
+                <div className="preview-name">{photo.label}</div>
+              </div>
+              <div className="btn-row between">
+                <button type="button" className="btn" onClick={() => { setPhoto(null); setForm(null); setRaw(null); setDraft(null); setError('') }}>
+                  다시 고르기
+                </button>
+                <button className="btn primary" onClick={recognize} disabled={loading}>
+                  {loading ? '인식 중… (5초 안팎)' : '영수증 인식'}
+                </button>
+              </div>
+            </>
           )}
-
-          <div className="btn-row">
-            <button className="btn primary" onClick={recognize} disabled={!photo || loading}>
-              {loading ? '인식 중… (5초 안팎)' : '영수증 인식'}
-            </button>
-          </div>
         </div>
 
         {/* ---------- 오른쪽: 결과 ---------- */}

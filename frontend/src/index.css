@@ -637,3 +637,23 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .route-search { display: flex; gap: 8px; align-items: flex-end; }
 .route-search .field { flex: 1; }
 
+
+/* ---------- 비밀번호 보기 · 뒤로가기 · 아이콘 타일 · 영수증 시작 버튼 ---------- */
+.logo-mark svg { display: block; }
+.pw-wrap { position: relative; display: block; }
+.pw-wrap input { width: 100%; padding-right: 44px; }
+.pw-eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: 0; background: none; color: var(--muted); width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; }
+.pw-eye:hover { background: var(--bg); color: var(--ink); }
+.crumb-back { display: inline-flex; align-items: center; gap: 2px; margin-right: 10px; padding: 4px 10px 4px 6px !important; border: 1px solid var(--line) !important; background: var(--panel) !important; font-weight: 600; }
+.tile-icon { width: 54px; height: 54px; border-radius: 14px; display: grid; place-items: center; background: var(--brand-soft); color: var(--brand); }
+.tile-icon.ico-meal { background: var(--warn-soft); color: var(--warn); }
+.tile-icon.ico-meeting { background: #ece9fb; color: #4a3fa8; }
+.tile-icon.ico-card { background: #e0f3f1; color: #0b6b62; }
+@media (prefers-color-scheme: dark) { .tile-icon.ico-meeting { background: #26224a; color: #b4abf5; } .tile-icon.ico-card { background: #12302d; color: #6fd2c6; } }
+.start-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0 8px; }
+.start-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 28px 12px; border: 1.5px dashed var(--line); border-radius: 14px; background: var(--panel); color: var(--brand); text-align: center; cursor: pointer; }
+.start-btn:hover { border-color: var(--brand); background: var(--brand-soft); }
+.start-btn b { color: var(--ink); font-size: 16px; }
+.start-btn small { color: var(--muted); }
+.start-btn input { display: none; }
+.sample-toggle { display: block; margin: 6px 0 10px; font-size: 13px; font-weight: 600; }
