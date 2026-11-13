@@ -148,6 +148,9 @@ export default function DocumentEditor({ doc, onBack, onChanged }) {
         <h2>{kind}{saved.id ? '' : ' 새로 쓰기'}</h2>
         {saved.id && <span className={`badge ${confirmed ? 'good' : 'muted'}`}>{confirmed ? '작성 완료' : '작성 중'}</span>}
       </div>
+      {doc.origin && !saved.id && (
+        <div className="notice">{doc.origin}에서 입력한 값을 채워 두었어요. 빈 칸만 적고 “초안 만들기”를 누르세요. 채워진 값도 고칠 수 있어요.</div>
+      )}
       <p className="hint">{schema.desc} * 표시는 초안을 만들 때 꼭 필요해요.</p>
 
       <div className="card">

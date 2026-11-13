@@ -54,7 +54,7 @@ const SAMPLE = {
   ],
 }
 
-export default function VerifyPage({ prefill }) {
+export default function VerifyPage({ prefill, user, onNavigate }) {
   const [tripType, setTripType] = useState(prefill?.trip_type ?? '국내출장')
   const [grade, setGrade] = useState(prefill?.grade ?? '직원 3급 이하')
   const [trip, setTrip] = useState({ start_date: '', end_date: '', region: '', vehicle: '', ...(prefill?.trip ?? {}) })
@@ -358,7 +358,7 @@ export default function VerifyPage({ prefill }) {
           {result ? (
             <>
               <VerifyResult result={result} />
-              <SubmitPanel claim={buildRequest()} result={result} />
+              <SubmitPanel claim={buildRequest()} result={result} user={user} onNavigate={onNavigate} />
             </>
           ) : (
             !loading && <div className="empty">청구 내역을 입력하고 "검증하기"를 누르면 항목별 판정이 여기에 표시됩니다.</div>

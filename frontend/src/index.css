@@ -636,6 +636,11 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .recent-name { font-weight: 600; }
 .recent-link { border: 0; background: none; padding: 0; text-align: left; color: inherit; display: grid; gap: 2px; }
 .row-badges { display: flex; gap: 6px; }
+/* 정산 → 문서 작성 연결 (components/NextDocs.jsx) */
+.next-docs { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); display: grid; gap: 6px; }
+.next-docs .hint { margin: 0; }
+.next-docs.compact { margin: 4px 0 0; padding: 0; border: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13.5px; }
+.btn-row.start { justify-content: flex-start; flex-wrap: wrap; }
 /* 관리자 홈: 확인 필요 목록 */
 .alert-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 28px; }
 .alert-head .home-sub { margin: 0; display: flex; align-items: center; gap: 6px; color: var(--bad); }

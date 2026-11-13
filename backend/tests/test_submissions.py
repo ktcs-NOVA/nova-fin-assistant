@@ -37,9 +37,12 @@ def cleanup():
     yield codes
     with SessionLocal() as db:
         for sub in db.scalars(select(Submission).where(Submission.code.in_(codes))):
+            trip = sub.trip
             for e in list(sub.expenses):
                 db.delete(e)
             db.delete(sub)
+            if trip is not None:
+                db.delete(trip)
         db.commit()
 
 
@@ -64,6 +67,22 @@ def test_meeting_submission_keeps_purpose_and_attendees(cleanup):
     first = detail["expenses"][0]
     assert first["attendees"] == ["기획팀 노은비", "해운정책팀 황종원"]
     assert first["meeting_purpose"] == "테스트 업무협의" and first["participant_count"] == 2
+    assert detail["trip"] is None  # 출장 건이 아니면 출장 정보 없음
+
+
+def test_trip_submission_exposes_period(cleanup):
+    """출장 건은 기간·지역을 돌려줘야 직원 화면에서 출장보고서·출장원을 이어 쓸 수 있음."""
+    claim = {
+        "trip_type": "국내출장", "grade": "직원 3급 이하",
+        "trip": {"start_date": "2026-11-03", "end_date": "2026-11-04", "region": "광역시"},
+        "items": [{"field": "일비", "amount": 60000}], "purpose": "테스트 출장",
+    }
+    r = client.post("/api/submissions", json=claim, headers=auth("E1001"))
+    assert r.status_code == 201, r.text
+    cleanup.append(r.json()["id"])
+    mine = client.get("/api/submissions", headers=auth("E1001")).json()["items"]
+    got = next(s for s in mine if s["id"] == r.json()["id"])
+    assert got["trip"] == {"start_date": "2026-11-03", "end_date": "2026-11-04", "region": "광역시", "destination": "광역시"}
 
 
 def test_external_meeting_over_500k_needs_pre_approval(cleanup):

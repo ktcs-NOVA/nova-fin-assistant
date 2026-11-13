@@ -252,6 +252,11 @@ def to_view(sub: Submission) -> dict:
             }
             for e in expenses
         ],
+        # 출장 건이면 기간·지역 (직원 화면에서 출장보고서·출장원을 이어 쓸 때 채움)
+        "trip": {
+            "start_date": sub.trip.start_date.isoformat(), "end_date": sub.trip.end_date.isoformat(),
+            "region": sub.trip.region, "destination": sub.trip.destination,
+        } if sub.trip else None,
         "decision_message": last_review.message if last_review else None,
         "decided_at": last_review.created_at.astimezone(KST).date().isoformat() if last_review and last_review.created_at else None,
     }
