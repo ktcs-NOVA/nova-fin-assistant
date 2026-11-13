@@ -84,12 +84,19 @@ def build_request(c: dict) -> dict:
     return req
 
 
-# 예산항목 → 청구 유형·엔진 분류·계정과목. 미확정은 계정을 비워 M-05 비교 카드에 "(없음)" 으로 보이게 둠
+# 청구 유형은 모두 "회의비" (2026-11-13 코칭: 점심·회식을 따로 두지 않고 회의비에 합침).
+# 예산항목 → 엔진 분류·계정과목. 미확정은 계정을 비워 M-05 비교 카드에 "(없음)" 으로 보이게 둠
+MEET_TYPE = "회의비"
 MEET_BUDGET = {
-    "업무추진비": ("업무추진비", "business", "업무추진비"),
-    "조직관리비": ("법인카드", "org", "조직관리비"),
-    "미확정": ("법인카드", "general", None),
+    "업무추진비": ("business", "업무추진비"),
+    "조직관리비": ("org", "조직관리비"),
+    "미확정": ("general", None),
 }
+
+
+def meet_field(c: dict) -> str:
+    """회의비 안의 구분 (frontend utils/claimTypes.js 의 MEETING_FIELDS 와 같은 이름)."""
+    return "다과비" if "카페" in c["merchant_type"] or "다과" in c["purpose"] else "회의 식대"
 
 
 def build_meet_request(c: dict) -> dict:
@@ -97,17 +104,18 @@ def build_meet_request(c: dict) -> dict:
 
     1인당 한도는 미확보(NULL)라 엔진에 넘기지 않고, 참석 인원은 메모와 extra 로만 남깁니다 (유의사항 ①).
     """
-    trip_type, category, account = MEET_BUDGET[c["budget_item"]]
+    category, account = MEET_BUDGET[c["budget_item"]]
     n = c.get("participants")
     note = f"{c['purpose']}" + (f" · 참석 {n}명" if n else " · 참석 인원 미기재")
     item = {
-        "field": f"{c['expense_type']}", "amount": c["amount"], "date": c["date"], "time": c["time"],
+        "field": meet_field(c), "amount": c["amount"], "date": c["date"], "time": c["time"],
         "merchant": c["merchant"], "merchant_type": c["merchant_type"], "payment": c["payment"],
         "note": note, "category": category, "receipt": c["has_receipt"], "case_id": c["case_id"],
         "participant_count": n, "budget_item": c["budget_item"],
+        "meeting_purpose": c["purpose"], "origin_type": c["expense_type"],  # 원 자료의 유형(점심·식대/회식비/회의비)
     }
     if c["has_attendees"] and n:
-        item["attendees"] = f"총 {n}명 (사용자·상대방 소속·직책·성명 기재)"
+        item["attendees"] = [f"{c['submitter']} 외 {n - 1}명 (소속·직책·성명 기재)"]
     if c["pre_approval"] == "있음":
         item["pre_approved"] = True
     if c["pre_approval"] == "예외서류 제출":
@@ -120,7 +128,7 @@ def build_meet_request(c: dict) -> dict:
         items.append({**item, "amount": r["amount"], "time": r["time"], "case_id": None,
                       "case_ref": c["case_id"], "note": note + " · 같은 간담회 2차 결제"})
     return {
-        "trip_type": trip_type, "grade": c["grade"],
+        "trip_type": MEET_TYPE, "grade": c["grade"],
         "trip": {"settlement_date": c["claim_date"]},  # 법인카드 10일 결의 기한 검사용
         "items": items, "purpose": c["purpose"], "account": account,
     }

@@ -32,6 +32,15 @@ STEP_DONE = 6
 _ITEM_COLUMNS = {"field", "amount", "date", "time", "payment", "merchant", "merchant_type", "note", "attendees"}
 
 
+def _as_list(value) -> list[str] | None:
+    """참석자는 목록으로 저장. 문자열 하나로 와도 받아 줍니다."""
+    if not value:
+        return None
+    if isinstance(value, str):
+        return [value]
+    return [str(v) for v in value if str(v).strip()] or None
+
+
 def require_admin(user: User) -> None:
     if user.role != ROLE_ADMIN:
         raise AppError("회계 관리자만 쓸 수 있는 기능입니다.", 403)
@@ -119,7 +128,7 @@ def create_submission(db: Session, user: User, req: dict) -> Submission:
                 merchant=(it.get("merchant") or None),
                 merchant_type=(it.get("merchant_type") or it.get("business_type") or None),
                 note=(it.get("note") or None),
-                attendees=it.get("attendees") or None,
+                attendees=_as_list(it.get("attendees")),
                 extra={k: v for k, v in it.items() if k not in _ITEM_COLUMNS and v not in (None, "", False)},
             )
         )
@@ -167,7 +176,7 @@ def _claim_from_expenses(sub: Submission) -> dict:
             "field": e.field, "amount": e.amount, "date": e.used_date.isoformat(),
             "time": e.used_time.strftime("%H:%M") if e.used_time else None,
             "payment": e.payment, "merchant": e.merchant, "merchant_type": e.merchant_type,
-            "note": e.note, **(e.extra or {}),
+            "note": e.note, "attendees": e.attendees, **(e.extra or {}),
         }
         for e in sub.expenses
     ]
@@ -237,10 +246,17 @@ def to_view(sub: Submission) -> dict:
             {
                 "field": e.field, "amount": e.amount, "date": e.used_date.isoformat(),
                 "time": e.used_time.strftime("%H:%M") if e.used_time else None,
-                "payment": e.payment, "merchant": e.merchant, "note": e.note, **(e.extra or {}),
+                "payment": e.payment, "merchant": e.merchant, "note": e.note,
+                "attendees": e.attendees or [],  # 회의비 참석자 (회의 목적은 extra.meeting_purpose)
+                **(e.extra or {}),
             }
             for e in expenses
         ],
+        # 출장 건이면 기간·지역 (직원 화면에서 출장보고서·출장원을 이어 쓸 때 채움)
+        "trip": {
+            "start_date": sub.trip.start_date.isoformat(), "end_date": sub.trip.end_date.isoformat(),
+            "region": sub.trip.region, "destination": sub.trip.destination,
+        } if sub.trip else None,
         "decision_message": last_review.message if last_review else None,
         "decided_at": last_review.created_at.astimezone(KST).date().isoformat() if last_review and last_review.created_at else None,
     }

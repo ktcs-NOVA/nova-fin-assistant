@@ -1,4 +1,5 @@
 // 문서 작업 (U-02): 출장보고서·회의록·출장원을 쓰다 말아도 저장해 두고 이어 쓰는 곳.
+// 정산 화면에서 넘어오면(param.newDoc: { kind, fields, origin }) 그 값이 채워진 새 서류 작성으로 바로 들어갑니다.
 // 탭 "저장한 업무 절차"는 규정 Q&A에서 저장한 체크리스트(ChecklistPage)를 그대로 보여줘요.
 
 import { useEffect, useState } from 'react'
@@ -18,7 +19,7 @@ const when = (iso) => {
 export default function DocumentsPage(props) {
   const [tab, setTab] = useState('docs')       // docs | procedures
   const [rows, setRows] = useState(null)       // null = 불러오는 중
-  const [editing, setEditing] = useState(null) // null | 서류 객체(id 없으면 새 서류)
+  const [editing, setEditing] = useState(() => (props.param?.newDoc ? { draft: '', ...props.param.newDoc } : null)) // null | 서류 객체(id 없으면 새 서류)
   const [picking, setPicking] = useState(false)
   const [confirmId, setConfirmId] = useState(null)
   const [error, setError] = useState('')

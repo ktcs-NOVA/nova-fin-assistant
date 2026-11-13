@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react'
 import { listMySubmissions } from '../api/client.js'
 import VerdictBadge from '../components/VerdictBadge.jsx'
 import StatusTag from '../components/StatusTag.jsx'
+import NextDocs from '../components/NextDocs.jsx'
 
 const won = (n) => Number(n).toLocaleString('ko-KR') + '원'
 
-export default function MyStatusPage() {
+export default function MyStatusPage({ user, onNavigate }) {
   const [rows, setRows] = useState(null)
   const [error, setError] = useState('')
 
@@ -35,6 +36,8 @@ export default function MyStatusPage() {
               <div>
                 <div className="recent-name">{s.type} · {s.purpose}</div>
                 <div className="hint">{s.date} · {won(s.amount)} · {s.id}</div>
+                {/* 이 정산의 내용으로 채운 서류 쓰기 (회의비 → 회의록, 출장 → 출장보고서·출장원) */}
+                <NextDocs compact src={s} user={user} onNavigate={onNavigate} />
               </div>
               <span className="row-badges"><VerdictBadge verdict={s.verdict} /><StatusTag status={s.status} /></span>
             </li>

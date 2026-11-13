@@ -204,7 +204,31 @@ button { font: inherit; cursor: pointer; }
 }
 .stat-label { font-size: 12px; color: var(--muted); }
 .stat-value { font-size: 22px; font-weight: 700; }
-.stat.warn .stat-value { color: var(--bad); }
+/* 누를 수 있는 숫자 카드 (관리자 홈·검토 대기함, components/ReviewStats.jsx) */
+button.stat { font: inherit; color: inherit; text-align: left; cursor: pointer; transition: border-color .12s, box-shadow .12s; }
+button.stat:hover { border-color: var(--brand); }
+button.stat.on { border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
+.stat-label { display: flex; align-items: center; gap: 5px; }
+.stat-sub { font-size: 12.5px; color: var(--muted); min-height: 1.3em; }
+/* 확인 필요: 빨간 배경 + ⚠ */
+.stat.alert { background: var(--bad-soft); border-color: var(--bad); }
+.stat.alert .stat-label { color: var(--bad); font-weight: 700; }
+.stat.alert .stat-value { color: var(--bad); }
+.stat.alert .stat-sub { color: var(--bad); opacity: .9; }
+button.stat.alert:hover, button.stat.alert.on { border-color: var(--bad); box-shadow: inset 0 0 0 1px var(--bad); }
+.stat-row.big { gap: 14px; margin: 18px 0 0; }
+.stat-row.big .stat { min-width: 200px; padding: 18px 20px; border-radius: 16px; gap: 4px; }
+.stat-row.big .stat-label { font-size: 15px; }
+.stat-row.big .stat-value { font-size: 34px; line-height: 1.15; font-weight: 800; }
+@media (max-width: 760px) {
+  /* 좁은 화면에서도 숫자 세 개가 한 줄에 보이게 (세로로 쌓이면 목록이 화면 밖으로 밀림) */
+  .stat-row.big { gap: 8px; flex-wrap: nowrap; }
+  .stat-row.big .stat { min-width: 0; flex: 1 1 0; padding: 12px; border-radius: 12px; }
+  .stat-row.big .stat-label { font-size: 13px; }
+  .stat-row.big .stat-value { font-size: 24px; }
+  .stat-row.big .stat-sub { display: none; }
+  .alert-row { align-items: flex-start; }
+}
 
 /* ---------- 폼 요소 ---------- */
 select, textarea, input[type=text] {
@@ -319,6 +343,7 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .field-label em { font-style: normal; color: var(--warn); font-size: 11px; }
 .field input, .field select { width: 100%; font: inherit; font-size: 14px; color: inherit; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
 .field.missing input { border-color: var(--warn); background: var(--warn-soft); }
+.form-grid .field-wide { grid-column: 1 / -1; }
 .items-table td { padding: 6px 4px; border-bottom: 1px solid var(--line); }
 .items-table td.num { text-align: right; white-space: nowrap; }
 .notes-box { font-size: 13px; color: var(--muted); background: var(--bg); border-radius: 8px; padding: 10px 12px; margin: 0; }
@@ -593,6 +618,7 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .tile-grid { display: grid; gap: 14px; margin-top: 18px; }
 .tile-grid.hero { grid-template-columns: 1.4fr 1fr 1fr; }
 .tile-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.tile-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .tile { display: flex; flex-direction: column; gap: 8px; text-align: left; padding: 22px; border: 1.5px solid var(--line); border-radius: 16px; background: var(--panel); color: var(--ink); transition: border-color .12s, box-shadow .12s; }
 .tile:hover { border-color: var(--brand); background: var(--brand-soft); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
 .count-red { color: var(--bad); font-weight: 800; }
@@ -610,8 +636,27 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .recent-name { font-weight: 600; }
 .recent-link { border: 0; background: none; padding: 0; text-align: left; color: inherit; display: grid; gap: 2px; }
 .row-badges { display: flex; gap: 6px; }
+/* 정산 → 문서 작성 연결 (components/NextDocs.jsx) */
+.next-docs { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); display: grid; gap: 6px; }
+.next-docs .hint { margin: 0; }
+.next-docs.compact { margin: 4px 0 0; padding: 0; border: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13.5px; }
+.btn-row.start { justify-content: flex-start; flex-wrap: wrap; }
+/* 관리자 홈: 확인 필요 목록 */
+.alert-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 28px; }
+.alert-head .home-sub { margin: 0; display: flex; align-items: center; gap: 6px; color: var(--bad); }
+.alert-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+.alert-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; width: 100%; padding: 13px 16px; border: 1px solid var(--line); border-left: 4px solid var(--bad); border-radius: 12px; background: var(--panel); color: inherit; font: inherit; text-align: left; cursor: pointer; transition: border-color .12s, background .12s; }
+.alert-row:hover { border-color: var(--bad); background: var(--bad-soft); }
+.alert-main { display: grid; gap: 2px; min-width: 0; }
+.alert-main > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.alert-problems { font-size: 13.5px; font-weight: 600; color: var(--bad); }
+.alert-side { display: grid; justify-items: end; gap: 4px; flex: none; }
+.alert-amount { font-weight: 700; font-variant-numeric: tabular-nums; }
+.tile.compact { padding: 16px 20px; gap: 4px; }
+.tile.compact .tile-title { font-size: 17px; }
+.home .alert-list + .tile-grid, .home .empty + .tile-grid { margin-top: 24px; }
 @media (max-width: 760px) {
-  .tile-grid.hero, .tile-grid.two { grid-template-columns: 1fr; }
+  .tile-grid.hero, .tile-grid.two, .tile-grid.three { grid-template-columns: 1fr; }
   .login-hero { padding: 32px 24px; }
   .login-hero h1 { font-size: 24px; }
 }

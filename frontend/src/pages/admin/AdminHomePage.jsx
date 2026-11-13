@@ -1,70 +1,83 @@
-// 관리자 홈: 오늘 검토할 정산 건수와 바로가기. 건수는 제출 목록(listSubmissions)에서 셉니다.
-// "보완 요청 중" 상태는 아직 백엔드 상태값(검토 대기/승인/반려)에 없어서 타일에서 뺐어요.
+// 관리자 홈: 들어오자마자 제출 / 검토 대기 / 확인 필요 건수와, 확인이 필요한 건 목록이 바로 보입니다.
+// (2026-11-13 코칭: 깊이 들어가야 보이면 안 되고 앞단에서 검토할 수 있어야 함. 반려는 확인 필요에 포함)
+// 숫자·목록 기준은 검토 대기함과 같은 reviewQueue.js 를 씁니다. 숫자 카드나 행을 누르면 검토 대기함의 그 보기·그 건으로 갑니다.
 
-import { useEffect, useState } from 'react'
-import { listSubmissions, STATUS, VERDICT } from '../../api/client.js'
+import ReviewStats from '../../components/ReviewStats.jsx'
 import VerdictBadge from '../../components/VerdictBadge.jsx'
+import StatusTag from '../../components/StatusTag.jsx'
+import Icon from '../../components/Icons.jsx'
+import { STATUS } from '../../api/client.js'
+import { useReviewQueue, countQueue, needsCheck, problemFields, byUrgency, VIEW } from './reviewQueue.js'
+
+const SHOW = 8   // 홈에 바로 보여 줄 확인 필요 건수
+const won = (n) => Number(n ?? 0).toLocaleString('ko-KR') + '원'
 
 export default function AdminHomePage({ user, onNavigate }) {
-  const [rows, setRows] = useState(null)
-
-  useEffect(() => {
-    let ignore = false
-    listSubmissions()
-      .then((d) => { if (!ignore) setRows(d.items ?? []) })
-      .catch(() => { if (!ignore) setRows([]) })
-    return () => { ignore = true }
-  }, [])
-
-  const all = rows ?? []
-  const pending = all.filter((s) => s.status === STATUS.PENDING)
-  const needCheck = pending.filter((s) => s.verdict !== VERDICT.OK).length
-  const approved = all.filter((s) => s.status === STATUS.APPROVED).length
-  const preview = pending.slice(0, 3)
+  const { rows, acctIssue, error } = useReviewQueue()
+  const counts = rows ? countQueue(rows, acctIssue) : null
+  const needs = rows ? rows.filter((r) => needsCheck(r, acctIssue)).sort(byUrgency) : []
 
   return (
     <div className="home">
       <h1>
-        {rows === null ? `${user.name} 님, 안녕하세요` : (
-          <>{user.name} 님, 오늘 검토할 정산이 <span className="count-red">{pending.length}건</span> 있어요</>
-        )}
+        {!counts ? `${user.name} 님, 안녕하세요` : counts.needs > 0 ? (
+          <>{user.name} 님, 확인이 필요한 정산이 <span className="count-red">{counts.needs}건</span> 있어요</>
+        ) : `${user.name} 님, 지금 확인이 필요한 정산은 없어요`}
       </h1>
-      <p className="hint">AI가 먼저 점검한 결과를 보고, 승인 여부는 담당자가 결정해요.</p>
+      <p className="hint">AI가 먼저 점검한 결과예요. 승인·반려는 담당자가 결정해요.</p>
+
+      {error && <div className="error" role="alert">{error}</div>}
+
+      <ReviewStats big counts={counts} onPick={(view) => onNavigate('review', { view })} />
+
+      <div className="alert-head">
+        <h2 className="home-sub"><Icon name="warn" size={18} />확인 필요</h2>
+        {needs.length > 0 && (
+          <button type="button" className="link-btn" onClick={() => onNavigate('review', { view: VIEW.NEEDS })}>
+            {needs.length > SHOW ? `${needs.length}건 모두 보기 →` : '검토 대기함에서 보기 →'}
+          </button>
+        )}
+      </div>
+
+      {rows === null ? (
+        <div className="empty">불러오는 중…</div>
+      ) : needs.length === 0 ? (
+        <div className="empty">확인이 필요한 건이 없어요. 검토 대기 {counts.pending}건은 AI 점검을 통과했어요.</div>
+      ) : (
+        <ul className="alert-list">
+          {needs.slice(0, SHOW).map((s) => {
+            const problems = problemFields(s, acctIssue)
+            return (
+              <li key={s.id}>
+                <button type="button" className="alert-row" onClick={() => onNavigate('review', { id: s.id })}>
+                  <span className="alert-main">
+                    <span className="recent-name">{s.submitter} <span className="hint">{s.dept}</span></span>
+                    <span className="hint">{s.type} · {s.purpose} · {s.date}</span>
+                    <span className="alert-problems">{problems.length ? problems.join(', ') : s.status === STATUS.REJECTED ? '반려 후 다시 제출 대기' : '문제 항목 없음'}</span>
+                  </span>
+                  <span className="alert-side">
+                    <span className="alert-amount">{won(s.amount)}</span>
+                    {s.status === STATUS.REJECTED ? <StatusTag status={s.status} /> : <VerdictBadge verdict={s.verdict} />}
+                  </span>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
 
       <div className="tile-grid two">
-        <button type="button" className="tile" onClick={() => onNavigate('review')}>
-          <span className="tile-title">검토 대기</span>
-          <span className="tile-desc">새로 제출된 정산이에요. AI 판정이 함께 보여요.</span>
-          <span className="tile-go">{rows === null ? '불러오는 중…' : <><span className="count-red">{pending.length}건</span> · 확인 필요 <span className="count-red">{needCheck}건</span></>}</span>
-        </button>
-        <button type="button" className="tile" onClick={() => onNavigate('review')}>
+        <button type="button" className="tile compact" onClick={() => onNavigate('review', { view: VIEW.ALL, status: STATUS.APPROVED })}>
           <span className="tile-title">승인 완료</span>
           <span className="tile-desc">승인된 정산 내역을 확인해요.</span>
-          <span className="tile-go">{rows === null ? '불러오는 중…' : `${approved}건`}</span>
+          <span className="tile-go">{counts ? `${counts.approved}건` : '불러오는 중…'}</span>
         </button>
-        <button type="button" className="tile" onClick={() => onNavigate('qa')}>
+        <button type="button" className="tile compact" onClick={() => onNavigate('qa')}>
           <span className="tile-title">규정 물어보기</span>
           <span className="tile-desc">판정이 헷갈릴 때 근거 조항을 찾아봐요.</span>
           <span className="tile-go">질문하기 →</span>
         </button>
       </div>
-
-      {preview.length > 0 && (
-        <>
-          <h2 className="home-sub">검토 대기 목록</h2>
-          <ul className="recent-list">
-            {preview.map((s) => (
-              <li key={s.id}>
-                <button type="button" className="recent-link" onClick={() => onNavigate('review')}>
-                  <span className="recent-name">{s.submitter}</span>
-                  <span className="hint">{s.type} · {s.purpose} · {s.date}</span>
-                </button>
-                <VerdictBadge verdict={s.verdict} />
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
     </div>
   )
 }

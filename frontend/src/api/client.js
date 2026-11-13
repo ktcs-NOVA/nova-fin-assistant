@@ -247,7 +247,9 @@ export function toVoucherRequest(sub) {
     const items = fields.map((field, i) => ({ field, amount: i === 0 ? sub.amount : 0 }))
     return { ...base, items: items.length ? items : [{ field: sub.purpose, amount: sub.amount }] }
   }
-  return { ...base, items: [{ field: sub.purpose, amount: sub.amount, date: sub.date, merchant: sub.merchant ?? '' }] }
+  // 회의비처럼 제출할 때 분류(category)를 정해 보낸 건은 그 분류로 과목을 제안받음 (건명 글자만으로 추정하지 않게)
+  const category = sub.expenses?.[0]?.category
+  return { ...base, items: [{ field: sub.purpose, amount: sub.amount, date: sub.date, merchant: sub.merchant ?? '', ...(category ? { category } : {}) }] }
 }
 
 /** 결의서 lines[] 중 금액이 가장 큰 과목을 대표로, 세목은 모두 모읍니다. */

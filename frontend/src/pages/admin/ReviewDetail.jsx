@@ -40,6 +40,8 @@ export default function ReviewDetail({ id, onBack, onDecided }) {
 
   if (error && !sub) return <div className="error">{error}</div>
   if (!sub) return <div className="empty">불러오는 중…</div>
+  // 회의비 건이면 첫 항목에 회의 목적·참석자가 실려 옴 (직원 청구 검증 화면에서 필수 입력)
+  const meetingInfo = sub.type === '회의비' ? (sub.expenses?.[0] ?? {}) : null
 
   // 반려 사유 후보 = AI 판정 문제 항목 + 계정과목 불일치(M-05)
   const accountIssue = acct.data ? compareAccount(sub, acct.data).issue : null
@@ -102,6 +104,9 @@ export default function ReviewDetail({ id, onBack, onDecided }) {
           <dt>유형</dt><dd>{sub.type}</dd>
           <dt>사용일시</dt><dd>{sub.date}{sub.time ? ` ${sub.time}` : ''}</dd>
           {sub.merchant && (<><dt>사용처</dt><dd>{sub.merchant}</dd></>)}
+          {/* 회의비: 실무에서 증빙으로 보는 두 가지 (회의 목적·참석자) */}
+          {meetingInfo?.meeting_purpose && (<><dt>회의 목적</dt><dd>{meetingInfo.meeting_purpose}</dd></>)}
+          {meetingInfo && (<><dt>참석자</dt><dd>{meetingInfo.attendees?.length ? `${meetingInfo.attendees.join(', ')}${meetingInfo.participant_count ? ` · 총 ${meetingInfo.participant_count}명` : ''}` : <span className="error-text">미기재</span>}</dd></>)}
           <dt>금액</dt><dd>{won(sub.amount)}</dd>
           <dt>계정과목</dt><dd>{sub.account || <span className="muted-text">미입력</span>}</dd>
           <dt>제출일</dt><dd>{sub.submitted_at}</dd>
