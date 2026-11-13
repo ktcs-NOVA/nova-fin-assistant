@@ -11,6 +11,7 @@
 
 import { useState } from 'react'
 import { recognizeReceipt, PURPOSES, USE_MOCK } from '../api/client.js'
+import { blobToBase64 } from '../utils/base64.js'
 import receiptsData from '../mocks/receipts.json'
 import CameraCapture from '../components/CameraCapture.jsx'
 import Icon from '../components/Icons.jsx'
@@ -33,16 +34,6 @@ const CONFIDENCE = {
   high: { label: '신뢰도 높음', cls: 'good' },
   medium: { label: '신뢰도 보통 · 확인 필요', cls: 'warn' },
   low: { label: '신뢰도 낮음 · 직접 확인', cls: 'bad' },
-}
-
-// 파일 → base64 (data: 접두어 제거)
-function readAsBase64(blob) {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader()
-    r.onload = () => resolve(String(r.result).split(',')[1])
-    r.onerror = () => reject(new Error('사진 파일을 읽지 못했습니다.'))
-    r.readAsDataURL(blob)
-  })
 }
 
 export default function ReceiptPage({ onSendToVerify }) {
@@ -83,7 +74,7 @@ export default function ReceiptPage({ onSendToVerify }) {
       if (!USE_MOCK) {
         // 샘플은 public/ 에서 받아오고, 내 사진은 선택한 파일 그대로
         const blob = photo.blob ?? (await (await fetch(photo.url)).blob())
-        base64 = await readAsBase64(blob)
+        base64 = await blobToBase64(blob)   // 직접 인코딩 + 전송 전 검증 (utils/base64.js)
         mediaType = blob.type || 'image/jpeg'
       }
       const r = await recognizeReceipt({ filename: photo.file, mediaType, base64 })
