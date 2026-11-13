@@ -47,6 +47,8 @@ export default function App() {
   const [current, setCurrent] = useState(() => (user ? MENUS[user.role].home : null))
   // 영수증 등록(U-06)·출장비 계산(U-05)에서 "청구 검증으로 보내기"를 누르면 여기에 담겨 청구 검증(U-04) 폼의 초기값이 됩니다.
   const [verifyPrefill, setVerifyPrefill] = useState(null)
+  // 화면을 옮길 때 함께 넘기는 값 (예: 관리자 홈 → 검토 대기함의 보기 방식·열어 둘 건). 다른 화면으로 가면 비워집니다.
+  const [pageParam, setPageParam] = useState(null)
 
   // 로그인·회원가입 응답 { token, user } 를 저장하고 역할에 맞는 첫 화면으로
   function login(session) {
@@ -81,8 +83,9 @@ export default function App() {
     crumbs.unshift({ id, label: menu.pages[id].label, go: () => changePage(id) })
   }
 
-  function changePage(id) {
+  function changePage(id, param = null) {
     setCurrent(id)
+    setPageParam(param)
     if (id !== 'verify') setVerifyPrefill(null)   // 검증 화면을 떠나면 넘겨받은 값은 버림
     window.scrollTo?.(0, 0)
   }
@@ -94,7 +97,7 @@ export default function App() {
 
   return (
     <Layout user={user} roleLabel={menu.label} onLogout={logout} onHome={() => changePage(menu.home)} onAsk={() => changePage('qa')} crumbs={crumbs}>
-      <Page user={user} onNavigate={changePage} onSendToVerify={sendToVerify} prefill={verifyPrefill} />
+      <Page user={user} onNavigate={changePage} onSendToVerify={sendToVerify} prefill={verifyPrefill} param={pageParam} />
     </Layout>
   )
 }

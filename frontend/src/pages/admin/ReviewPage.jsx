@@ -1,67 +1,60 @@
 // M-01 정산 검토 대기함 (목록)
-// 확인이 필요한 건(보완 필요 → 담당자 확인 필요 → 확인 가능 순)이 위로 오고,
+// 확인이 필요한 건(검토 대기 중 보완 필요 → 담당자 확인 필요 → 계정과목 불일치, 그다음 반려한 건)이 위로 오고,
 // 판정·상태로 거를 수 있습니다. 행을 누르면 상세(ReviewDetail)로 들어갑니다.
 // 문제 항목에는 AI 판정 항목 외에 계정과목 불일치(M-05)도 포함해, 상세·반려 사유와 개수가 맞도록 합니다.
 
-import { useEffect, useMemo, useState } from 'react'
-import { listSubmissions, suggestAccount, VERDICT, STATUS } from '../../api/client.js'
-import { compareAccount, ACCOUNT_FIELD } from '../../components/AccountReviewCard.jsx'
+import { useMemo, useState } from 'react'
+import { VERDICT, STATUS } from '../../api/client.js'
+import ReviewStats from '../../components/ReviewStats.jsx'
 import VerdictBadge from '../../components/VerdictBadge.jsx'
 import StatusTag from '../../components/StatusTag.jsx'
 import ReviewDetail from './ReviewDetail.jsx'
+import { useReviewQueue, countQueue, needsCheck, problemFields, byUrgency, VIEW } from './reviewQueue.js'
 
-const ORDER = { [VERDICT.FIX]: 0, [VERDICT.CHECK]: 1, [VERDICT.OK]: 2 }
+const NEEDS = '확인 필요'
+const ALL = '전체'
 const won = (n) => n.toLocaleString('ko-KR') + '원'
 
-export default function ReviewPage() {
-  const [rows, setRows] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [verdictFilter, setVerdictFilter] = useState('확인 필요') // '전체' | '확인 필요' | 각 판정
-  const [statusFilter, setStatusFilter] = useState(STATUS.PENDING)
-  const [selectedId, setSelectedId] = useState(null)
-  const [acctIssue, setAcctIssue] = useState({})   // id → 계정과목 불일치·미입력 여부 (M-05, 따로 받아 채움)
+// 숫자 카드(제출 / 검토 대기 / 확인 필요) ↔ 필터 두 개. 확인 필요에는 반려 건도 들어가므로 상태는 전체로 둡니다.
+const VIEW_FILTERS = {
+  [VIEW.ALL]: { verdict: ALL, status: ALL },
+  [VIEW.PENDING]: { verdict: ALL, status: STATUS.PENDING },
+  [VIEW.NEEDS]: { verdict: NEEDS, status: ALL },
+}
 
-  function load() {
-    return listSubmissions()
-      .then((data) => {
-        setRows(data.items)
-        setError('')
-        // 계정과목 제안은 건별로 따로 받음. 실패한 건은 그냥 비워 둠 (목록은 그대로 보임)
-        Promise.allSettled(data.items.map((s) => suggestAccount(s).then((d) => [s.id, !!compareAccount(s, d).issue])))
-          .then((rs) => setAcctIssue(Object.fromEntries(rs.filter((r) => r.status === 'fulfilled').map((r) => r.value))))
-      })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false))
+// param: 관리자 홈에서 넘어올 때 { view, status?, id? } — 볼 방식과 바로 열 건
+export default function ReviewPage({ param }) {
+  const { rows: loaded, acctIssue, error, reload } = useReviewQueue()
+  const loading = loaded === null
+  const first = VIEW_FILTERS[param?.view] ?? VIEW_FILTERS[VIEW.NEEDS]
+  const [verdictFilter, setVerdictFilter] = useState(first.verdict) // '전체' | '확인 필요' | 각 판정
+  const [statusFilter, setStatusFilter] = useState(param?.status ?? first.status)
+  const [selectedId, setSelectedId] = useState(param?.id ?? null)
+
+  const counts = useMemo(() => (loaded ? countQueue(loaded, acctIssue) : null), [loaded, acctIssue])
+  const activeView = Object.keys(VIEW_FILTERS).find((v) => VIEW_FILTERS[v].verdict === verdictFilter && VIEW_FILTERS[v].status === statusFilter)
+
+  function pickView(view) {
+    setVerdictFilter(VIEW_FILTERS[view].verdict)
+    setStatusFilter(VIEW_FILTERS[view].status)
   }
-  // 외부(API)에서 데이터를 가져오는 동기화라 effect 사용. setState는 응답 후(비동기)에만 호출됨.
-  useEffect(() => { load() }, [])
 
-  // 확인 필요 = AI 판정이 확인 가능이 아니거나, 계정과목이 AI 제안과 다름
-  const needsCheck = (r) => r.verdict !== VERDICT.OK || !!acctIssue[r.id]
-
-  const counts = useMemo(() => ({
-    total: rows.length,
-    pending: rows.filter((r) => r.status === STATUS.PENDING).length,
-    needs: rows.filter((r) => r.status === STATUS.PENDING && needsCheck(r)).length,
-  }), [rows, acctIssue])
-
-  const visible = useMemo(() => rows
-    .filter((r) => statusFilter === '전체' || r.status === statusFilter)
+  const visible = useMemo(() => (loaded ?? [])
+    .filter((r) => statusFilter === ALL || r.status === statusFilter)
     .filter((r) => {
-      if (verdictFilter === '전체') return true
-      if (verdictFilter === '확인 필요') return needsCheck(r)
+      if (verdictFilter === ALL) return true
+      if (verdictFilter === NEEDS) return needsCheck(r, acctIssue)
       return r.verdict === verdictFilter
     })
-    .sort((a, b) => ORDER[a.verdict] - ORDER[b.verdict] || a.submitted_at.localeCompare(b.submitted_at)),
-  [rows, statusFilter, verdictFilter, acctIssue])
+    .sort(byUrgency),
+  [loaded, statusFilter, verdictFilter, acctIssue])
 
   if (selectedId) {
     return (
       <ReviewDetail
         id={selectedId}
         onBack={() => setSelectedId(null)}
-        onDecided={() => { setSelectedId(null); load() }}
+        onDecided={() => { setSelectedId(null); reload() }}
       />
     )
   }
@@ -73,20 +66,16 @@ export default function ReviewPage() {
         <span className="desc">AI가 미리 판정한 결과를 보고 승인 또는 반려합니다. 승인·반려는 사람이 누릅니다.</span>
       </div>
 
-      {/* 요약 숫자 */}
-      <div className="stat-row">
-        <div className="stat"><span className="stat-label">제출</span><span className="stat-value">{counts.total}건</span></div>
-        <div className="stat"><span className="stat-label">검토 대기</span><span className="stat-value">{counts.pending}건</span></div>
-        <div className="stat warn"><span className="stat-label">확인 필요</span><span className="stat-value">{counts.needs}건</span></div>
-      </div>
+      {/* 요약 숫자: 누르면 그 보기로 */}
+      <ReviewStats counts={counts} active={activeView} onPick={pickView} />
 
       {/* 필터 */}
       <div className="toolbar">
         <label className="field-inline">
           <span>판정</span>
           <select value={verdictFilter} onChange={(e) => setVerdictFilter(e.target.value)}>
-            <option>확인 필요</option>
-            <option>전체</option>
+            <option>{NEEDS}</option>
+            <option>{ALL}</option>
             <option>{VERDICT.FIX}</option>
             <option>{VERDICT.CHECK}</option>
             <option>{VERDICT.OK}</option>
@@ -95,8 +84,8 @@ export default function ReviewPage() {
         <label className="field-inline">
           <span>상태</span>
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <option>{ALL}</option>
             <option>{STATUS.PENDING}</option>
-            <option>전체</option>
             <option>{STATUS.APPROVED}</option>
             <option>{STATUS.REJECTED}</option>
           </select>
@@ -121,7 +110,7 @@ export default function ReviewPage() {
             </thead>
             <tbody>
               {visible.map((r) => {
-                const problems = [...r.items.filter((it) => it.verdict !== VERDICT.OK).map((it) => it.field), ...(acctIssue[r.id] ? [ACCOUNT_FIELD] : [])]
+                const problems = problemFields(r, acctIssue)
                 return (
                   <tr key={r.id} className="clickable" onClick={() => setSelectedId(r.id)}>
                     <td>{r.submitted_at.slice(5)}</td>
