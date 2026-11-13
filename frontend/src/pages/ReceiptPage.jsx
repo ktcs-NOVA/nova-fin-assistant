@@ -12,6 +12,7 @@
 import { useState } from 'react'
 import { recognizeReceipt, PURPOSES, USE_MOCK } from '../api/client.js'
 import { blobToBase64 } from '../utils/base64.js'
+import { CLAIM, guessMeetingField } from '../utils/claimTypes.js'
 import receiptsData from '../mocks/receipts.json'
 import CameraCapture from '../components/CameraCapture.jsx'
 import Icon from '../components/Icons.jsx'
@@ -36,7 +37,9 @@ const CONFIDENCE = {
   low: { label: '신뢰도 낮음 · 직접 확인', cls: 'bad' },
 }
 
-export default function ReceiptPage({ onSendToVerify }) {
+// param.claim: 유형 선택에서 고른 정산 유형 (회의비 / 기타 법인카드). 없으면 기타 법인카드로 봅니다.
+export default function ReceiptPage({ onSendToVerify, param }) {
+  const claim = param?.claim === CLAIM.MEETING ? CLAIM.MEETING : CLAIM.CARD
   const [photo, setPhoto] = useState(null)      // { file, url, blob?, sample: bool }
   const [form, setForm] = useState(null)        // 인식 결과 (수정 가능)
   const [raw, setRaw] = useState(null)          // 인식 원본 (수정 전 비교용)
@@ -81,7 +84,8 @@ export default function ReceiptPage({ onSendToVerify }) {
       setRaw(r)
       setForm({
         ...r,
-        purpose: r.purpose_candidates?.[0] ?? '',
+        // 회의비로 들어왔으면 용도는 회의비로 맞춰 둠 (바꿀 수 있음)
+        purpose: claim === CLAIM.MEETING ? '회의비' : (r.purpose_candidates?.[0] ?? ''),
         items: r.items ?? [],
       })
     } catch (e) {
@@ -121,9 +125,11 @@ export default function ReceiptPage({ onSendToVerify }) {
   // 초안 → 청구 검증 폼 항목. 이름은 PM 엔진이 읽는 쪽(field, merchant_type, amount)으로 맞춰 보냄.
   function sendToVerify() {
     onSendToVerify?.({
-      trip_type: '법인카드',
+      from: 'receipt',
+      trip_type: claim,
       items: [{
-        field: draft.purpose,
+        // 회의비는 항목명을 회의비 구분(식대·다과비)으로, 그 밖에는 고른 용도를 그대로
+        field: claim === CLAIM.MEETING ? guessMeetingField(draft.business_type ?? '') : draft.purpose,
         amount: String(draft.amount),
         date: draft.date,
         time: draft.time ?? '',
@@ -146,6 +152,7 @@ export default function ReceiptPage({ onSendToVerify }) {
     <section>
       <div className="page-title">
         <h1>영수증 등록</h1>
+        <span className="badge muted">{claim === CLAIM.MEETING ? '회의비' : '기타 법인카드 사용'}</span>
         <span className="desc">영수증 사진에서 가맹점·금액·일시·용도를 자동으로 읽어 지출 건 초안을 만듭니다.</span>
       </div>
 

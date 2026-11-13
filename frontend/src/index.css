@@ -343,6 +343,7 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .field-label em { font-style: normal; color: var(--warn); font-size: 11px; }
 .field input, .field select { width: 100%; font: inherit; font-size: 14px; color: inherit; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
 .field.missing input { border-color: var(--warn); background: var(--warn-soft); }
+.form-grid .field-wide { grid-column: 1 / -1; }
 .items-table td { padding: 6px 4px; border-bottom: 1px solid var(--line); }
 .items-table td.num { text-align: right; white-space: nowrap; }
 .notes-box { font-size: 13px; color: var(--muted); background: var(--bg); border-radius: 8px; padding: 10px 12px; margin: 0; }
@@ -617,6 +618,7 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .tile-grid { display: grid; gap: 14px; margin-top: 18px; }
 .tile-grid.hero { grid-template-columns: 1.4fr 1fr 1fr; }
 .tile-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.tile-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .tile { display: flex; flex-direction: column; gap: 8px; text-align: left; padding: 22px; border: 1.5px solid var(--line); border-radius: 16px; background: var(--panel); color: var(--ink); transition: border-color .12s, box-shadow .12s; }
 .tile:hover { border-color: var(--brand); background: var(--brand-soft); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
 .count-red { color: var(--bad); font-weight: 800; }
@@ -649,7 +651,7 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .tile.compact .tile-title { font-size: 17px; }
 .home .alert-list + .tile-grid, .home .empty + .tile-grid { margin-top: 24px; }
 @media (max-width: 760px) {
-  .tile-grid.hero, .tile-grid.two { grid-template-columns: 1fr; }
+  .tile-grid.hero, .tile-grid.two, .tile-grid.three { grid-template-columns: 1fr; }
   .login-hero { padding: 32px 24px; }
   .login-hero h1 { font-size: 24px; }
 }

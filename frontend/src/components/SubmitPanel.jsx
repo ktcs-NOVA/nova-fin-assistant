@@ -5,18 +5,24 @@ import { useEffect, useState } from 'react'
 import { createSubmission, ACCOUNTS, VERDICT } from '../api/client.js'
 
 const DEFAULT_ACCOUNT = { 국내출장: '여비교통비', 업무추진비: '업무추진비', 법인카드: '' }
+// 회의비: 외부 참석(업무추진비 기준으로 검사한 건)이면 업무추진비, 내부 회의면 조직관리비
+function defaultAccount(claim) {
+  if (claim.trip_type === '회의비') return claim.items?.[0]?.category === 'business' ? '업무추진비' : '조직관리비'
+  return DEFAULT_ACCOUNT[claim.trip_type] ?? ''
+}
 
 function defaultPurpose(claim) {
   // trip.region 은 "서울/광역시/기타" 같은 지역 구분이라 이름처럼 붙이지 않고 괄호로 보임
   if (claim.trip?.start_date) return `출장 여비 정산 (${claim.trip.start_date}${claim.trip.end_date ? `~${claim.trip.end_date}` : ''}${claim.trip.region ? `, ${claim.trip.region}` : ''})`
   if (claim.trip?.region) return `출장 여비 정산 (${claim.trip.region})`
+  if (claim.items?.[0]?.meeting_purpose) return claim.items[0].meeting_purpose   // 회의비는 회의 목적이 곧 건명
   const first = claim.items?.[0]?.field
   return first ? `${first} (${claim.trip_type})` : `${claim.trip_type} 지출 정산`
 }
 
 export default function SubmitPanel({ claim, result }) {
   const [purpose, setPurpose] = useState(() => defaultPurpose(claim))
-  const [account, setAccount] = useState(() => DEFAULT_ACCOUNT[claim.trip_type] ?? '')
+  const [account, setAccount] = useState(() => defaultAccount(claim))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [done, setDone] = useState(null)   // 제출 완료된 건

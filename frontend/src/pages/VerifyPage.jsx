@@ -2,6 +2,7 @@
 // 입력 폼은 PM 문서 docs/U-04_청구검증_입력필드.md 의 "0. 최소 세트" 기준입니다.
 //   기본 정보: 청구 유형, 직급
 //   출장 정보 (출장일 때만): 시작일, 종료일, 출장지 지역, 교통수단
+//   회의 정보 (회의비일 때만): 회의 목적 *, 참석자 *, 참석 인원, 외부 참석 여부(+사전결재·일상감사) — 2026-11-13 코칭: 참석자·목적은 필수
 //   청구 항목 (행 추가): 항목명, 금액, 사용일, 메모 + 숙박비면 박수·조식 포함, 철도·항공이면 좌석 등급
 // 요청 JSON 모양은 docs/API.md 3-2 그대로이고, 선택 칸은 값이 있을 때만 보냅니다.
 //
@@ -13,15 +14,21 @@ import { useState } from 'react'
 import { verifyClaim } from '../api/client.js'
 import VerifyResult from '../components/VerifyResult.jsx'
 import SubmitPanel from '../components/SubmitPanel.jsx'
+import { CLAIM, MEETING_FIELDS, splitAttendees } from '../utils/claimTypes.js'
 
-const TRIP_TYPES = ['국내출장', '근무지 내 출장', '법인카드', '업무추진비']
+const TRIP_TYPES = [CLAIM.TRIP, CLAIM.LOCAL_TRIP, CLAIM.MEETING, CLAIM.CARD]
 const GRADES = ['직원 3급 이하', '직원 1·2급', '임원/본부장', '감사', '사장']
 const REGIONS = ['', '서울', '광역시', '기타']
 const VEHICLES = ['', '대중교통', '업무용차량', '렌트차량', '자가용']
 // 항목명 추천값 (PM 문서 3-1). 직접 입력도 가능.
-const FIELD_NAMES = ['교통비', '철도운임', '항공운임', '숙박비', '식비', '일비', '통행료·주차비', '회의 식대', '업무추진비', '부서운영비', '경조금', '화환', '기타']
+const FIELD_NAMES = ['교통비', '철도운임', '항공운임', '숙박비', '식비', '일비', '통행료·주차비', '업무추진비', '부서운영비', '소모품비', '도서비', '경조금', '화환', '기타']
 
 const isTrip = (t) => t.includes('출장')
+const isMeeting = (t) => t === CLAIM.MEETING
+// 업무추진비 건당 기준 (업무추진비 및 조직관리비 집행 지침 제3조④). 외부 참석 회의에만 해당
+const PRE_APPROVAL = 500000
+const DAILY_AUDIT = 1000000
+const emptyMeeting = () => ({ purpose: '', attendees: '', count: '', external: false, pre_approved: false, daily_audit: false })
 const isLodging = (f) => f.includes('숙박')
 // 좌석 등급이 붙는 항목: 철도(일반/특실), 항공(이코노미/비즈니스)
 const seatOptions = (f) => (f.includes('철도') || f.includes('KTX') ? ['일반', '특실'] : f.includes('항공') ? ['이코노미', '비즈니스'] : null)
@@ -52,6 +59,7 @@ export default function VerifyPage({ prefill }) {
   const [grade, setGrade] = useState(prefill?.grade ?? '직원 3급 이하')
   const [trip, setTrip] = useState({ start_date: '', end_date: '', region: '', vehicle: '', ...(prefill?.trip ?? {}) })
   const [items, setItems] = useState(() => (prefill?.items?.length ? prefill.items.map((it) => ({ ...emptyItem(), ...it })) : [emptyItem()]))
+  const [meeting, setMeeting] = useState(() => ({ ...emptyMeeting(), ...(prefill?.meeting ?? {}) }))   // 회의비일 때만 씀
   const receiptCount = items.filter(fromReceipt).length
   const fromTravel = prefill?.from === 'travel' && items.length > 0
   const [result, setResult] = useState(null)
@@ -59,6 +67,9 @@ export default function VerifyPage({ prefill }) {
   const [error, setError] = useState('')
 
   const editTrip = (k, v) => setTrip((t) => ({ ...t, [k]: v }))
+  const editMeeting = (k, v) => setMeeting((m) => ({ ...m, [k]: v }))
+  const meetingTotal = items.reduce((sum, it) => sum + (Number(it.amount) || 0), 0)
+  const biggest = items.reduce((max, it) => Math.max(max, Number(it.amount) || 0), 0)   // 사전결재·일상감사는 건당 금액 기준
   const editItem = (i, k, v) => setItems((list) => list.map((it, idx) => (idx === i ? { ...it, [k]: v } : it)))
   const addItem = () => setItems((list) => [...list, emptyItem()])
   const removeItem = (i) => setItems((list) => (list.length > 1 ? list.filter((_, idx) => idx !== i) : list))
@@ -93,14 +104,29 @@ export default function VerifyPage({ prefill }) {
       if (seatOptions(it.field) && it.seat_class) row.seat_class = it.seat_class
       // 영수증에서 온 항목: 가맹점·업종·시각·결제수단을 그대로 실어 법인카드 규칙(심야·제한업종)을 받게 함
       for (const k of ['merchant', 'merchant_type', 'time', 'payment']) if (it[k]) row[k] = it[k]
+      if (isMeeting(tripType)) {
+        // 회의 정보는 항목마다 실어 보냄: 엔진(참석자 확인)과 제출 건 저장(관리자 화면·문서 초안)이 항목 단위로 읽음
+        row.meeting_purpose = meeting.purpose.trim()
+        row.attendees = splitAttendees(meeting.attendees)
+        if (Number(meeting.count) > 0) row.participant_count = Number(meeting.count)
+        // 외부 인사가 참석한 회의는 업무추진비(건당 50만 원 이상 사전결재 등), 내부 회의는 조직관리비 성격으로 검사
+        row.category = meeting.external ? 'business' : 'org'
+        if (!row.payment) row.payment = '법인카드'
+        if (meeting.external && meeting.pre_approved) row.pre_approved = true
+        if (meeting.external && meeting.daily_audit) row.daily_audit = true
+      }
       req.items.push(row)
     }
     return req
   }
 
   function validate() {
-    const bad = items.findIndex((it) => !it.field.trim() || !(Number(it.amount) > 0))
-    if (bad >= 0) return `${bad + 1}번째 항목의 항목명과 금액을 입력해 주세요.`
+    const bad = items.findIndex((it) => !it.field.trim() || !(Number(it.amount) > 0) || (isMeeting(tripType) && !MEETING_FIELDS.includes(it.field)))
+    if (bad >= 0) return `${bad + 1}번째 항목의 ${isMeeting(tripType) ? '구분' : '항목명'}과 금액을 입력해 주세요.`
+    if (isMeeting(tripType)) {
+      if (!meeting.purpose.trim()) return '회의 목적을 적어 주세요. 회의비는 회의 목적과 참석자가 있어야 증빙이 됩니다.'
+      if (!splitAttendees(meeting.attendees).length) return '참석자를 적어 주세요. (예: 해운정책팀 홍길동, 김철수)'
+    }
     if (isTrip(tripType) && trip.start_date && trip.end_date && trip.end_date < trip.start_date) {
       return '출장 종료일이 시작일보다 앞설 수 없습니다.'
     }
@@ -195,8 +221,57 @@ export default function VerifyPage({ prefill }) {
             </div>
           )}
 
+          {isMeeting(tripType) && (
+            <div className="card">
+              <h2>2. 회의 정보</h2>
+              <p className="hint">회의비는 회의 목적과 참석자를 적어야 증빙이 됩니다. 점심·회식 식대도 같은 방식으로 적어요.</p>
+              <div className="form-grid">
+                <label className="field field-wide">
+                  <span className="field-label">회의 목적 *</span>
+                  <input type="text" value={meeting.purpose} placeholder="예: 4분기 항만 물류 지원사업 업무협의" onChange={(e) => editMeeting('purpose', e.target.value)} />
+                </label>
+                <label className="field field-wide">
+                  <span className="field-label">참석자 * <em>쉼표로 구분</em></span>
+                  <input type="text" value={meeting.attendees} placeholder="예: 해운정책팀 홍길동, 김철수 / ○○해운 이영희 부장" onChange={(e) => editMeeting('attendees', e.target.value)} />
+                </label>
+                <label className="field">
+                  <span className="field-label">참석 인원 <em>비우면 참석자 수</em></span>
+                  <input type="number" min="1" value={meeting.count} placeholder={String(splitAttendees(meeting.attendees).length || '')} onChange={(e) => editMeeting('count', e.target.value)} />
+                </label>
+                <label className="field field-check">
+                  <span className="field-label">외부 참석 <em>업무추진비 기준 적용</em></span>
+                  <span className="check-inline">
+                    <input type="checkbox" checked={meeting.external} onChange={(e) => editMeeting('external', e.target.checked)} />
+                    외부 기관·업체 인사가 참석함
+                  </span>
+                </label>
+                {meeting.external && biggest >= PRE_APPROVAL && (
+                  <label className="field field-check">
+                    <span className="field-label">사전결재 <em>건당 50만 원 이상</em></span>
+                    <span className="check-inline">
+                      <input type="checkbox" checked={meeting.pre_approved} onChange={(e) => editMeeting('pre_approved', e.target.checked)} />
+                      사용 전에 결재를 받음
+                    </span>
+                  </label>
+                )}
+                {meeting.external && biggest >= DAILY_AUDIT && (
+                  <label className="field field-check">
+                    <span className="field-label">일상감사 <em>건당 100만 원 이상</em></span>
+                    <span className="check-inline">
+                      <input type="checkbox" checked={meeting.daily_audit} onChange={(e) => editMeeting('daily_audit', e.target.checked)} />
+                      일상감사를 받음
+                    </span>
+                  </label>
+                )}
+              </div>
+              {(Number(meeting.count) || splitAttendees(meeting.attendees).length) > 0 && meetingTotal > 0 && (
+                <p className="hint">1인당 약 {Math.round(meetingTotal / (Number(meeting.count) || splitAttendees(meeting.attendees).length)).toLocaleString('ko-KR')}원 · 1인당 한도는 공사 기준이 확인되지 않아 자동으로 판정하지 않고 참고로만 보여 줍니다.</p>
+              )}
+            </div>
+          )}
+
           <div className="card">
-            <h2>{isTrip(tripType) ? '3' : '2'}. 청구 항목</h2>
+            <h2>{isTrip(tripType) || isMeeting(tripType) ? '3' : '2'}. 청구 항목</h2>
             <div className="items-editor">
               {items.map((it, i) => (
                 <div key={i} className={`item-row ${fromReceipt(it) ? 'from-receipt' : ''}`}>
@@ -208,8 +283,15 @@ export default function VerifyPage({ prefill }) {
                   )}
                   <div className="form-grid">
                     <label className="field">
-                      <span className="field-label">항목명 *</span>
-                      <input list="field-names" value={it.field} placeholder="예: 숙박비" onChange={(e) => editItem(i, 'field', e.target.value)} />
+                      <span className="field-label">{isMeeting(tripType) ? '구분 *' : '항목명 *'}</span>
+                      {isMeeting(tripType) ? (
+                        <select value={MEETING_FIELDS.includes(it.field) ? it.field : ''} onChange={(e) => editItem(i, 'field', e.target.value)}>
+                          <option value="">구분 선택</option>
+                          {MEETING_FIELDS.map((f) => <option key={f} value={f}>{f}</option>)}
+                        </select>
+                      ) : (
+                        <input list="field-names" value={it.field} placeholder="예: 숙박비" onChange={(e) => editItem(i, 'field', e.target.value)} />
+                      )}
                     </label>
                     <label className="field">
                       <span className="field-label">금액(원) *</span>

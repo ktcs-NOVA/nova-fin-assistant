@@ -43,7 +43,7 @@ export default function HomePage({ user, onNavigate }) {
       <div className="tile-grid hero">
         <button type="button" className="tile" onClick={() => onNavigate('type')}>
           <span className="tile-title">정산하기</span>
-          <span className="tile-desc">출장, 식대, 회의비 등 사용 내역을 제출하기 전에 규정에 맞는지 확인하고 서류를 준비해요.</span>
+          <span className="tile-desc">출장, 회의비, 법인카드 사용 내역을 제출하기 전에 규정에 맞는지 확인하고 서류를 준비해요.</span>
           <span className="tile-go">시작하기 →</span>
         </button>
         <button type="button" className="tile" onClick={() => onNavigate('mystatus')}>
