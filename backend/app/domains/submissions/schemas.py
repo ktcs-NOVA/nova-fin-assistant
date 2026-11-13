@@ -62,6 +62,7 @@ class SubmissionView(BaseModel):
     amount: int
     account: str | None = None
     submitted_at: str | None = None
+    submitted_time: str | None = None  # 2026-11-13T15:02+09:00
     step: int | None = None
     verdict: str | None = None
     status: str

@@ -376,6 +376,7 @@ app.add_middleware(
 - 코드: `backend/app/domains/submissions/`, 마이그레이션 `0004` (`submissions.account`).
 
 - (2026-11-13) 제출 건 응답의 `expenses[]` 에 `attendees`(참석자 목록)와 회의비의 `meeting_purpose`·`participant_count` 가 들어가고, 출장 건이면 `trip: { start_date, end_date, region, destination }` 이 함께 옵니다 (아니면 `null`). 직원 화면이 이 값으로 회의록·출장보고서·출장원 입력 칸을 채웁니다.
+- (2026-11-13) 제출 건 응답에 `submitted_time`(분 단위 제출 시각, 예: `2026-11-13T17:55+09:00`)이 추가됐습니다. `submitted_at`(날짜)은 그대로입니다. 관리자 화면이 이 값으로 "방금 전"·"새 제출" 표시와 최근 제출 순 정렬을 합니다.
 
 ### 3-10. 로그인 · 회원가입 (`/api/auth/*`) — 2026-11-12 PM 요청, 백엔드·프론트 구현 완료
 

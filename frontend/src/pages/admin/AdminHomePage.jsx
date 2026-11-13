@@ -1,21 +1,24 @@
 // 관리자 홈: 들어오자마자 제출 / 검토 대기 / 확인 필요 건수와, 확인이 필요한 건 목록이 바로 보입니다.
 // (2026-11-13 코칭: 깊이 들어가야 보이면 안 되고 앞단에서 검토할 수 있어야 함. 반려는 확인 필요에 포함)
 // 숫자·목록 기준은 검토 대기함과 같은 reviewQueue.js 를 씁니다. 숫자 카드나 행을 누르면 검토 대기함의 그 보기·그 건으로 갑니다.
+// "최근 제출"은 판정과 상관없이 가장 늦게 들어온 건입니다 — 직원이 방금 낸 건을 찾아다니지 않게 (통과한 건은 확인 필요 목록에 안 나오므로).
 
 import ReviewStats from '../../components/ReviewStats.jsx'
 import VerdictBadge from '../../components/VerdictBadge.jsx'
 import StatusTag from '../../components/StatusTag.jsx'
 import Icon from '../../components/Icons.jsx'
 import { STATUS } from '../../api/client.js'
-import { useReviewQueue, countQueue, needsCheck, problemFields, byUrgency, VIEW } from './reviewQueue.js'
+import { useReviewQueue, countQueue, needsCheck, problemFields, byUrgency, byRecent, isFresh, submittedAgo, VIEW } from './reviewQueue.js'
 
 const SHOW = 8   // 홈에 바로 보여 줄 확인 필요 건수
+const RECENT = 3 // 홈에 바로 보여 줄 최근 제출 건수
 const won = (n) => Number(n ?? 0).toLocaleString('ko-KR') + '원'
 
 export default function AdminHomePage({ user, onNavigate }) {
   const { rows, acctIssue, error } = useReviewQueue()
   const counts = rows ? countQueue(rows, acctIssue) : null
   const needs = rows ? rows.filter((r) => needsCheck(r, acctIssue)).sort(byUrgency) : []
+  const recent = rows ? [...rows].sort(byRecent).slice(0, RECENT) : []
 
   return (
     <div className="home">
@@ -29,6 +32,34 @@ export default function AdminHomePage({ user, onNavigate }) {
       {error && <div className="error" role="alert">{error}</div>}
 
       <ReviewStats big counts={counts} onPick={(view) => onNavigate('review', { view })} />
+
+      {recent.length > 0 && (
+        <>
+          <div className="alert-head plain">
+            <h2 className="home-sub">최근 제출</h2>
+            <button type="button" className="link-btn" onClick={() => onNavigate('review', { view: VIEW.ALL, sort: 'recent' })}>최근 제출 순으로 모두 보기 →</button>
+          </div>
+          <ul className="alert-list">
+            {recent.map((s) => (
+              <li key={s.id}>
+                <button type="button" className={`alert-row plain${isFresh(s) ? ' fresh' : ''}`} onClick={() => onNavigate('review', { id: s.id })}>
+                  <span className="alert-main">
+                    <span className="recent-name">
+                      {isFresh(s) && <span className="badge new">새 제출</span>}
+                      {s.submitter} <span className="hint">{s.dept} · {submittedAgo(s)}</span>
+                    </span>
+                    <span className="hint">{s.id} · {s.type} · {s.purpose}</span>
+                  </span>
+                  <span className="alert-side">
+                    <span className="alert-amount">{won(s.amount)}</span>
+                    {s.status === STATUS.PENDING ? <VerdictBadge verdict={s.verdict} /> : <StatusTag status={s.status} />}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
 
       <div className="alert-head">
         <h2 className="home-sub"><Icon name="warn" size={18} />확인 필요</h2>

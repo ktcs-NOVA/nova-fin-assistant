@@ -238,6 +238,8 @@ def to_view(sub: Submission) -> dict:
         "amount": sub.total_amount,
         "account": sub.account,
         "submitted_at": sub.submitted_at.astimezone(KST).date().isoformat() if sub.submitted_at else None,
+        # 분 단위 제출 시각 (관리자 화면에서 "방금 전"·새 제출 표시와 최근 순 정렬에 씀)
+        "submitted_time": sub.submitted_at.astimezone(KST).isoformat(timespec="minutes") if sub.submitted_at else None,
         "step": sub.step,
         "verdict": sub.verdict or verify.get("overall"),
         "status": sub.status,

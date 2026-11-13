@@ -1,6 +1,7 @@
 // M-01 정산 검토 대기함 (목록)
 // 확인이 필요한 건(검토 대기 중 보완 필요 → 담당자 확인 필요 → 계정과목 불일치, 그다음 반려한 건)이 위로 오고,
 // 판정·상태로 거를 수 있습니다. 행을 누르면 상세(ReviewDetail)로 들어갑니다.
+// 정렬을 "최근 제출 순"으로 바꾸면 방금 들어온 건이 맨 위에 옵니다. 1시간 안에 들어온 건은 "새 제출" 표시가 붙습니다.
 // 문제 항목에는 AI 판정 항목 외에 계정과목 불일치(M-05)도 포함해, 상세·반려 사유와 개수가 맞도록 합니다.
 
 import { useMemo, useState } from 'react'
@@ -9,11 +10,15 @@ import ReviewStats from '../../components/ReviewStats.jsx'
 import VerdictBadge from '../../components/VerdictBadge.jsx'
 import StatusTag from '../../components/StatusTag.jsx'
 import ReviewDetail from './ReviewDetail.jsx'
-import { useReviewQueue, countQueue, needsCheck, problemFields, byUrgency, VIEW } from './reviewQueue.js'
+import { useReviewQueue, countQueue, needsCheck, problemFields, byUrgency, byRecent, isFresh, submittedAgo, VIEW } from './reviewQueue.js'
 
 const NEEDS = '확인 필요'
 const ALL = '전체'
 const won = (n) => n.toLocaleString('ko-KR') + '원'
+
+// 정렬: 확인이 급한 순(기본) / 최근에 제출한 순 (직원이 방금 낸 건을 찾을 때)
+const SORT = { URGENT: 'urgent', RECENT: 'recent' }
+const SORTERS = { [SORT.URGENT]: byUrgency, [SORT.RECENT]: byRecent }
 
 // 숫자 카드(제출 / 검토 대기 / 확인 필요) ↔ 필터 두 개. 확인 필요에는 반려 건도 들어가므로 상태는 전체로 둡니다.
 const VIEW_FILTERS = {
@@ -22,7 +27,7 @@ const VIEW_FILTERS = {
   [VIEW.NEEDS]: { verdict: NEEDS, status: ALL },
 }
 
-// param: 관리자 홈에서 넘어올 때 { view, status?, id? } — 볼 방식과 바로 열 건
+// param: 관리자 홈에서 넘어올 때 { view, status?, id?, sort? } — 볼 방식, 바로 열 건, 정렬
 export default function ReviewPage({ param }) {
   const { rows: loaded, acctIssue, error, reload } = useReviewQueue()
   const loading = loaded === null
@@ -30,6 +35,7 @@ export default function ReviewPage({ param }) {
   const [verdictFilter, setVerdictFilter] = useState(first.verdict) // '전체' | '확인 필요' | 각 판정
   const [statusFilter, setStatusFilter] = useState(param?.status ?? first.status)
   const [selectedId, setSelectedId] = useState(param?.id ?? null)
+  const [sort, setSort] = useState(SORTERS[param?.sort] ? param.sort : SORT.URGENT)
 
   const counts = useMemo(() => (loaded ? countQueue(loaded, acctIssue) : null), [loaded, acctIssue])
   const activeView = Object.keys(VIEW_FILTERS).find((v) => VIEW_FILTERS[v].verdict === verdictFilter && VIEW_FILTERS[v].status === statusFilter)
@@ -46,8 +52,8 @@ export default function ReviewPage({ param }) {
       if (verdictFilter === NEEDS) return needsCheck(r, acctIssue)
       return r.verdict === verdictFilter
     })
-    .sort(byUrgency),
-  [loaded, statusFilter, verdictFilter, acctIssue])
+    .sort(SORTERS[sort]),
+  [loaded, statusFilter, verdictFilter, acctIssue, sort])
 
   if (selectedId) {
     return (
@@ -90,6 +96,13 @@ export default function ReviewPage({ param }) {
             <option>{STATUS.REJECTED}</option>
           </select>
         </label>
+        <label className="field-inline">
+          <span>정렬</span>
+          <select value={sort} onChange={(e) => setSort(e.target.value)}>
+            <option value={SORT.URGENT}>확인이 급한 순</option>
+            <option value={SORT.RECENT}>최근 제출 순</option>
+          </select>
+        </label>
         <span className="hint">{visible.length}건 표시</span>
       </div>
 
@@ -112,8 +125,8 @@ export default function ReviewPage({ param }) {
               {visible.map((r) => {
                 const problems = problemFields(r, acctIssue)
                 return (
-                  <tr key={r.id} className="clickable" onClick={() => setSelectedId(r.id)}>
-                    <td>{r.submitted_at.slice(5)}</td>
+                  <tr key={r.id} className={`clickable${isFresh(r) ? ' fresh' : ''}`} onClick={() => setSelectedId(r.id)}>
+                    <td className="nowrap">{isFresh(r) ? <><span className="badge new">새 제출</span> {submittedAgo(r)}</> : r.submitted_at.slice(5)}</td>
                     <td>{r.submitter}</td>
                     <td>{r.dept}</td>
                     <td>{r.type}</td>
