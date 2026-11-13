@@ -647,6 +647,14 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .alert-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
 .alert-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; width: 100%; padding: 13px 16px; border: 1px solid var(--line); border-left: 4px solid var(--bad); border-radius: 12px; background: var(--panel); color: inherit; font: inherit; text-align: left; cursor: pointer; transition: border-color .12s, background .12s; }
 .alert-row:hover { border-color: var(--bad); background: var(--bad-soft); }
+/* 최근 제출: 같은 줄 모양이지만 경고색 대신 포인트 색. 방금 들어온 건(.fresh)은 옅은 배경으로 한 번 더 강조 */
+.alert-head.plain .home-sub { color: inherit; }
+.alert-row.plain { border-left-color: var(--brand); }
+.alert-row.plain:hover { border-color: var(--brand); background: var(--brand-soft); }
+.alert-row.fresh { background: var(--brand-soft); border-color: var(--brand); }
+.badge.new { background: var(--brand); color: var(--brand-ink); margin-right: 6px; }
+.table tr.fresh td { background: var(--brand-soft); }
+.nowrap { white-space: nowrap; }
 .alert-main { display: grid; gap: 2px; min-width: 0; }
 .alert-main > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .alert-problems { font-size: 13.5px; font-weight: 600; color: var(--bad); }

@@ -86,3 +86,32 @@ export function byUrgency(a, b) {
     || (VERDICT_ORDER[a.verdict] ?? 9) - (VERDICT_ORDER[b.verdict] ?? 9)
     || String(a.submitted_at ?? '').localeCompare(String(b.submitted_at ?? ''))
 }
+
+// ---- 최근 제출 (직원이 방금 낸 건을 관리자가 바로 찾을 수 있게) ----
+// submitted_time 은 분 단위 제출 시각(예: 2026-11-13T15:02+09:00). 목업처럼 없으면 제출일(submitted_at)로 대신합니다.
+
+const FRESH_MINUTES = 60   // 이 안에 들어온 건은 "새 제출"로 표시
+const codeNo = (r) => Number(String(r.id ?? '').split('-').pop()) || 0
+const submittedMs = (r) => Date.parse(r.submitted_time ?? r.submitted_at ?? '') || 0
+
+/** 최근에 제출한 순. 시각이 같으면 제출 번호가 큰 쪽이 먼저 */
+export function byRecent(a, b) {
+  return submittedMs(b) - submittedMs(a) || codeNo(b) - codeNo(a)
+}
+
+/** 방금 들어온 건인지 (제출 시각이 있을 때만) */
+export function isFresh(r, now = Date.now()) {
+  if (!r.submitted_time) return false
+  const min = (now - submittedMs(r)) / 60000
+  return min >= 0 && min < FRESH_MINUTES
+}
+
+/** "방금 전" / "12분 전" / "3시간 전" / "11-12" */
+export function submittedAgo(r, now = Date.now()) {
+  if (!r.submitted_time) return (r.submitted_at ?? '').slice(5)
+  const min = Math.floor((now - submittedMs(r)) / 60000)
+  if (min < 1) return '방금 전'
+  if (min < 60) return `${min}분 전`
+  if (min < 24 * 60) return `${Math.floor(min / 60)}시간 전`
+  return r.submitted_time.slice(5, 10)
+}

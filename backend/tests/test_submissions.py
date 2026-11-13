@@ -69,6 +69,11 @@ def test_meeting_submission_keeps_purpose_and_attendees(cleanup):
     assert first["meeting_purpose"] == "테스트 업무협의" and first["participant_count"] == 2
     assert detail["trip"] is None  # 출장 건이 아니면 출장 정보 없음
 
+    # 방금 낸 건은 관리자 목록 맨 위에, 분 단위 제출 시각과 함께 (관리자 화면의 "새 제출" 표시용)
+    newest = client.get("/api/admin/submissions", headers=auth("A2001")).json()["items"][0]
+    assert newest["id"] == sub["id"]
+    assert newest["submitted_time"].startswith(newest["submitted_at"] + "T") and newest["submitted_time"].endswith("+09:00")
+
 
 def test_trip_submission_exposes_period(cleanup):
     """출장 건은 기간·지역을 돌려줘야 직원 화면에서 출장보고서·출장원을 이어 쓸 수 있음."""
