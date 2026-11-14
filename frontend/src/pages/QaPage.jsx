@@ -1,7 +1,7 @@
 // 규정 Q&A 챗봇 (U-01 규정 답변 · U-02 업무절차 안내 · U-03 근거 표시)
 // 입력창은 하나입니다. 백엔드가 질문을 보고 답하는 방식을 고르고, 응답의 type 으로 화면을 정합니다.
 //   answer    규정 답변 + 근거 조항
-//   procedure 절차 안내 카드 + 내 체크리스트 저장
+//   procedure 절차 안내 카드
 //   clarify   어떤 업무인지 되묻기 + 업무 버튼
 
 import { useEffect, useRef, useState } from 'react'
@@ -34,15 +34,15 @@ function Clarify({ result, onPick }) {
   )
 }
 
-function Reply({ result, onNavigate, onAsk }) {
+function Reply({ result, onAsk }) {
   if (result.type === 'procedure' && result.procedure) {
-    return <ProcedureGuide result={result.procedure} onNavigate={onNavigate} />
+    return <ProcedureGuide result={result.procedure} />
   }
   if (result.type === 'clarify') return <Clarify result={result} onPick={onAsk} />
   return <QaAnswer result={result} />
 }
 
-export default function QaPage({ onNavigate }) {
+export default function QaPage() {
   const [messages, setMessages] = useState([]) // { id, text, status: 'loading'|'done'|'error', result, error }
   const [input, setInput] = useState('')
   const endRef = useRef(null)
@@ -113,7 +113,7 @@ export default function QaPage({ onNavigate }) {
             <div className="bubble-bot">
               {m.status === 'loading' && <p className="loading">답변을 준비하는 중…</p>}
               {m.status === 'error' && <div className="error">{m.error}</div>}
-              {m.status === 'done' && <Reply result={m.result} onNavigate={onNavigate} onAsk={send} />}
+              {m.status === 'done' && <Reply result={m.result} onAsk={send} />}
             </div>
           </div>
         ))}

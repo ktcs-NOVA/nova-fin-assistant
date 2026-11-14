@@ -27,6 +27,7 @@ nova-fin-assistant/
 | 정산 → 문서 작성 연결 — 제출 직후와 "내 정산 현황"에서 회의비는 회의록, 출장은 출장보고서·출장원으로 넘어가며 날짜·금액·참석자·회의 목적이 미리 채워짐 (빈 칸만 적고 초안 생성) | 완료 (11/13 코칭 반영. `frontend/src/utils/claimToDocs.js`, `components/NextDocs.jsx`) |
 | 관리자 홈 — 들어오자마자 제출 / 검토 대기 / 확인 필요 건수(확인 필요는 빨간 배경 + ⚠, 반려 포함)와 확인 필요 목록 8건. 숫자 카드·행을 누르면 검토 대기함의 그 보기·그 건으로 이동 | 완료 (11/13 코칭 반영. 홈과 검토 대기함이 같은 기준을 쓰도록 `pages/admin/reviewQueue.js` 로 통일) |
 | 관리자 화면에서 방금 제출된 건 바로 찾기 — 홈에 "최근 제출" 3건(1시간 안에 들어온 건은 "새 제출" 표시), 검토 대기함에 "최근 제출 순" 정렬 | 완료 (제출 건 응답에 분 단위 `submitted_time` 추가. 받은 뒤 백엔드 재시작 필요, DB 변경 없음) |
+| 내 체크리스트(규정 Q&A 절차 안내 저장·체크) 화면에서 제외 | 완료 (11/13 코칭에서 PM·코치 협의로 기능 제외. Q&A의 "내 체크리스트에 저장" 버튼과 문서 작업의 "저장한 업무 절차" 탭 삭제. 절차 안내 카드 자체는 그대로. 백엔드 `/api/checklists` 와 테이블은 남아 있고 화면에서 부르지 않음) |
 | 로그인·회원가입 화면 — 사번(또는 이메일)+비밀번호로 `POST /api/auth/login`, 가입은 항상 직원 역할. 모든 API 는 `Authorization: Bearer <token>` 으로 사용자 구분 (`X-Employee-No` 제거) | 완료 (11/12 PM 요청. 시드 계정 비밀번호 `nova1234`, 팀원은 `alembic upgrade head` + 시드 재실행 필요. `docs/API.md` 3-10) |
 | 시연용 관리자 검토함 데이터 — 출장 27건 + 점심·회식·회의비 17건 (가상 직원 44명) | 완료 (`backend/scripts/seed_demo.py` → `scripts/data/demo_submissions.json`·`demo_meet_cases.json`. 11/10 패키지 + 종원 11/12 자료. AI 판정은 엔진 실제 결과, 기대와 다른 건은 적재 시 출력. FAQ 22개는 `data/eval/qa_eval.csv`. `docs/U-04_점심회식회의비_확장.md`) |
 | 정산 제출 → 관리자 검토 대기함 실제 연결 — 직원이 검증 결과를 제출(건명·계정과목)하면 DB 에 저장되어 관리자 목록·상세에 뜨고 승인/반려·반려 초안(LLM) 저장 | 완료 (`/api/submissions`, `/api/admin/submissions/*`) |
@@ -123,8 +124,7 @@ frontend/src/
 └── pages/
     ├── QaPage.jsx          # 규정 Q&A · 업무절차 안내 (U-01 · U-02 · U-03)
     ├── VerifyPage.jsx      # 청구 검증
-    ├── TravelCalcPage.jsx  # 출장비 계산 (U-05)
-    └── ChecklistPage.jsx   # 체크리스트
+    └── TravelCalcPage.jsx  # 출장비 계산 (U-05)
 ```
 
 ### 기능을 얹을 때
