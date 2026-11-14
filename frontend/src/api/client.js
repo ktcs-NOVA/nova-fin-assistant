@@ -96,31 +96,6 @@ export function verifyClaim(claim) {
   return request('POST', '/api/verify', claim)
 }
 
-/** 내 체크리스트 목록: [{ id, task, summary, deadline, approver, sources, created_at,
- *    items: [{ id, kind: 'document'|'step', title, detail, basis, done, done_at }] }] */
-export function getChecklists() {
-  if (USE_MOCK) return mock.getChecklists()
-  return request('GET', '/api/checklists')
-}
-
-/** 절차 안내를 내 체크리스트로 저장. task 는 안내 응답의 task 값입니다. */
-export function createChecklist(task) {
-  if (USE_MOCK) return mock.createChecklist(task)
-  return request('POST', '/api/checklists', { task })
-}
-
-/** 체크 항목 완료 표시를 바꿉니다. 바뀐 항목을 돌려줍니다. */
-export function updateChecklistItem(checklistId, itemId, done) {
-  if (USE_MOCK) return mock.updateChecklistItem(checklistId, itemId, done)
-  return request('PATCH', `/api/checklists/${checklistId}/items/${itemId}`, { done })
-}
-
-/** 내 체크리스트를 삭제합니다. */
-export function deleteChecklist(checklistId) {
-  if (USE_MOCK) return mock.deleteChecklist(checklistId)
-  return request('DELETE', `/api/checklists/${checklistId}`)
-}
-
 // ---------- 문서 작업: 출장보고서·회의록·출장원 (/api/documents) ----------
 export const DOC_KINDS = ['출장보고서', '회의록', '출장원']
 
