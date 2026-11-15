@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { askQa } from '../api/client.js'
 import QaReply from './QaReply.jsx'
+import NovaSay from './NovaSay.jsx'
 import mascot from '../assets/nova-mascot.png'
 
 // 지금 보는 화면에 맞는 예시 질문
@@ -78,7 +79,9 @@ export default function AskDock({ page }) {
       <div className="ask-body">
         {messages.length === 0 && (
           <div className="ask-empty">
-            <p>정산하다가 궁금한 규정이 있으면 바로 물어보세요.</p>
+            <NovaSay>
+              <p className="answer-text">안녕하세요, NOVA예요! 정산하다가 궁금한 규정이 있으면 바로 물어보세요.</p>
+            </NovaSay>
             <div className="chips">
               {chips.map((q) => (
                 <button key={q} type="button" className="chip" onClick={() => send(q)}>{q}</button>
@@ -89,11 +92,10 @@ export default function AskDock({ page }) {
         {messages.map((m) => (
           <div key={m.id} className="turn">
             <div className="bubble-user">{m.text}</div>
-            <div className="bubble-bot">
-              {m.status === 'loading' && <p className="loading">답변을 준비하는 중…</p>}
+            <NovaSay loading={m.status === 'loading'}>
               {m.status === 'error' && <div className="error">{m.error}</div>}
               {m.status === 'done' && <QaReply result={m.result} onAsk={send} />}
-            </div>
+            </NovaSay>
           </div>
         ))}
         <div ref={bodyEndRef} />

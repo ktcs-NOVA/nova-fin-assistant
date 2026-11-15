@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { askQa } from '../api/client.js'
 import QaReply from '../components/QaReply.jsx'
+import NovaSay from '../components/NovaSay.jsx'
 
 // 예시 질문. 규정 질문과 절차 질문을 섞어 두면 챗봇이 알아서 고르는 모습을 볼 수 있습니다.
 const EXAMPLES = [
@@ -81,7 +82,9 @@ export default function QaPage({ param }) {
       <div className="chat">
         {messages.length === 0 && (
           <div className="chat-empty">
-            <p>규정 내용은 근거 조항과 함께 답하고, 처리 절차를 물으면 단계별로 안내해요.</p>
+            <NovaSay>
+              <p className="answer-text">안녕하세요, NOVA예요! 규정이 궁금하면 근거 조항과 함께 답해 드리고, 처리 절차를 물으면 단계별로 안내해 드려요.</p>
+            </NovaSay>
             <div className="chips">
               {EXAMPLES.map((q) => (
                 <button key={q} type="button" className="chip" onClick={() => send(q)}>
@@ -95,11 +98,10 @@ export default function QaPage({ param }) {
         {messages.map((m) => (
           <div key={m.id} className="turn">
             <div className="bubble-user">{m.text}</div>
-            <div className="bubble-bot">
-              {m.status === 'loading' && <p className="loading">답변을 준비하는 중…</p>}
+            <NovaSay loading={m.status === 'loading'}>
               {m.status === 'error' && <div className="error">{m.error}</div>}
               {m.status === 'done' && <QaReply result={m.result} onAsk={send} />}
-            </div>
+            </NovaSay>
           </div>
         ))}
         <div ref={endRef} />
