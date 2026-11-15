@@ -11,8 +11,7 @@ export default function Layout({ user, roleLabel, onLogout, onHome, onAsk, crumb
         <button type="button" className="logo logo-btn" onClick={onHome} aria-label="홈으로">
           <span className="logo-mark"><Icon name="logo" size={20} /></span>
           <span>
-            <span className="logo-name">경비 정산 사전검증</span>
-            <span className="logo-sub">한국해양진흥공사 · 팀 NOVA</span>
+            <span className="logo-name">NOVA</span>
           </span>
         </button>
 
