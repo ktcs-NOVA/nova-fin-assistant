@@ -575,11 +575,18 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
   50% { transform: translateY(-14px) rotate(3deg); }
 }
 @media (prefers-reduced-motion: reduce) { .login-mascot { animation: none; } }
-.login-wordmark { font-size: 56px; font-weight: 800; letter-spacing: .08em; line-height: 1; }
+.login-wordmark, .login-lead { font-family: 'Jua', 'Noto Sans KR', system-ui, sans-serif; font-weight: 400; }
+.login-wordmark { display: inline-flex; font-size: 68px; letter-spacing: .06em; line-height: 1; }
+.login-hero .login-lead { display: grid; gap: 4px; margin: 0; font-size: 32px; line-height: 1.4; opacity: 1; }
+.reveal-ch, .reveal-line { display: inline-block; opacity: 0; animation: nova-reveal 1.4s cubic-bezier(.2, .8, .2, 1) forwards; }
+.reveal-ch { animation-delay: calc(1s + var(--i) * .3s); }
+.reveal-line { display: block; animation-delay: var(--d); }
+@keyframes nova-reveal {
+  from { opacity: 0; transform: translateY(16px); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: blur(0); }
+}
+@media (prefers-reduced-motion: reduce) { .reveal-ch, .reveal-line { animation: none; opacity: 1; } }
 .login-hero p { margin: 0; font-size: 16px; line-height: 1.7; opacity: .9; }
-.login-hero ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-.login-hero li { display: flex; align-items: center; gap: 12px; font-size: 15.5px; }
-.login-hero .check { width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,.2); display: grid; place-items: center; font-size: 14px; font-weight: 700; flex: none; }
 .login-pane { flex: 1 1 460px; display: flex; align-items: center; justify-content: center; padding: 40px 24px; background: var(--bg); }
 .login-panel { width: 100%; max-width: 420px; display: grid; gap: 22px; }
 .login-top { display: flex; align-items: center; justify-content: space-between; }
@@ -650,7 +657,8 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
   .login-hero { padding: 32px 24px; }
   .login-hero h1 { font-size: 24px; }
   .login-mascot { width: 110px; }
-  .login-wordmark { font-size: 38px; }
+  .login-wordmark { font-size: 44px; }
+  .login-hero .login-lead { font-size: 22px; }
 }
 .hint.center { text-align: center; }
 .link-btn { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; color: var(--brand); text-decoration: underline; cursor: pointer; }
@@ -784,3 +792,32 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .wiz-status .bad { color: var(--bad); }
 .cal-day.off, .cal-day.off:hover { color: var(--muted); opacity: .45; text-decoration: line-through; cursor: not-allowed; background: none; }
 .cal-off-sample { text-decoration: line-through; opacity: .6; }
+
+/* ---------- 정산 화면 오른쪽 아래 마스코트 질문창 ---------- */
+.main.has-dock { padding-bottom: 130px; }
+.ask-fab { position: fixed; right: 22px; bottom: 20px; z-index: 30; border: 0; background: none; padding: 0; cursor: pointer; display: flex; align-items: flex-end; }
+.ask-fab img { width: 92px; height: auto; display: block; animation: nova-bob 3.6s ease-in-out infinite; filter: drop-shadow(0 6px 10px rgba(15, 30, 60, .22)); transition: transform .15s; }
+.ask-fab:hover img { transform: scale(1.08); }
+.ask-fab:focus-visible { outline: 3px solid var(--brand-soft); border-radius: 16px; }
+.ask-fab-tip { position: absolute; right: 88px; bottom: 34px; white-space: nowrap; background: var(--panel); color: var(--brand); border: 1px solid var(--line); border-radius: 14px; padding: 7px 14px; font-size: 14px; font-weight: 700; box-shadow: 0 4px 14px rgba(15, 30, 60, .12); animation: ask-tip-in .5s 1.2s both; }
+@keyframes nova-bob { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-9px) rotate(2deg); } }
+@keyframes ask-tip-in { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ask-fab img, .ask-fab-tip { animation: none; } }
+.ask-panel { position: fixed; right: 22px; bottom: 20px; z-index: 31; width: min(420px, calc(100vw - 24px)); height: min(640px, calc(100vh - 40px)); display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 16px 48px rgba(15, 30, 60, .28); overflow: hidden; }
+.ask-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--brand); color: var(--brand-ink); }
+.ask-head img { width: 46px; height: auto; flex: none; }
+.ask-head-text { flex: 1; min-width: 0; display: grid; line-height: 1.3; }
+.ask-head-text b { font-size: 16px; }
+.ask-head-text span { font-size: 12.5px; opacity: .85; }
+.ask-head-btn { border: 1px solid rgba(255, 255, 255, .5); background: transparent; color: inherit; border-radius: 8px; padding: 5px 10px; font-size: 13px; cursor: pointer; }
+.ask-head-btn:hover:not(:disabled) { background: rgba(255, 255, 255, .15); }
+.ask-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 14px; background: var(--bg); }
+.ask-empty { display: grid; gap: 12px; color: var(--muted); font-size: 14px; }
+.ask-empty p { margin: 0; }
+.ask-panel .chips { justify-content: flex-start; }
+.ask-panel .chip { font-size: 13px; padding: 7px 12px; text-align: left; }
+.ask-panel .bubble-bot { padding: 12px 14px; font-size: 14px; }
+.ask-form { display: flex; align-items: flex-end; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); background: var(--panel); }
+.ask-form textarea { flex: 1; resize: none; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--ink); padding: 9px 12px; font: inherit; font-size: 14px; line-height: 1.45; }
+.ask-form textarea:focus { outline: 2px solid var(--brand-soft); border-color: var(--brand); }
+.ask-form .btn { height: 42px; white-space: nowrap; }

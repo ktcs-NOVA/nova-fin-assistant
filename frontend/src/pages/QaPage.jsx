@@ -6,8 +6,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { askQa } from '../api/client.js'
-import QaAnswer from '../components/QaAnswer.jsx'
-import ProcedureGuide from '../components/ProcedureGuide.jsx'
+import QaReply from '../components/QaReply.jsx'
 
 // 예시 질문. 규정 질문과 절차 질문을 섞어 두면 챗봇이 알아서 고르는 모습을 볼 수 있습니다.
 const EXAMPLES = [
@@ -18,29 +17,6 @@ const EXAMPLES = [
 ]
 
 let nextId = 1
-
-function Clarify({ result, onPick }) {
-  return (
-    <div className="answer">
-      <p className="answer-text">{result.answer}</p>
-      <div className="chips clarify-options">
-        {result.options.map((task) => (
-          <button key={task} type="button" className="chip" onClick={() => onPick(`${task} 절차 알려줘`)}>
-            {task}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function Reply({ result, onAsk }) {
-  if (result.type === 'procedure' && result.procedure) {
-    return <ProcedureGuide result={result.procedure} />
-  }
-  if (result.type === 'clarify') return <Clarify result={result} onPick={onAsk} />
-  return <QaAnswer result={result} />
-}
 
 export default function QaPage({ param }) {
   const [messages, setMessages] = useState([]) // { id, text, status: 'loading'|'done'|'error', result, error }
@@ -122,7 +98,7 @@ export default function QaPage({ param }) {
             <div className="bubble-bot">
               {m.status === 'loading' && <p className="loading">답변을 준비하는 중…</p>}
               {m.status === 'error' && <div className="error">{m.error}</div>}
-              {m.status === 'done' && <Reply result={m.result} onAsk={send} />}
+              {m.status === 'done' && <QaReply result={m.result} onAsk={send} />}
             </div>
           </div>
         ))}

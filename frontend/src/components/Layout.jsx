@@ -3,8 +3,9 @@
 
 import { USE_MOCK, API_BASE } from '../api/client.js'
 import Icon from './Icons.jsx'
+import AskDock from './AskDock.jsx'
 
-export default function Layout({ user, roleLabel, onLogout, onHome, onAsk, crumbs, children }) {
+export default function Layout({ user, roleLabel, onLogout, onHome, onAsk, crumbs, askDock, children }) {
   return (
     <div className="app">
       <header className="header">
@@ -32,7 +33,7 @@ export default function Layout({ user, roleLabel, onLogout, onHome, onAsk, crumb
         </div>
       </header>
 
-      <main className="main">
+      <main className={`main ${askDock ? 'has-dock' : ''}`}>
         {crumbs.length > 1 && (
           <nav className="crumbs" aria-label="현재 위치">
             <button type="button" className="crumb-back" onClick={crumbs[crumbs.length - 2].go}>
@@ -50,6 +51,7 @@ export default function Layout({ user, roleLabel, onLogout, onHome, onAsk, crumb
         )}
         {children}
       </main>
+      {askDock && <AskDock page={askDock} />}
     </div>
   )
 }

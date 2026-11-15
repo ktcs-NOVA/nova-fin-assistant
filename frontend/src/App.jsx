@@ -42,6 +42,9 @@ const MENUS = {
   },
 }
 
+// 정산 유형을 고른 뒤의 화면들에서는 오른쪽 아래 마스코트(규정 질문창)가 떠 있습니다
+const ASK_DOCK_PAGES = ['receipt', 'travel', 'verify', 'checklist']
+
 export default function App() {
   const [user, setUser] = useState(() => loadSession()?.user ?? null)   // 로그인한 계정 (토큰과 함께 브라우저에 기억)
   const [current, setCurrent] = useState(() => (user ? MENUS[user.role].home : null))
@@ -96,7 +99,7 @@ export default function App() {
   }
 
   return (
-    <Layout user={user} roleLabel={menu.label} onLogout={logout} onHome={() => changePage(menu.home)} onAsk={() => changePage('qa')} crumbs={crumbs}>
+    <Layout user={user} roleLabel={menu.label} onLogout={logout} onHome={() => changePage(menu.home)} onAsk={() => changePage('qa')} crumbs={crumbs} askDock={user.role === 'employee' && ASK_DOCK_PAGES.includes(pageId) ? pageId : null}>
       <Page user={user} onNavigate={changePage} onSendToVerify={sendToVerify} prefill={verifyPrefill} param={pageParam} />
     </Layout>
   )

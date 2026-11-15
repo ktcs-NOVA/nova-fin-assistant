@@ -17,12 +17,6 @@ const TABS = [
   { role: ROLE.ADMIN, label: '관리자' },
 ]
 
-const POINTS = [
-  '영수증을 찍으면 금액·날짜를 자동으로 읽어요',
-  '필요한 서류를 하나씩 따라가며 채워요',
-  '판정 결과에는 근거 조항이 함께 나와요',
-]
-
 export default function LoginPage({ onLogin }) {
   const [role, setRole] = useState(ROLE.EMPLOYEE)
   const [mode, setMode] = useState('login')            // 'login' | 'signup' (가입은 직원 탭에서만)
@@ -89,13 +83,16 @@ export default function LoginPage({ onLogin }) {
       <section className="login-hero" aria-label="서비스 소개">
         <div className="login-brand">
           <img className="login-mascot" src={mascot} alt="NOVA 마스코트" />
-          <span className="login-wordmark">NOVA</span>
+          <span className="login-wordmark" aria-label="NOVA">
+            {'NOVA'.split('').map((ch, i) => (
+              <span key={i} className="reveal-ch" style={{ '--i': i }} aria-hidden="true">{ch}</span>
+            ))}
+          </span>
         </div>
-        <h1>제출하기 전에,<br />규정에 맞는지 먼저 확인하세요</h1>
-        <p>한국해양진흥공사 여비규정을 근거로<br />출장비 정산 서류를 미리 점검해 드려요.</p>
-        <ul>
-          {POINTS.map((t) => (<li key={t}><span className="check" aria-hidden="true">✓</span>{t}</li>))}
-        </ul>
+        <p className="login-lead">
+          <span className="reveal-line" style={{ '--d': '2.3s' }}>제출하기 전에,</span>
+          <span className="reveal-line" style={{ '--d': '3s' }}>규정에 맞는지 먼저 확인하세요</span>
+        </p>
       </section>
 
       <section className="login-pane">
