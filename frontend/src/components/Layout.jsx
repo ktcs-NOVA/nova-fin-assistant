@@ -10,7 +10,6 @@ export default function Layout({ user, roleLabel, onLogout, onHome, onAsk, crumb
     <div className="app">
       <header className="header">
         <button type="button" className="logo logo-btn" onClick={onHome} aria-label="홈으로">
-          <span className="logo-mark"><Icon name="logo" size={20} /></span>
           <span>
             <span className="logo-name">NOVA</span>
           </span>
