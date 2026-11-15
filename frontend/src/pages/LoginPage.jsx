@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { DEMO_ACCOUNTS, DEMO_PASSWORD, GRADES, ROLE, ROLE_LABEL } from '../auth/accounts.js'
 import { login, signup, USE_MOCK, API_BASE } from '../api/client.js'
 import Icon from '../components/Icons.jsx'
+import mascot from '../assets/nova-mascot.png'
 import PasswordField from '../components/PasswordField.jsx'
 import EmailField from '../components/EmailField.jsx'
 
@@ -86,6 +87,10 @@ export default function LoginPage({ onLogin }) {
   return (
     <div className="login-split">
       <section className="login-hero" aria-label="서비스 소개">
+        <div className="login-brand">
+          <img className="login-mascot" src={mascot} alt="NOVA 마스코트" />
+          <span className="login-wordmark">NOVA</span>
+        </div>
         <h1>제출하기 전에,<br />규정에 맞는지 먼저 확인하세요</h1>
         <p>한국해양진흥공사 여비규정을 근거로<br />출장비 정산 서류를 미리 점검해 드려요.</p>
         <ul>
