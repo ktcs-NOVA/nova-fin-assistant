@@ -7,7 +7,7 @@ import seeker from '../assets/nova-seeker.png'
 export default function NovaSay({ loading = false, children }) {
   return (
     <div className={`nova-row ${loading ? 'thinking' : ''}`}>
-      <img className="nova-avatar" src={seeker} alt="" />
+      <img className="nova-avatar" src={seeker} alt="" width="200" height="179" />
       <div className="nova-main">
         <span className="nova-name">NOVA</span>
         <div className="bubble-bot">

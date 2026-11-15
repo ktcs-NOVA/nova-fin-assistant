@@ -24,10 +24,16 @@ export default function AskDock({ page }) {
   const [input, setInput] = useState('')
   const bodyEndRef = useRef(null)
   const inputRef = useRef(null)
+  const fabRef = useRef(null)
+  const wasOpen = useRef(false)
   const busy = messages.some((m) => m.status === 'loading')
 
   useEffect(() => { bodyEndRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'end' }) }, [messages, open])
-  useEffect(() => { if (open) inputRef.current?.focus() }, [open])
+  useEffect(() => {
+    if (open) inputRef.current?.focus()
+    else if (wasOpen.current) fabRef.current?.focus()   // 닫으면 포커스를 떠 있는 캐릭터로 돌려줌
+    wasOpen.current = open
+  }, [open])
 
   async function send(text) {
     const question = text.trim()
@@ -54,9 +60,9 @@ export default function AskDock({ page }) {
 
   if (!open) {
     return (
-      <button type="button" className="ask-fab" onClick={() => setOpen(true)} aria-label="NOVA에게 규정 물어보기">
+      <button ref={fabRef} type="button" className="ask-fab" onClick={() => setOpen(true)} aria-label="NOVA에게 규정 물어보기">
         <span className="ask-fab-tip">규정 물어보세요!</span>
-        <img src={mascot} alt="" />
+        <img src={mascot} alt="" width="360" height="272" />
       </button>
     )
   }
@@ -65,7 +71,7 @@ export default function AskDock({ page }) {
   return (
     <section className="ask-panel" role="dialog" aria-label="규정 물어보기" onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false) }}>
       <header className="ask-head">
-        <img src={mascot} alt="" />
+        <img src={mascot} alt="" width="360" height="272" />
         <div className="ask-head-text">
           <b>NOVA에게 물어보기</b>
           <span>규정은 근거 조항과 함께 답해요</span>
@@ -76,7 +82,7 @@ export default function AskDock({ page }) {
         <button type="button" className="ask-head-btn" onClick={() => setOpen(false)} aria-label="질문창 닫기">닫기</button>
       </header>
 
-      <div className="ask-body">
+      <div className="ask-body" role="log" aria-live="polite" aria-label="대화 내용">
         {messages.length === 0 && (
           <div className="ask-empty">
             <NovaSay>

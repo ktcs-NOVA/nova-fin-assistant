@@ -11,7 +11,7 @@ export default function Layout({ user, roleLabel, onLogout, onHome, onAsk, crumb
       <header className="header">
         <button type="button" className="logo logo-btn" onClick={onHome} aria-label="홈으로">
           <span>
-            <span className="logo-name">NOVA</span>
+            <span className={`logo-name ${user.role === 'employee' ? 'brand-font' : ''}`}>NOVA</span>
           </span>
         </button>
 

@@ -197,7 +197,7 @@ export default function VerifyPage({ prefill, user, onNavigate }) {
     <div className="wiz-nav">
       {idx > 0 ? <button type="button" className="btn" onClick={back} disabled={loading}>이전</button> : <span />}
       <button type="button" className="btn primary" onClick={next} disabled={loading}>
-        {lastInput ? (loading ? '검증 중…' : '검증하기') : '다음 →'}
+        {lastInput ? (loading ? '검증 중…' : '검증하기') : '다음'}
       </button>
     </div>
   )
@@ -412,7 +412,7 @@ export default function VerifyPage({ prefill, user, onNavigate }) {
           <VerifyResult result={result} />
           <div className="wiz-nav">
             <button type="button" className="btn" onClick={back}>이전 (수정하기)</button>
-            <button type="button" className="btn primary" onClick={() => go('submit')}>제출하기 →</button>
+            <button type="button" className="btn primary" onClick={() => go('submit')}>제출하기</button>
           </div>
         </div>
       )}

@@ -81,7 +81,7 @@ export default function LoginPage({ onLogin }) {
     <div className="login-split">
       <section className="login-hero" aria-label="서비스 소개">
         <div className="login-brand">
-          <img className="login-mascot" src={mascot} alt="NOVA 마스코트" />
+          <img className="login-mascot" src={mascot} alt="NOVA 마스코트" width="360" height="272" />
           <span className="login-wordmark" aria-label="NOVA">
             {'NOVA'.split('').map((ch, i) => (
               <span key={i} className="reveal-ch" style={{ '--i': i }} aria-hidden="true">{ch}</span>

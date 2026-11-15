@@ -351,9 +351,9 @@ export default function TravelCalcPage({ user, onNavigate }) {
           <div className="wiz-nav">
             <span />
             {intra ? (
-              <button type="button" className="btn primary" onClick={run} disabled={loading}>{loading ? '계산 중…' : '계산하기 →'}</button>
+              <button type="button" className="btn primary" onClick={run} disabled={loading}>{loading ? '계산 중…' : '계산하기'}</button>
             ) : (
-              <button type="button" className="btn primary" onClick={() => go(2)}>다음 →</button>
+              <button type="button" className="btn primary" onClick={() => go(2)}>다음</button>
             )}
           </div>
         </div>
@@ -478,7 +478,7 @@ export default function TravelCalcPage({ user, onNavigate }) {
           <div className="wiz-nav">
             <button type="button" className="btn" onClick={back}>이전</button>
             <button type="button" className="btn primary" onClick={run} disabled={loading || !trip.start_date || !trip.end_date}>
-              {loading ? '계산 중…' : '계산하기 →'}
+              {loading ? '계산 중…' : '계산하기'}
             </button>
           </div>
         </div>
@@ -491,7 +491,7 @@ export default function TravelCalcPage({ user, onNavigate }) {
           <div className="wiz-nav">
             <button type="button" className="btn" onClick={back}>이전</button>
             {hasVerify ? (
-              <button type="button" className="btn primary" onClick={startVerify}>규정 검증하기 →</button>
+              <button type="button" className="btn primary" onClick={startVerify}>규정 검증하기</button>
             ) : (
               <button type="button" className="btn primary" onClick={restart}>새 출장 계산하기</button>
             )}
@@ -554,7 +554,7 @@ export default function TravelCalcPage({ user, onNavigate }) {
           </p>
           <div className="wiz-nav">
             <button type="button" className="btn" onClick={back}>이전</button>
-            <button type="button" className="btn primary" onClick={() => go(5)} disabled={!canSubmit}>제출하기 →</button>
+            <button type="button" className="btn primary" onClick={() => go(5)} disabled={!canSubmit}>제출하기</button>
           </div>
         </div>
       )}
