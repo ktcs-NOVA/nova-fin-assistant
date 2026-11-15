@@ -3,7 +3,7 @@
 
 import VerdictBadge from './VerdictBadge.jsx'
 
-export default function ResultCard({ item }) {
+export default function ResultCard({ item, action = null }) {
   const { field, verdict, message, basis, fix } = item
   return (
     <article className="result-card">
@@ -26,6 +26,7 @@ export default function ResultCard({ item }) {
           </>
         )}
       </dl>
+      {action}
     </article>
   )
 }

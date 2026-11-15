@@ -717,3 +717,60 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
   .doc-item { flex-wrap: wrap; }
   .doc-actions { width: 100%; justify-content: flex-end; }
 }
+
+/* ---------- 홈 하단 규정 검색바 (2026-11-15) ---------- */
+.home-ask { margin-top: 28px; padding: 24px; background: var(--panel); border: 1.5px solid var(--line); border-radius: 16px; }
+.home-ask-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+.home-ask-head h2 { margin: 0; font-size: 18px; }
+.ask-bar { display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 16px; border: 1.5px solid var(--brand); border-radius: 14px; background: var(--panel); box-shadow: 0 0 0 4px var(--brand-soft); color: var(--brand); }
+.ask-bar input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; color: var(--ink); padding: 14px 4px; }
+.ask-bar .btn { min-height: 48px; padding: 0 22px; font-size: 15px; }
+.ask-chips { margin-top: 16px; display: grid; gap: 8px; }
+.ask-chips .chips { justify-content: flex-start; margin-top: 0; }
+.home-ask > .hint:last-child { margin: 16px 0 0; }
+@media (max-width: 640px) { .ask-bar { flex-wrap: wrap; padding: 10px; } .ask-bar input { flex-basis: 70%; } .ask-bar .btn { width: 100%; } }
+
+/* ---------- 출장 정산 단계별 화면 (2026-11-15) ---------- */
+.wizard { display: grid; gap: 16px; }
+.wsteps { list-style: none; margin: 0; padding: 14px 20px; display: flex; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+.wsteps li { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+.wsteps li + li { flex: 1; }
+.wsteps li + li::before { content: ''; flex: 1; height: 2px; min-width: 12px; margin: 0 12px; background: var(--line); }
+.wstep-no { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; border: 2px solid var(--line); background: var(--panel); flex: none; }
+.wsteps li.done { color: var(--ink); }
+.wsteps li.done .wstep-no { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.wsteps li.done + li::before, .wsteps li.now::before { background: var(--brand); }
+.wsteps li.now { color: var(--brand); }
+.wsteps li.now .wstep-no { border-color: var(--brand); color: var(--brand); }
+@media (max-width: 760px) {
+  .wstep-label { display: none; }
+  .wsteps li.now .wstep-label { display: inline; }
+  .wsteps { padding: 12px 14px; }
+  .wsteps li + li::before { margin: 0 6px; }
+}
+.wiz-card { padding: 24px; display: grid; gap: 14px; align-content: start; }
+.wiz-card h2 { margin: 0; }
+.wiz-banner { margin: 0; font-weight: 600; background: var(--brand-soft); color: var(--brand); border-color: transparent; flex-direction: row; align-items: center; }
+.wiz-nav { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 10px; }
+.wiz-nav .btn { min-height: 46px; padding: 0 22px; }
+.wiz-sub { margin: 6px 0 0; font-size: 16px; }
+.wiz-sub-head { margin-top: 10px; }
+.wiz-more { border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; display: grid; gap: 12px; }
+.wiz-more > summary { cursor: pointer; font-weight: 700; min-height: 32px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.wiz-more[open] > summary { margin-bottom: 4px; }
+.wiz-two { display: flex; gap: 24px; align-items: flex-start; }
+.wiz-col { flex: 1; min-width: 0; display: grid; gap: 12px; align-content: start; }
+.wiz-two .wiz-col:last-child { flex: 1.2; }
+@media (max-width: 860px) { .wiz-two { flex-direction: column; } .wiz-col { width: 100%; } }
+.wiz-amt { display: grid; gap: 8px; padding: 12px 0; border-top: 1px solid var(--line); }
+.wiz-amt-row { display: flex; align-items: center; gap: 12px; }
+.wiz-amt-row b { min-width: 64px; }
+.wiz-amt-row .hint { flex: 1; }
+.wiz-amt-row input { width: 150px; text-align: right; }
+.wiz-fixed { font-size: 14px; color: var(--muted); }
+.wiz-fix { margin-top: 10px; }
+.wiz-status { margin: 0; font-size: 14px; color: var(--muted); }
+.wiz-status .good { color: var(--good); }
+.wiz-status .bad { color: var(--bad); }
+.cal-day.off, .cal-day.off:hover { color: var(--muted); opacity: .45; text-decoration: line-through; cursor: not-allowed; background: none; }
+.cal-off-sample { text-decoration: line-through; opacity: .6; }

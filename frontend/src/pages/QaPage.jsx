@@ -42,10 +42,11 @@ function Reply({ result, onAsk }) {
   return <QaAnswer result={result} />
 }
 
-export default function QaPage() {
+export default function QaPage({ param }) {
   const [messages, setMessages] = useState([]) // { id, text, status: 'loading'|'done'|'error', result, error }
   const [input, setInput] = useState('')
   const endRef = useRef(null)
+  const askedRef = useRef(false)   // 홈 검색바에서 넘어온 질문은 한 번만 보냄 (개발 모드 이중 실행 방지)
 
   const busy = messages.some((m) => m.status === 'loading')
 
@@ -69,6 +70,14 @@ export default function QaPage() {
       setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, status: 'error', error: e.message } : m)))
     }
   }
+
+  useEffect(() => {
+    if (param?.ask && !askedRef.current) {
+      askedRef.current = true
+      send(param.ask)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function onKeyDown(e) {
     // Enter 로 보내기, Shift+Enter 는 줄바꿈. 한글 조합 중인 Enter 는 무시 (두 번 전송 방지)

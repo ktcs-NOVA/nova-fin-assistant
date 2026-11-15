@@ -5,7 +5,8 @@ import { VERDICT } from '../api/client.js'
 import VerdictBadge from './VerdictBadge.jsx'
 import ResultCard from './ResultCard.jsx'
 
-export default function VerifyResult({ result }) {
+// renderAction(item): 카드 아래에 붙일 요소(예: '상한액으로 수정' 버튼). 없으면 카드만 그립니다.
+export default function VerifyResult({ result, renderAction }) {
   const { overall, items = [] } = result
   const count = (v) => items.filter((i) => i.verdict === v).length
 
@@ -25,7 +26,7 @@ export default function VerifyResult({ result }) {
 
       <div className="result-list">
         {items.map((item, i) => (
-          <ResultCard key={`${item.field}-${i}`} item={item} />
+          <ResultCard key={`${item.field}-${i}`} item={item} action={renderAction ? renderAction(item) : null} />
         ))}
       </div>
     </div>

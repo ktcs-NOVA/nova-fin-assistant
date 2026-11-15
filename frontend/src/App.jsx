@@ -24,7 +24,7 @@ const MENUS = {
       home: { label: '홈', component: HomePage },
       type: { label: '정산하기', component: TypePage, parent: 'home' },
       receipt: { label: '영수증 등록', component: ReceiptPage, parent: 'type' },     // U-06
-      travel: { label: '출장비 계산', component: TravelCalcPage, parent: 'type' },   // U-05
+      travel: { label: '출장 정산', component: TravelCalcPage, parent: 'type' },   // U-05
       verify: { label: '청구 검증', component: VerifyPage, parent: 'type' },         // U-04
       mystatus: { label: '내 정산 현황', component: MyStatusPage, parent: 'home' },
       checklist: { label: '문서 작업', component: DocumentsPage, parent: 'home' }, // U-02
