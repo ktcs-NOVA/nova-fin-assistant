@@ -5,7 +5,6 @@
 import { useState } from 'react'
 import { DEMO_ACCOUNTS, DEMO_PASSWORD, GRADES, ROLE, ROLE_LABEL } from '../auth/accounts.js'
 import { login, signup, USE_MOCK, API_BASE } from '../api/client.js'
-import Icon from '../components/Icons.jsx'
 import mascot from '../assets/nova-mascot.png'
 import PasswordField from '../components/PasswordField.jsx'
 import EmailField from '../components/EmailField.jsx'
@@ -98,7 +97,6 @@ export default function LoginPage({ onLogin }) {
       <section className="login-pane">
         <div className="login-panel">
           <div className="login-top">
-            <span className="logo-mark"><Icon name="logo" size={20} /></span>
             <span className={`mode ${USE_MOCK ? 'mock' : 'live'}`} title={USE_MOCK ? '가짜 응답으로 동작 중' : API_BASE}>
               {USE_MOCK ? '목업 모드' : '백엔드 연결'}
             </span>
