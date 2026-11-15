@@ -569,7 +569,12 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .login-hero { flex: 1 1 420px; background: var(--brand); color: var(--brand-ink); padding: 56px 52px; display: flex; flex-direction: column; justify-content: center; gap: 22px; }
 .login-hero h1 { font-size: 32px; line-height: 1.35; margin: 0; }
 .login-brand { display: flex; align-items: center; gap: 18px; margin-bottom: 8px; }
-.login-mascot { width: 170px; height: auto; display: block; flex: none; }
+.login-mascot { width: 170px; height: auto; display: block; flex: none; animation: nova-float 4.2s ease-in-out infinite; will-change: transform; }
+@keyframes nova-float {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-14px) rotate(3deg); }
+}
+@media (prefers-reduced-motion: reduce) { .login-mascot { animation: none; } }
 .login-wordmark { font-size: 56px; font-weight: 800; letter-spacing: .08em; line-height: 1; }
 .login-hero p { margin: 0; font-size: 16px; line-height: 1.7; opacity: .9; }
 .login-hero ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
