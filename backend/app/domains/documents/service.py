@@ -1,7 +1,8 @@
 """문서 작업: 내 서류 저장·수정·초안 만들기. 다른 사람 서류는 없는 것처럼 404 로 답합니다.
 
 정산 건에서 만든 서류는 그 건에 붙고(submission), 확인을 마치면 관리자에게 보낼 수 있습니다(sent_at).
-지출결과서(+검수확인서)는 줄글 초안이 아니라 양식(forms.py)으로 만들어집니다.
+정산 건에 붙은 지출결과서·회의록·출장보고서는 줄글 초안이 아니라 양식(forms.py)으로 만들어집니다.
+(정산 건 없이 따로 쓴 회의록·출장보고서는 예전처럼 줄글 초안 방식입니다.)
 """
 
 import re
@@ -15,6 +16,7 @@ from app.ai import llm
 from app.core.config import settings
 from app.core.errors import AppError
 from app.domains.documents import drafts, forms
+from app.domains.receipt import service as receipts
 from app.domains.submissions import service as submissions
 from app.models import Submission, User, WorkDocument
 
@@ -81,9 +83,9 @@ def create_document(
 ) -> WorkDocument:
     sub = _my_submission(db, user, submission_code) if submission_code else None
 
-    if kind == forms.KIND:
-        if sub is None:
-            raise AppError("지출 결과서는 제출한 정산 건에서 만들 수 있습니다.")
+    if kind == forms.KIND and sub is None:
+        raise AppError("지출 결과서는 제출한 정산 건에서 만들 수 있습니다.")
+    if sub is not None and kind in forms.FORM_KINDS:
         existing = db.scalar(
             select(WorkDocument)
             .options(selectinload(WorkDocument.submission))
@@ -94,11 +96,11 @@ def create_document(
             )
         )
         if existing is not None:
-            return existing  # 한 정산 건에 결과서는 한 부
+            return existing  # 한 정산 건에 같은 양식은 한 부
         view = submissions.to_view(sub)
-        # 금액·날짜는 정산 건에서 읽으므로 저장하지 않고, AI 가 제안한 문구만 채워 둡니다.
-        fields = {**forms.suggest(view), "ai_keys": forms.ai_keys(view)}
-        title = (title or "").strip() or forms.default_title(view)
+        # 금액·날짜·참석자는 정산 건에서 읽으므로 저장하지 않고, 고칠 수 있는 칸만 둡니다.
+        fields = forms.initial_fields(kind, view, fields)
+        title = (title or "").strip() or forms.default_title(kind, view)
 
     doc = WorkDocument(
         user_id=user.id,
@@ -128,8 +130,8 @@ def update_document(db: Session, user: User, doc_id: int, req) -> WorkDocument:
     if req.title is not None and req.title.strip():
         doc.title = req.title.strip()
     if req.confirmed is True:
-        if doc.kind == forms.KIND:
-            lacking = _form(doc, user)["todo"]
+        if _is_form(doc):
+            lacking = _form(db, doc, user)["todo"]
             if lacking:
                 names = ", ".join(t["label"] for t in lacking)
                 raise AppError(f"아직 비어 있는 칸이 있습니다: {names}")
@@ -154,8 +156,8 @@ def delete_document(db: Session, user: User, doc_id: int) -> None:
 def make_draft(db: Session, user: User, doc_id: int) -> WorkDocument:
     """입력한 값으로 초안을 만들어 draft 에 저장. 비어 있는 칸이 있으면 400."""
     doc = _get(db, user, doc_id)
-    if doc.kind == forms.KIND:
-        raise AppError("지출 결과서는 초안 대신 양식으로 만들어집니다.")
+    if _is_form(doc):
+        raise AppError("이 서류는 초안 대신 양식으로 만들어집니다.")
     lacking = drafts.missing(doc.kind, doc.fields)
     if lacking:
         raise AppError(f"초안을 만들려면 먼저 입력해 주세요: {', '.join(lacking)}")
@@ -171,29 +173,55 @@ def make_draft(db: Session, user: User, doc_id: int) -> WorkDocument:
 # ---------------------------------------------------------------------------
 # 양식 (지출결과서 + 검수확인서) · 관리자에게 보내기
 # ---------------------------------------------------------------------------
-def _form(doc: WorkDocument, writer: User) -> dict:
-    if doc.kind != forms.KIND:
+def _is_form(doc: WorkDocument) -> bool:
+    """양식으로 만드는 서류인지: 지출결과서는 항상, 회의록·출장보고서는 정산 건에 붙었을 때."""
+    return doc.kind == forms.KIND or (doc.kind in forms.FORM_KINDS and doc.submission_id is not None)
+
+
+def _view(db: Session, sub: Submission) -> dict:
+    """양식에 쓸 제출 건. 영수증 사진 번호는 제출한 사람이 올린 것만 남깁니다."""
+    view = submissions.to_view(sub)
+    mine = receipts.owned_ids(db, sub.user_id, [e.get("receipt_id") for e in view["expenses"]])
+    for e in view["expenses"]:
+        rid = e.get("receipt_id")
+        e["receipt_id"] = int(rid) if rid is not None and str(rid).isdigit() and int(rid) in mine else None
+    return view
+
+
+def _form(db: Session, doc: WorkDocument, writer: User) -> dict:
+    if not _is_form(doc):
         raise AppError("양식으로 보는 서류가 아닙니다.")
     if doc.submission is None:
         raise AppError("이 서류가 붙어 있던 정산 건이 없어졌습니다.", 404)
     today = (doc.sent_at or datetime.now(KST)).astimezone(KST).date()
-    return forms.build(submissions.to_view(doc.submission), doc.fields, _who(writer), today)
+    return forms.build(doc.kind, _view(db, doc.submission), doc.fields, _who(writer), today)
 
 
 def get_form(db: Session, user: User, doc_id: int) -> dict:
-    return _form(_get(db, user, doc_id), user)
+    return _form(db, _get(db, user, doc_id), user)
 
 
 def fill_form(db: Session, user: User, doc_id: int) -> WorkDocument:
-    """AI 칸(상세내역·용도)을 다시 채웁니다. 직원이 직접 고친 칸은 건드리지 않습니다."""
+    """AI 가 쓰는 부분을 채웁니다. 직원이 직접 고친 칸은 건드리지 않습니다.
+
+    지출결과서: 상세내역·용도 문구를 다시 제안. 회의록·출장보고서: 직원이 적은 메모(content)를 보고서 문체로 다듬음.
+    """
     doc = _get(db, user, doc_id)
-    if doc.kind != forms.KIND or doc.submission is None:
+    if not _is_form(doc) or doc.submission is None:
         raise AppError("양식으로 보는 서류가 아닙니다.")
-    base = forms.suggest(submissions.to_view(doc.submission))
     kept = set(doc.fields.get("ai_keys") or [])
-    # 비어 있거나, 아직 AI 제안 그대로인 칸만 대상
-    targets = {k: v for k, v in base.items() if not str(doc.fields.get(k) or "").strip() or k in kept}
-    filled = _polish_cells(targets)
+    if doc.kind == forms.KIND:
+        base = forms.suggest(submissions.to_view(doc.submission))
+        # 비어 있거나, 아직 AI 제안 그대로인 칸만 대상
+        targets = {k: v for k, v in base.items() if not str(doc.fields.get(k) or "").strip() or k in kept}
+        filled = _polish_cells(targets)
+    else:
+        memo = str(doc.fields.get("content") or "").strip()
+        if not memo:
+            raise AppError(f"먼저 {'회의' if doc.kind == forms.MINUTES else '출장'} 내용을 메모로 적어 주세요. 적은 내용을 AI 가 다듬습니다.")
+        polished = _polisher()(memo)
+        # 메모에 없던 숫자가 생기거나 있던 숫자가 빠지면 다듬은 글을 쓰지 않음
+        filled = {"content": polished} if polished != memo and _keeps_facts(memo, polished) else {}
     doc.fields = {**doc.fields, **filled, "ai_keys": sorted(kept | set(filled))}
     doc.confirmed = False
     doc.sent_at = None
@@ -260,7 +288,7 @@ def submission_documents(db: Session, code: str) -> dict:
                 "writer": _who(sub.user),
                 "sent_at": d.sent_at,
                 "draft": d.draft,
-                "form": _form(d, sub.user) if d.kind == forms.KIND else None,
+                "form": _form(db, d, sub.user) if _is_form(d) else None,
             }
             for d in docs
         ],

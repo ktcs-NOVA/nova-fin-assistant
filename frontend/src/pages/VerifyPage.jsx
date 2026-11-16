@@ -128,7 +128,7 @@ export default function VerifyPage({ prefill, user, onNavigate }) {
       }
       if (seatOptions(it.field) && it.seat_class) row.seat_class = it.seat_class
       // 영수증에서 온 항목: 가맹점·업종·시각·결제수단을 그대로 실어 법인카드 규칙(심야·제한업종)을 받게 함
-      for (const k of ['merchant', 'merchant_type', 'time', 'payment']) if (it[k]) row[k] = it[k]
+      for (const k of ['merchant', 'merchant_type', 'time', 'payment', 'receipt_id']) if (it[k]) row[k] = it[k]   // receipt_id: 보관된 영수증 사진 번호
       if (isMeeting(tripType)) {
         // 회의 정보는 항목마다 실어 보냄: 엔진(참석자 확인)과 제출 건 저장(관리자 화면·문서 초안)이 항목 단위로 읽음
         row.meeting_purpose = meeting.purpose.trim()

@@ -112,14 +112,16 @@ export function createDocument({ kind, title, fields, submission_code }) {
   return request('POST', '/api/documents', { kind, title, fields: fields ?? {}, ...(submission_code ? { submission_code } : {}) })
 }
 
-/** 지출결과서 양식(지출 결과서 + 검수확인서): { sheets: [{ title, info, table, extra, signers, evidence }], todo, ready }
- *  칸마다 source(auto 자동 / ai AI 제안 / manual 직접 입력 / blank 서명) 와, 고칠 수 있는 칸이면 key 가 붙어 옵니다. */
+/** 양식(지출결과서 · 정산 건에 붙은 회의록 · 출장보고서): { sheets: [{ title, blocks: [...] }], todo, ready }
+ *  블록 종류는 info · table · field · note · signers · evidence · photos (utils/formCells.js).
+ *  칸마다 source(auto 자동 / ai AI 작성 / manual 직접 입력 / blank 서명·사진) 와, 고칠 수 있는 칸이면 key 가 붙어 옵니다. */
 export function getDocumentForm(id) {
   if (USE_MOCK) return mock.unsupported('지출 결과서 양식')
   return request('GET', `/api/documents/${id}/form`)
 }
 
-/** AI 칸(상세내역·용도)을 다시 채웁니다. 직접 고친 칸은 그대로 둡니다. 바뀐 서류를 돌려줘요. */
+/** AI 가 쓰는 부분을 채웁니다 (지출결과서: 상세내역·용도 제안 / 회의록·출장보고서: 적어 둔 메모를 보고서 문체로 다듬기).
+ *  직접 고친 칸은 그대로 둡니다. 바뀐 서류를 돌려줘요. */
 export function fillDocumentForm(id) {
   if (USE_MOCK) return mock.unsupported('AI 채우기')
   return request('POST', `/api/documents/${id}/fill`)
@@ -129,6 +131,15 @@ export function fillDocumentForm(id) {
 export function sendDocument(id) {
   if (USE_MOCK) return mock.unsupported('관리자에게 보내기')
   return request('POST', `/api/documents/${id}/send`)
+}
+
+/** 보관해 둔 영수증 사진을 받아 <img src> 에 쓸 주소(blob:)로 돌려줍니다. 올린 본인과 관리자만 볼 수 있어 토큰을 실어 받습니다.
+ *  다 쓴 주소는 URL.revokeObjectURL 로 풀어 주세요. */
+export async function getReceiptImageUrl(id) {
+  const token = loadSession()?.token
+  const res = await fetch(`${API_BASE}/api/receipts/${id}/image`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  if (!res.ok) throw new Error('영수증 사진을 불러오지 못했습니다.')
+  return URL.createObjectURL(await res.blob())
 }
 
 /** 관리자: 정산 건에 붙어 온 서류 { expected: [종류], missing: [종류], documents: [{ id, kind, title, writer, sent_at, draft, form }] } */

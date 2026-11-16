@@ -1,6 +1,7 @@
 // 문서 작업 (U-02): 출장보고서·회의록·출장원·지출 결과서를 쓰다 말아도 저장해 두고 이어 쓰는 곳.
 // 정산 화면에서 넘어오면(param.newDoc: { kind, fields, origin, submission_code }) 그 값이 채워진 새 서류 작성으로 바로 들어갑니다.
-// 지출 결과서(+검수확인서)는 줄글 초안이 아니라 양식이라 전용 편집기(ExpenseReportEditor)로 엽니다.
+// 지출 결과서(+검수확인서)와, 정산 건에서 만든 회의록·출장보고서는 줄글 초안이 아니라 양식이라 양식 편집기(ExpenseReportEditor)로 엽니다.
+// 정산 건 없이 따로 쓰는 회의록·출장보고서·출장원은 예전처럼 줄글 초안 편집기(DocumentEditor)입니다.
 
 import { useEffect, useState } from 'react'
 import { DOC_KINDS, deleteDocument, listDocuments } from '../api/client.js'
@@ -12,6 +13,8 @@ import Icon from '../components/Icons.jsx'
 const KIND_ICON = { 출장보고서: 'trip', 회의록: 'meeting', 출장원: 'card', [REPORT]: 'card' }
 const KIND_CLASS = { 출장보고서: '', 회의록: 'ico-meeting', 출장원: 'ico-card', [REPORT]: 'ico-card' }
 const KIND_NAME = { [REPORT]: '지출 결과서 · 검수확인서' }
+const FORM_KINDS = [REPORT, '회의록', '출장보고서']
+const isForm = (d) => d.kind === REPORT || (FORM_KINDS.includes(d.kind) && Boolean(d.submission_code))
 
 const when = (iso) => {
   const t = new Date(iso)
@@ -42,7 +45,7 @@ export default function DocumentsPage(props) {
   }
 
   if (editing) {
-    const Editor = editing.kind === REPORT ? ExpenseReportEditor : DocumentEditor
+    const Editor = isForm(editing) ? ExpenseReportEditor : DocumentEditor
     return <Editor key={editing.id ?? 'new'} doc={editing} onChanged={reload} onBack={() => { setEditing(null); reload() }} />
   }
 

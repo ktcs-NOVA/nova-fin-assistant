@@ -44,7 +44,7 @@ export function docsForClaim(src, user) {
   if (c.type === CLAIM.MEETING) {
     return [...report, {
       kind: '회의록',
-      label: '회의록 초안 쓰기',
+      label: '회의록 쓰기',
       origin,
       ...link,
       fields: {

@@ -872,12 +872,19 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .form-table .al-center { text-align: center; }
 .form-table .al-right { text-align: right; font-variant-numeric: tabular-nums; }
 .form-total th, .form-total td { font-weight: 700; }
-.form-closing { text-align: center; margin: 18px 0 4px; }
-.form-date { text-align: center; margin: 0 0 14px; font-weight: 600; }
+.form-note.center { text-align: center; margin: 18px 0 4px; }
+.form-note.date { text-align: center; margin: 0 0 14px; font-weight: 600; }
+.form-note.foot { font-size: 13px; color: var(--muted); margin: 4px 0 12px; }
+.form-table caption { caption-side: top; text-align: left; font-weight: 700; padding: 0 0 5px; }
+.form-field th { width: 24%; }
+.form-text { white-space: pre-wrap; }
+.form-photos th { text-align: left; }
+.form-photos td { height: 110px; }
+.form-evidence td { vertical-align: middle; }
+.form-receipt { display: block; max-width: 100%; max-height: 260px; margin: 0 auto; border-radius: 4px; }
 .form-signers th { width: 24%; }
 .form-seal-cell { width: 14%; text-align: center; }
 .form-seal { color: var(--muted); }
-.form-footnote { font-size: 13px; color: var(--muted); margin: 4px 0 0; }
 .form-table td.src-ai { background: var(--brand-soft); }
 .form-table td.src-manual { background: var(--warn-soft); }
 .form-table td.src-blank { background: repeating-linear-gradient(135deg, transparent 0 6px, var(--line) 6px 7px); }
@@ -885,6 +892,7 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .form-table .form-input { display: block; width: 100%; min-height: 0; border: 0; border-bottom: 1px dashed var(--muted); background: transparent; box-shadow: none; color: inherit; font: inherit; line-height: 1.45; padding: 2px 0; border-radius: 0; resize: none; overflow: hidden; }
 .form-table .form-input:focus { outline: 2px solid var(--brand); outline-offset: 3px; border-bottom-color: transparent; }
 .form-table .form-input.need { border-bottom: 2px solid var(--bad); }
+.form-table .form-input.multi { overflow: auto; resize: vertical; min-height: 9em; }
 .form-guide { display: grid; gap: 12px; }
 .form-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 18px; }
 .form-legend li { display: flex; align-items: center; gap: 6px; }
@@ -923,4 +931,5 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
   .form-table th { background: #f1f1f1; }
   .form-table td.src-ai, .form-table td.src-manual, .form-table td.src-blank { background: none; }
   .form-table .form-input { border: 0; }
+  .form-receipt { max-height: 320px; }
 }

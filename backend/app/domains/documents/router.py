@@ -62,12 +62,12 @@ def make_draft(doc_id: int, db: Session = Depends(get_db), user: User = Depends(
     return service.make_draft(db, user, doc_id)
 
 
-@router.get("/{doc_id}/form", summary="지출결과서 양식 (지출 결과서 + 검수확인서, 칸마다 출처 표시)")
+@router.get("/{doc_id}/form", summary="양식 (지출결과서 · 회의록 · 출장보고서, 칸마다 출처 표시)")
 def get_form(doc_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     return service.get_form(db, user, doc_id)
 
 
-@router.post("/{doc_id}/fill", response_model=DocumentOut, summary="AI 칸(상세내역·용도) 다시 채우기")
+@router.post("/{doc_id}/fill", response_model=DocumentOut, summary="AI 가 쓰는 칸 채우기 (문구 제안 · 메모 다듬기)")
 def fill_form(doc_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     return service.fill_form(db, user, doc_id)
 
