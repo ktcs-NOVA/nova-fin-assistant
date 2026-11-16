@@ -5,6 +5,12 @@
 import { useState } from 'react'
 
 const DOW = ['일', '월', '화', '수', '목', '금', '토']
+// 2026년 공휴일(대체공휴일 포함, 참고용). 공사 근무일 기준이 확정되면 이 목록만 고치면 됩니다.
+// blockWeekends 를 켜면 토·일과 아래 날짜는 고를 수 없습니다. (2026-11-13 코칭: 주말·공휴일엔 보통 사용할 수 없음)
+const HOLIDAYS = new Set([
+  '2026-01-01', '2026-02-16', '2026-02-17', '2026-02-18', '2026-03-02', '2026-05-01', '2026-05-05', '2026-05-25',
+  '2026-06-03', '2026-08-17', '2026-09-24', '2026-09-25', '2026-09-26', '2026-10-05', '2026-10-09', '2026-12-25',
+])
 const pad = (n) => String(n).padStart(2, '0')
 const iso = (y, m, d) => `${y}-${pad(m + 1)}-${pad(d)}`
 const parse = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d) }
@@ -17,7 +23,7 @@ function periodLabel(start, end) {
   return nights <= 0 ? '당일' : `${nights}박 ${nights + 1}일`
 }
 
-export default function DateRangePicker({ start, end, onChange }) {
+export default function DateRangePicker({ start, end, onChange, blockWeekends = false }) {
   const [view, setView] = useState(() => {
     const base = start ? parse(start) : new Date()   // 처음 한 번만: 출발일이 있으면 그 달, 없으면 이번 달
     return { y: base.getFullYear(), m: base.getMonth() }
@@ -32,8 +38,11 @@ export default function DateRangePicker({ start, end, onChange }) {
     setView({ y: d.getFullYear(), m: d.getMonth() })
   }
 
+  const isOff = (v) => blockWeekends && (parse(v).getDay() % 6 === 0 || HOLIDAYS.has(v))   // 토(6)·일(0)·공휴일
+
   function pick(day) {
     const v = iso(view.y, view.m, day)
+    if (isOff(v)) return
     if (!start || (start && end)) onChange({ start: v, end: '' })
     else if (v < start) onChange({ start: v, end: '' })
     else onChange({ start, end: v })
@@ -55,10 +64,12 @@ export default function DateRangePicker({ start, end, onChange }) {
             const isStart = v === start
             const isEnd = v === end
             const inRange = start && end && v > start && v < end
+            const off = isOff(v)
             return (
               <button
                 key={v} type="button"
-                className={`cal-day${isStart || isEnd ? ' sel' : ''}${inRange ? ' range' : ''}`}
+                className={`cal-day${isStart || isEnd ? ' sel' : ''}${inRange ? ' range' : ''}${off ? ' off' : ''}`}
+                disabled={off}
                 aria-pressed={isStart || isEnd}
                 aria-label={label(v)}
                 onClick={() => pick(day)}
@@ -71,6 +82,7 @@ export default function DateRangePicker({ start, end, onChange }) {
         <div><dt>출발일</dt><dd>{start ? label(start) : '달력에서 고르세요'}</dd></div>
         <div><dt>도착일</dt><dd>{end ? label(end) : start ? '도착일을 고르세요' : '—'}</dd></div>
         <div><dt>기간</dt><dd>{periodLabel(start, end) || '—'}</dd></div>
+        {blockWeekends && <div><dd className="hint"><span className="cal-off-sample">00</span> 주말·공휴일은 고를 수 없어요</dd></div>}
       </dl>
     </div>
   )

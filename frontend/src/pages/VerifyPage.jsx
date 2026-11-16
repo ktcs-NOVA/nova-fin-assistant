@@ -14,6 +14,7 @@ import { useState } from 'react'
 import { verifyClaim } from '../api/client.js'
 import VerifyResult from '../components/VerifyResult.jsx'
 import SubmitPanel from '../components/SubmitPanel.jsx'
+import WizardSteps from '../components/WizardSteps.jsx'
 import { CLAIM, MEETING_FIELDS, splitAttendees } from '../utils/claimTypes.js'
 
 const TRIP_TYPES = [CLAIM.TRIP, CLAIM.LOCAL_TRIP, CLAIM.MEETING, CLAIM.CARD]
@@ -54,7 +55,25 @@ const SAMPLE = {
   ],
 }
 
+// 단계별로 한 화면에 한 단계씩 보여 줍니다. (2026-11-15: 길게 내려가던 입력 폼을 단계형으로)
+//   회의비:        기본 정보 → 청구 항목 → 회의 정보 → 검증 결과 → 제출
+//   출장:          기본 정보 → 출장 정보 → 청구 항목 → 검증 결과 → 제출
+//   기타 법인카드: 기본 정보 → 청구 항목 → 검증 결과 → 제출
+// 회의비는 금액을 먼저 받아야 건당 50만 원·100만 원 기준(사전결재·일상감사) 질문을 정확히 띄울 수 있어서 회의 정보가 항목 뒤에 옵니다.
+const S = {
+  info: { id: 'info', label: '기본 정보' },
+  trip: { id: 'trip', label: '출장 정보' },
+  items: { id: 'items', label: '청구 항목' },
+  meeting: { id: 'meeting', label: '회의 정보' },
+  result: { id: 'result', label: '검증 결과' },
+  submit: { id: 'submit', label: '제출' },
+}
+const stepsFor = (t) => (isMeeting(t)
+  ? [S.info, S.items, S.meeting, S.result, S.submit]
+  : isTrip(t) ? [S.info, S.trip, S.items, S.result, S.submit] : [S.info, S.items, S.result, S.submit])
+
 export default function VerifyPage({ prefill, user, onNavigate }) {
+  const [stepId, setStepId] = useState('info')
   const [tripType, setTripType] = useState(prefill?.trip_type ?? '국내출장')
   const [grade, setGrade] = useState(prefill?.grade ?? '직원 3급 이하')
   const [trip, setTrip] = useState({ start_date: '', end_date: '', region: '', vehicle: '', ...(prefill?.trip ?? {}) })
@@ -63,16 +82,21 @@ export default function VerifyPage({ prefill, user, onNavigate }) {
   const receiptCount = items.filter(fromReceipt).length
   const fromTravel = prefill?.from === 'travel' && items.length > 0
   const [result, setResult] = useState(null)
+  const [claim, setClaim] = useState(null)   // 검증에 쓴 요청 그대로 (제출할 때도 이걸 보냄)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const steps = stepsFor(tripType)
+  const idx = Math.max(0, steps.findIndex((s) => s.id === stepId))
+  const lastInput = steps[idx + 1]?.id === 'result'   // 검증 직전 단계: 여기서는 "다음" 대신 "검증하기"
 
   const editTrip = (k, v) => setTrip((t) => ({ ...t, [k]: v }))
   const editMeeting = (k, v) => setMeeting((m) => ({ ...m, [k]: v }))
   const meetingTotal = items.reduce((sum, it) => sum + (Number(it.amount) || 0), 0)
   const biggest = items.reduce((max, it) => Math.max(max, Number(it.amount) || 0), 0)   // 사전결재·일상감사는 건당 금액 기준
-  const editItem = (i, k, v) => setItems((list) => list.map((it, idx) => (idx === i ? { ...it, [k]: v } : it)))
+  const editItem = (i, k, v) => setItems((list) => list.map((it, idx2) => (idx2 === i ? { ...it, [k]: v } : it)))
   const addItem = () => setItems((list) => [...list, emptyItem()])
-  const removeItem = (i) => setItems((list) => (list.length > 1 ? list.filter((_, idx) => idx !== i) : list))
+  const removeItem = (i) => setItems((list) => (list.length > 1 ? list.filter((_, idx2) => idx2 !== i) : list))
 
   function loadSample() {
     setTripType(SAMPLE.trip_type)
@@ -80,6 +104,7 @@ export default function VerifyPage({ prefill, user, onNavigate }) {
     setTrip(SAMPLE.trip)
     setItems(SAMPLE.items.map((it) => ({ ...it })))
     setResult(null)
+    setClaim(null)
     setError('')
   }
 
@@ -120,21 +145,24 @@ export default function VerifyPage({ prefill, user, onNavigate }) {
     return req
   }
 
-  function validate() {
+  // 단계별 입력 점검: 문제가 있으면 안내 문구, 없으면 ''
+  const checkItems = () => {
     const bad = items.findIndex((it) => !it.field.trim() || !(Number(it.amount) > 0) || (isMeeting(tripType) && !MEETING_FIELDS.includes(it.field)))
-    if (bad >= 0) return `${bad + 1}번째 항목의 ${isMeeting(tripType) ? '구분' : '항목명'}과 금액을 입력해 주세요.`
-    if (isMeeting(tripType)) {
-      if (!meeting.purpose.trim()) return '회의 목적을 적어 주세요. 회의비는 회의 목적과 참석자가 있어야 증빙이 됩니다.'
-      if (!splitAttendees(meeting.attendees).length) return '참석자를 적어 주세요. (예: 해운정책팀 홍길동, 김철수)'
-    }
-    if (isTrip(tripType) && trip.start_date && trip.end_date && trip.end_date < trip.start_date) {
-      return '출장 종료일이 시작일보다 앞설 수 없습니다.'
-    }
+    return bad >= 0 ? `${bad + 1}번째 항목의 ${isMeeting(tripType) ? '구분' : '항목명'}과 금액을 입력해 주세요.` : ''
+  }
+  const checkMeeting = () => {
+    if (!meeting.purpose.trim()) return '회의 목적을 적어 주세요. 회의비는 회의 목적과 참석자가 있어야 증빙이 됩니다.'
+    if (!splitAttendees(meeting.attendees).length) return '참석자를 적어 주세요. (예: 해운정책팀 홍길동, 김철수)'
     return ''
   }
+  const checkTrip = () => (trip.start_date && trip.end_date && trip.end_date < trip.start_date ? '출장 종료일이 시작일보다 앞설 수 없습니다.' : '')
+  const checkStep = (id) => (id === 'items' ? checkItems() : id === 'meeting' ? checkMeeting() : id === 'trip' ? checkTrip() : '')
+
+  const go = (id) => { setError(''); setStepId(id); window.scrollTo?.(0, 0) }
+  const back = () => go(steps[idx - 1].id)
 
   async function run() {
-    const msg = validate()
+    const msg = checkItems() || (isMeeting(tripType) ? checkMeeting() : '') || (isTrip(tripType) ? checkTrip() : '')
     if (msg) {
       setError(msg)
       return
@@ -142,229 +170,263 @@ export default function VerifyPage({ prefill, user, onNavigate }) {
     setLoading(true)
     setError('')
     try {
-      setResult(await verifyClaim(buildRequest()))
+      const req = buildRequest()
+      setResult(await verifyClaim(req))
+      setClaim(req)
+      go('result')
     } catch (e) {
       setError(e.message)
       setResult(null)
+      setClaim(null)
     } finally {
       setLoading(false)
     }
   }
 
+  function next() {
+    const msg = checkStep(stepId)
+    if (msg) {
+      setError(msg)
+      return
+    }
+    if (lastInput) run()
+    else go(steps[idx + 1].id)
+  }
+
+  const nav = (
+    <div className="wiz-nav">
+      {idx > 0 ? <button type="button" className="btn" onClick={back} disabled={loading}>이전</button> : <span />}
+      <button type="button" className="btn primary" onClick={next} disabled={loading}>
+        {lastInput ? (loading ? '검증 중…' : '검증하기') : '다음'}
+      </button>
+    </div>
+  )
+  const errorBox = error && <div className="error">{error}</div>
+
   return (
-    <section>
+    <section className="wizard">
       <div className="page-title">
         <h1>청구 검증</h1>
-        <span className="desc">제출 전 청구 내역을 규정 기준으로 점검합니다.</span>
+        <span className="desc">한 단계씩 입력하면 제출 전에 규정 기준으로 점검해 드려요.</span>
       </div>
 
-      <div className="verify-layout">
-        {/* ---------- 입력 ---------- */}
-        <div className="verify-form">
-          {receiptCount > 0 && (
-            <div className="notice">
-              영수증 등록에서 {receiptCount}건을 넘겨받았습니다. 결제수단은 법인카드로 채웠고, 필요하면 항목을 더 넣은 뒤 "검증하기"를 누르세요.
-            </div>
-          )}
+      <WizardSteps steps={steps.map((s) => s.label)} current={idx + 1} />
+
+      {/* ---------- 기본 정보 ---------- */}
+      {stepId === 'info' && (
+        <div className="card wiz-card">
+          <div className="card-head">
+            <h2>청구 기본 정보</h2>
+            <button type="button" className="btn" onClick={loadSample}>출장 예시 불러오기</button>
+          </div>
+          {receiptCount > 0 && <p className="notice wiz-banner">영수증 등록에서 {receiptCount}건을 넘겨받았어요. 결제수단은 법인카드로 채웠어요.</p>}
+          <div className="form-grid">
+            <label className="field">
+              <span className="field-label">청구 유형 *</span>
+              <select value={tripType} onChange={(e) => setTripType(e.target.value)}>
+                {TRIP_TYPES.map((t) => <option key={t}>{t}</option>)}
+              </select>
+            </label>
+            <label className="field">
+              <span className="field-label">직급 *</span>
+              <select value={grade} onChange={(e) => setGrade(e.target.value)}>
+                {GRADES.map((g) => <option key={g}>{g}</option>)}
+              </select>
+            </label>
+          </div>
+          {nav}
+        </div>
+      )}
+
+      {/* ---------- 출장 정보 ---------- */}
+      {stepId === 'trip' && (
+        <div className="card wiz-card">
+          <h2>출장 정보</h2>
+          <p className="hint">비워 두면 해당 규칙은 건너뛰거나 "담당자 확인 필요"로 안내돼요.</p>
+          <div className="form-grid">
+            <label className="field">
+              <span className="field-label">출장 시작일</span>
+              <input type="date" value={trip.start_date} onChange={(e) => editTrip('start_date', e.target.value)} />
+            </label>
+            <label className="field">
+              <span className="field-label">출장 종료일</span>
+              <input type="date" value={trip.end_date} onChange={(e) => editTrip('end_date', e.target.value)} />
+            </label>
+            <label className="field">
+              <span className="field-label">출장지 지역 <em>숙박비 상한 판단</em></span>
+              <select value={trip.region} onChange={(e) => editTrip('region', e.target.value)}>
+                {REGIONS.map((r) => <option key={r} value={r}>{r || '선택 안 함'}</option>)}
+              </select>
+            </label>
+            <label className="field">
+              <span className="field-label">교통수단 <em>일비·자가용 규칙</em></span>
+              <select value={trip.vehicle} onChange={(e) => editTrip('vehicle', e.target.value)}>
+                {VEHICLES.map((v) => <option key={v} value={v}>{v || '선택 안 함'}</option>)}
+              </select>
+            </label>
+          </div>
+          {errorBox}
+          {nav}
+        </div>
+      )}
+
+      {/* ---------- 청구 항목 ---------- */}
+      {stepId === 'items' && (
+        <div className="card wiz-card">
+          <h2>청구 항목</h2>
           {fromTravel && (
-            <div className="notice">
-              출장비 계산 결과 {items.length}건을 넘겨받았습니다. 숙박비는 규정 상한이 들어가 있으니 실제 영수증 금액으로 고친 뒤 "검증하기"를 누르세요.
-            </div>
+            <p className="notice wiz-banner">출장비 계산 결과 {items.length}건을 넘겨받았어요. 숙박비는 규정 상한이 들어가 있으니 실제 영수증 금액으로 고쳐 주세요.</p>
           )}
-          <div className="card">
-            <div className="card-head">
-              <h2>1. 청구 기본 정보</h2>
-              <button type="button" className="btn" onClick={loadSample}>출장 예시 불러오기</button>
-            </div>
-            <div className="form-grid">
-              <label className="field">
-                <span className="field-label">청구 유형 *</span>
-                <select value={tripType} onChange={(e) => setTripType(e.target.value)}>
-                  {TRIP_TYPES.map((t) => <option key={t}>{t}</option>)}
-                </select>
-              </label>
-              <label className="field">
-                <span className="field-label">직급 *</span>
-                <select value={grade} onChange={(e) => setGrade(e.target.value)}>
-                  {GRADES.map((g) => <option key={g}>{g}</option>)}
-                </select>
-              </label>
-            </div>
-          </div>
-
-          {isTrip(tripType) && (
-            <div className="card">
-              <h2>2. 출장 정보</h2>
-              <p className="hint">비워 두면 해당 규칙은 건너뛰거나 "담당자 확인 필요"로 안내됩니다.</p>
-              <div className="form-grid">
-                <label className="field">
-                  <span className="field-label">출장 시작일</span>
-                  <input type="date" value={trip.start_date} onChange={(e) => editTrip('start_date', e.target.value)} />
-                </label>
-                <label className="field">
-                  <span className="field-label">출장 종료일</span>
-                  <input type="date" value={trip.end_date} onChange={(e) => editTrip('end_date', e.target.value)} />
-                </label>
-                <label className="field">
-                  <span className="field-label">출장지 지역 <em>숙박비 상한 판단</em></span>
-                  <select value={trip.region} onChange={(e) => editTrip('region', e.target.value)}>
-                    {REGIONS.map((r) => <option key={r} value={r}>{r || '선택 안 함'}</option>)}
-                  </select>
-                </label>
-                <label className="field">
-                  <span className="field-label">교통수단 <em>일비·자가용 규칙</em></span>
-                  <select value={trip.vehicle} onChange={(e) => editTrip('vehicle', e.target.value)}>
-                    {VEHICLES.map((v) => <option key={v} value={v}>{v || '선택 안 함'}</option>)}
-                  </select>
-                </label>
-              </div>
-            </div>
-          )}
-
-          {isMeeting(tripType) && (
-            <div className="card">
-              <h2>2. 회의 정보</h2>
-              <p className="hint">회의비는 회의 목적과 참석자를 적어야 증빙이 됩니다. 점심·회식 식대도 같은 방식으로 적어요.</p>
-              <div className="form-grid">
-                <label className="field field-wide">
-                  <span className="field-label">회의 목적 *</span>
-                  <input type="text" value={meeting.purpose} placeholder="예: 4분기 항만 물류 지원사업 업무협의" onChange={(e) => editMeeting('purpose', e.target.value)} />
-                </label>
-                <label className="field field-wide">
-                  <span className="field-label">참석자 * <em>쉼표로 구분</em></span>
-                  <input type="text" value={meeting.attendees} placeholder="예: 해운정책팀 홍길동, 김철수 / ○○해운 이영희 부장" onChange={(e) => editMeeting('attendees', e.target.value)} />
-                </label>
-                <label className="field">
-                  <span className="field-label">참석 인원 <em>비우면 참석자 수</em></span>
-                  <input type="number" min="1" value={meeting.count} placeholder={String(splitAttendees(meeting.attendees).length || '')} onChange={(e) => editMeeting('count', e.target.value)} />
-                </label>
-                <label className="field field-check">
-                  <span className="field-label">외부 참석 <em>업무추진비 기준 적용</em></span>
-                  <span className="check-inline">
-                    <input type="checkbox" checked={meeting.external} onChange={(e) => editMeeting('external', e.target.checked)} />
-                    외부 기관·업체 인사가 참석함
-                  </span>
-                </label>
-                {meeting.external && biggest >= PRE_APPROVAL && (
-                  <label className="field field-check">
-                    <span className="field-label">사전결재 <em>건당 50만 원 이상</em></span>
-                    <span className="check-inline">
-                      <input type="checkbox" checked={meeting.pre_approved} onChange={(e) => editMeeting('pre_approved', e.target.checked)} />
-                      사용 전에 결재를 받음
-                    </span>
-                  </label>
-                )}
-                {meeting.external && biggest >= DAILY_AUDIT && (
-                  <label className="field field-check">
-                    <span className="field-label">일상감사 <em>건당 100만 원 이상</em></span>
-                    <span className="check-inline">
-                      <input type="checkbox" checked={meeting.daily_audit} onChange={(e) => editMeeting('daily_audit', e.target.checked)} />
-                      일상감사를 받음
-                    </span>
-                  </label>
-                )}
-              </div>
-              {(Number(meeting.count) || splitAttendees(meeting.attendees).length) > 0 && meetingTotal > 0 && (
-                <p className="hint">1인당 약 {Math.round(meetingTotal / (Number(meeting.count) || splitAttendees(meeting.attendees).length)).toLocaleString('ko-KR')}원 · 1인당 한도는 공사 기준이 확인되지 않아 자동으로 판정하지 않고 참고로만 보여 줍니다.</p>
-              )}
-            </div>
-          )}
-
-          <div className="card">
-            <h2>{isTrip(tripType) || isMeeting(tripType) ? '3' : '2'}. 청구 항목</h2>
-            <div className="items-editor">
-              {items.map((it, i) => (
-                <div key={i} className={`item-row ${fromReceipt(it) ? 'from-receipt' : ''}`}>
-                  {fromReceipt(it) && (
-                    <div className="item-origin">
-                      <span className="badge muted">영수증</span>
-                      <span>{it.merchant}{it.merchant_type ? ` · ${it.merchant_type}` : ''}{it.time ? ` · ${it.time}` : ''} · {it.payment}</span>
-                    </div>
-                  )}
-                  <div className="form-grid">
-                    <label className="field">
-                      <span className="field-label">{isMeeting(tripType) ? '구분 *' : '항목명 *'}</span>
-                      {isMeeting(tripType) ? (
-                        <select value={MEETING_FIELDS.includes(it.field) ? it.field : ''} onChange={(e) => editItem(i, 'field', e.target.value)}>
-                          <option value="">구분 선택</option>
-                          {MEETING_FIELDS.map((f) => <option key={f} value={f}>{f}</option>)}
-                        </select>
-                      ) : (
-                        <input list="field-names" value={it.field} placeholder="예: 숙박비" onChange={(e) => editItem(i, 'field', e.target.value)} />
-                      )}
-                    </label>
-                    <label className="field">
-                      <span className="field-label">금액(원) *</span>
-                      <input type="number" min="0" value={it.amount} placeholder="0" onChange={(e) => editItem(i, 'amount', e.target.value)} />
-                    </label>
-                    <label className="field">
-                      <span className="field-label">사용일</span>
-                      <input type="date" value={it.date} onChange={(e) => editItem(i, 'date', e.target.value)} />
-                    </label>
-                    <label className="field">
-                      <span className="field-label">메모</span>
-                      <input type="text" value={it.note} placeholder="예: 특실, 동승" onChange={(e) => editItem(i, 'note', e.target.value)} />
-                    </label>
-                    {seatOptions(it.field) && (
-                      <label className="field">
-                        <span className="field-label">좌석 등급 <em>직급별 좌석 규칙</em></span>
-                        <select value={it.seat_class} onChange={(e) => editItem(i, 'seat_class', e.target.value)}>
-                          <option value="">선택 안 함</option>
-                          {seatOptions(it.field).map((o) => <option key={o} value={o}>{o}</option>)}
-                        </select>
-                      </label>
-                    )}
-                    {isLodging(it.field) && (
-                      <>
-                        <label className="field">
-                          <span className="field-label">박수</span>
-                          <input type="number" min="1" value={it.nights} placeholder="1" onChange={(e) => editItem(i, 'nights', e.target.value)} />
-                        </label>
-                        <label className="field field-check">
-                          <span className="field-label">조식 포함 <em>식비 1/3 차감</em></span>
-                          <span className="check-inline">
-                            <input type="checkbox" checked={it.breakfast_included} onChange={(e) => editItem(i, 'breakfast_included', e.target.checked)} />
-                            숙박에 조식이 포함됨
-                          </span>
-                        </label>
-                        <label className="field">
-                          <span className="field-label">특례 사유 <em>상한 초과 시</em></span>
-                          <input type="text" value={it.exception_reason} placeholder="예: 행사 기간 숙소 부족" onChange={(e) => editItem(i, 'exception_reason', e.target.value)} />
-                        </label>
-                      </>
-                    )}
+          <div className="items-editor">
+            {items.map((it, i) => (
+              <div key={i} className={`item-row ${fromReceipt(it) ? 'from-receipt' : ''}`}>
+                {fromReceipt(it) && (
+                  <div className="item-origin">
+                    <span className="badge muted">영수증</span>
+                    <span>{it.merchant}{it.merchant_type ? ` · ${it.merchant_type}` : ''}{it.time ? ` · ${it.time}` : ''} · {it.payment}</span>
                   </div>
-                  <button type="button" className="btn item-remove" onClick={() => removeItem(i)} disabled={items.length === 1} aria-label="항목 삭제">
-                    삭제
-                  </button>
+                )}
+                <div className="form-grid">
+                  <label className="field">
+                    <span className="field-label">{isMeeting(tripType) ? '구분 *' : '항목명 *'}</span>
+                    {isMeeting(tripType) ? (
+                      <select value={MEETING_FIELDS.includes(it.field) ? it.field : ''} onChange={(e) => editItem(i, 'field', e.target.value)}>
+                        <option value="">구분 선택</option>
+                        {MEETING_FIELDS.map((f) => <option key={f} value={f}>{f}</option>)}
+                      </select>
+                    ) : (
+                      <input list="field-names" value={it.field} placeholder="예: 숙박비" onChange={(e) => editItem(i, 'field', e.target.value)} />
+                    )}
+                  </label>
+                  <label className="field">
+                    <span className="field-label">금액(원) *</span>
+                    <input type="number" min="0" value={it.amount} placeholder="0" onChange={(e) => editItem(i, 'amount', e.target.value)} />
+                  </label>
+                  <label className="field">
+                    <span className="field-label">사용일</span>
+                    <input type="date" value={it.date} onChange={(e) => editItem(i, 'date', e.target.value)} />
+                  </label>
+                  <label className="field">
+                    <span className="field-label">메모</span>
+                    <input type="text" value={it.note} placeholder="예: 특실, 동승" onChange={(e) => editItem(i, 'note', e.target.value)} />
+                  </label>
+                  {seatOptions(it.field) && (
+                    <label className="field">
+                      <span className="field-label">좌석 등급 <em>직급별 좌석 규칙</em></span>
+                      <select value={it.seat_class} onChange={(e) => editItem(i, 'seat_class', e.target.value)}>
+                        <option value="">선택 안 함</option>
+                        {seatOptions(it.field).map((o) => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    </label>
+                  )}
+                  {isLodging(it.field) && (
+                    <>
+                      <label className="field">
+                        <span className="field-label">박수</span>
+                        <input type="number" min="1" value={it.nights} placeholder="1" onChange={(e) => editItem(i, 'nights', e.target.value)} />
+                      </label>
+                      <label className="field field-check">
+                        <span className="field-label">조식 포함 <em>식비 1/3 차감</em></span>
+                        <span className="check-inline">
+                          <input type="checkbox" checked={it.breakfast_included} onChange={(e) => editItem(i, 'breakfast_included', e.target.checked)} />
+                          숙박에 조식이 포함됨
+                        </span>
+                      </label>
+                      <label className="field">
+                        <span className="field-label">특례 사유 <em>상한 초과 시</em></span>
+                        <input type="text" value={it.exception_reason} placeholder="예: 행사 기간 숙소 부족" onChange={(e) => editItem(i, 'exception_reason', e.target.value)} />
+                      </label>
+                    </>
+                  )}
                 </div>
-              ))}
-            </div>
-            <datalist id="field-names">
-              {FIELD_NAMES.map((f) => <option key={f} value={f} />)}
-            </datalist>
-            <div className="btn-row between">
-              <button type="button" className="btn" onClick={addItem}>+ 항목 추가</button>
-              <button type="button" className="btn primary" onClick={run} disabled={loading}>
-                {loading ? '검증 중…' : '검증하기'}
-              </button>
-            </div>
+                <button type="button" className="btn item-remove" onClick={() => removeItem(i)} disabled={items.length === 1} aria-label="항목 삭제">
+                  삭제
+                </button>
+              </div>
+            ))}
+          </div>
+          <datalist id="field-names">
+            {FIELD_NAMES.map((f) => <option key={f} value={f} />)}
+          </datalist>
+          <div><button type="button" className="btn" onClick={addItem}>+ 항목 추가</button></div>
+          {errorBox}
+          {nav}
+        </div>
+      )}
+
+      {/* ---------- 회의 정보 ---------- */}
+      {stepId === 'meeting' && (
+        <div className="card wiz-card">
+          <h2>회의 정보</h2>
+          <p className="hint">회의비는 회의 목적과 참석자를 적어야 증빙이 돼요. 점심·회식 식대도 같은 방식으로 적어요.</p>
+          <div className="form-grid">
+            <label className="field field-wide">
+              <span className="field-label">회의 목적 *</span>
+              <input type="text" value={meeting.purpose} placeholder="예: 4분기 항만 물류 지원사업 업무협의" onChange={(e) => editMeeting('purpose', e.target.value)} />
+            </label>
+            <label className="field field-wide">
+              <span className="field-label">참석자 * <em>쉼표로 구분</em></span>
+              <input type="text" value={meeting.attendees} placeholder="예: 해운정책팀 홍길동, 김철수 / ○○해운 이영희 부장" onChange={(e) => editMeeting('attendees', e.target.value)} />
+            </label>
+            <label className="field">
+              <span className="field-label">참석 인원 <em>비우면 참석자 수</em></span>
+              <input type="number" min="1" value={meeting.count} placeholder={String(splitAttendees(meeting.attendees).length || '')} onChange={(e) => editMeeting('count', e.target.value)} />
+            </label>
+            <label className="field field-check">
+              <span className="field-label">외부 참석 <em>업무추진비 기준 적용</em></span>
+              <span className="check-inline">
+                <input type="checkbox" checked={meeting.external} onChange={(e) => editMeeting('external', e.target.checked)} />
+                외부 기관·업체 인사가 참석함
+              </span>
+            </label>
+            {meeting.external && biggest >= PRE_APPROVAL && (
+              <label className="field field-check">
+                <span className="field-label">사전결재 <em>건당 50만 원 이상</em></span>
+                <span className="check-inline">
+                  <input type="checkbox" checked={meeting.pre_approved} onChange={(e) => editMeeting('pre_approved', e.target.checked)} />
+                  사용 전에 결재를 받음
+                </span>
+              </label>
+            )}
+            {meeting.external && biggest >= DAILY_AUDIT && (
+              <label className="field field-check">
+                <span className="field-label">일상감사 <em>건당 100만 원 이상</em></span>
+                <span className="check-inline">
+                  <input type="checkbox" checked={meeting.daily_audit} onChange={(e) => editMeeting('daily_audit', e.target.checked)} />
+                  일상감사를 받음
+                </span>
+              </label>
+            )}
+          </div>
+          {(Number(meeting.count) || splitAttendees(meeting.attendees).length) > 0 && meetingTotal > 0 && (
+            <p className="hint">1인당 약 {Math.round(meetingTotal / (Number(meeting.count) || splitAttendees(meeting.attendees).length)).toLocaleString('ko-KR')}원 · 1인당 한도는 공사 기준이 확인되지 않아 자동으로 판정하지 않고 참고로만 보여 줘요.</p>
+          )}
+          {errorBox}
+          {nav}
+        </div>
+      )}
+
+      {/* ---------- 검증 결과 ---------- */}
+      {stepId === 'result' && result && (
+        <div className="card wiz-card">
+          <VerifyResult result={result} />
+          <div className="wiz-nav">
+            <button type="button" className="btn" onClick={back}>이전 (수정하기)</button>
+            <button type="button" className="btn primary" onClick={() => go('submit')}>제출하기</button>
           </div>
         </div>
+      )}
 
-        {/* ---------- 결과 ---------- */}
-        <div className="verify-result">
-          {error && <div className="error">{error}</div>}
-          {result ? (
-            <>
-              <VerifyResult result={result} />
-              <SubmitPanel claim={buildRequest()} result={result} user={user} onNavigate={onNavigate} />
-            </>
-          ) : (
-            !loading && <div className="empty">청구 내역을 입력하고 "검증하기"를 누르면 항목별 판정이 여기에 표시됩니다.</div>
-          )}
+      {/* ---------- 제출 ---------- */}
+      {stepId === 'submit' && result && claim && (
+        <div className="wiz-card">
+          <SubmitPanel claim={claim} result={result} user={user} onNavigate={onNavigate} />
+          <div className="wiz-nav">
+            <button type="button" className="btn" onClick={back}>이전</button>
+            <button type="button" className="btn" onClick={() => onNavigate?.('type')}>새 정산 시작</button>
+          </div>
         </div>
-      </div>
+      )}
     </section>
   )
 }

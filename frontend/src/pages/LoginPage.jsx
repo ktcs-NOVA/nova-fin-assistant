@@ -5,7 +5,7 @@
 import { useState } from 'react'
 import { DEMO_ACCOUNTS, DEMO_PASSWORD, GRADES, ROLE, ROLE_LABEL } from '../auth/accounts.js'
 import { login, signup, USE_MOCK, API_BASE } from '../api/client.js'
-import Icon from '../components/Icons.jsx'
+import mascot from '../assets/nova-mascot.png'
 import PasswordField from '../components/PasswordField.jsx'
 import EmailField from '../components/EmailField.jsx'
 
@@ -14,12 +14,6 @@ const EMPTY_SIGNUP = { name: '', employeeNo: '', department: '', grade: GRADES[0
 const TABS = [
   { role: ROLE.EMPLOYEE, label: '직원' },
   { role: ROLE.ADMIN, label: '관리자' },
-]
-
-const POINTS = [
-  '영수증을 찍으면 금액·날짜를 자동으로 읽어요',
-  '필요한 서류를 하나씩 따라가며 채워요',
-  '판정 결과에는 근거 조항이 함께 나와요',
 ]
 
 export default function LoginPage({ onLogin }) {
@@ -86,17 +80,23 @@ export default function LoginPage({ onLogin }) {
   return (
     <div className="login-split">
       <section className="login-hero" aria-label="서비스 소개">
-        <h1>제출하기 전에,<br />규정에 맞는지 먼저 확인하세요</h1>
-        <p>한국해양진흥공사 여비규정을 근거로<br />출장비 정산 서류를 미리 점검해 드려요.</p>
-        <ul>
-          {POINTS.map((t) => (<li key={t}><span className="check" aria-hidden="true">✓</span>{t}</li>))}
-        </ul>
+        <div className="login-brand">
+          <img className="login-mascot" src={mascot} alt="NOVA 마스코트" width="360" height="272" />
+          <span className="login-wordmark" aria-label="NOVA">
+            {'NOVA'.split('').map((ch, i) => (
+              <span key={i} className="reveal-ch" style={{ '--i': i }} aria-hidden="true">{ch}</span>
+            ))}
+          </span>
+        </div>
+        <p className="login-lead">
+          <span className="reveal-line" style={{ '--d': '2.3s' }}>제출하기 전에,</span>
+          <span className="reveal-line" style={{ '--d': '3s' }}>규정에 맞는지 먼저 확인하세요</span>
+        </p>
       </section>
 
       <section className="login-pane">
         <div className="login-panel">
           <div className="login-top">
-            <span className="logo-mark"><Icon name="logo" size={20} /></span>
             <span className={`mode ${USE_MOCK ? 'mock' : 'live'}`} title={USE_MOCK ? '가짜 응답으로 동작 중' : API_BASE}>
               {USE_MOCK ? '목업 모드' : '백엔드 연결'}
             </span>

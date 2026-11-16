@@ -7,7 +7,7 @@ import Icon from '../components/Icons.jsx'
 import { CLAIM } from '../utils/claimTypes.js'
 
 const TYPES = [
-  { id: 'trip', icon: 'trip', title: '국내출장', desc: '교통비·숙박비·일비·식비를 여비규정 기준으로 계산하고 출장보고서까지 준비해요.', docs: '출장원 · 보고서 · 증빙', go: 'travel' },
+  { id: 'trip', icon: 'trip', title: '국내출장', desc: '출장비 계산부터 규정 검증·제출까지 한 단계씩 따라가고, 출장보고서까지 준비해요.', docs: '출장원 · 보고서 · 증빙', go: 'travel' },
   { id: 'meeting', icon: 'meeting', title: '회의비', desc: '회의·업무협의 때 쓴 식대와 다과비를 참석자·회의 목적과 함께 정리해요. 점심·회식 식대도 여기서 해요.', docs: '영수증 · 참석자 · 회의 목적', go: 'receipt', param: { claim: CLAIM.MEETING } },
   { id: 'card', icon: 'card', title: '기타 법인카드 사용', desc: '그 밖의 법인카드 사용 내역을 사용 사유와 함께 확인해요.', docs: '영수증 · 사용 사유', go: 'receipt', param: { claim: CLAIM.CARD } },
 ]

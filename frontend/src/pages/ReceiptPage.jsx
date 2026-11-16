@@ -314,7 +314,7 @@ export default function ReceiptPage({ onSendToVerify, param }) {
                   </p>
                   <div className="btn-row">
                     <button type="button" className="btn primary" onClick={sendToVerify}>
-                      청구 검증으로 보내기 →
+                      청구 검증으로 보내기
                     </button>
                   </div>
                   <p className="hint">법인카드 결제 건으로 청구 검증 폼에 채워집니다. 필요하면 그 화면에서 항목을 더 넣고 "검증하기"를 누르세요.</p>

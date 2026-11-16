@@ -24,7 +24,7 @@ const MENUS = {
       home: { label: '홈', component: HomePage },
       type: { label: '정산하기', component: TypePage, parent: 'home' },
       receipt: { label: '영수증 등록', component: ReceiptPage, parent: 'type' },     // U-06
-      travel: { label: '출장비 계산', component: TravelCalcPage, parent: 'type' },   // U-05
+      travel: { label: '출장 정산', component: TravelCalcPage, parent: 'type' },   // U-05
       verify: { label: '청구 검증', component: VerifyPage, parent: 'type' },         // U-04
       mystatus: { label: '내 정산 현황', component: MyStatusPage, parent: 'home' },
       checklist: { label: '문서 작업', component: DocumentsPage, parent: 'home' }, // U-02
@@ -41,6 +41,9 @@ const MENUS = {
     },
   },
 }
+
+// 정산 유형을 고른 뒤의 화면들에서는 오른쪽 아래 마스코트(규정 질문창)가 떠 있습니다
+const ASK_DOCK_PAGES = ['receipt', 'travel', 'verify', 'checklist']
 
 export default function App() {
   const [user, setUser] = useState(() => loadSession()?.user ?? null)   // 로그인한 계정 (토큰과 함께 브라우저에 기억)
@@ -96,7 +99,7 @@ export default function App() {
   }
 
   return (
-    <Layout user={user} roleLabel={menu.label} onLogout={logout} onHome={() => changePage(menu.home)} onAsk={() => changePage('qa')} crumbs={crumbs}>
+    <Layout user={user} roleLabel={menu.label} onLogout={logout} onHome={() => changePage(menu.home)} onAsk={() => changePage('qa')} crumbs={crumbs} askDock={user.role === 'employee' && ASK_DOCK_PAGES.includes(pageId) ? pageId : null}>
       <Page user={user} onNavigate={changePage} onSendToVerify={sendToVerify} prefill={verifyPrefill} param={pageParam} />
     </Layout>
   )

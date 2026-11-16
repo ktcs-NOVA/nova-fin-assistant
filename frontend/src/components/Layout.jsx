@@ -3,16 +3,15 @@
 
 import { USE_MOCK, API_BASE } from '../api/client.js'
 import Icon from './Icons.jsx'
+import AskDock from './AskDock.jsx'
 
-export default function Layout({ user, roleLabel, onLogout, onHome, onAsk, crumbs, children }) {
+export default function Layout({ user, roleLabel, onLogout, onHome, onAsk, crumbs, askDock, children }) {
   return (
     <div className="app">
       <header className="header">
         <button type="button" className="logo logo-btn" onClick={onHome} aria-label="홈으로">
-          <span className="logo-mark"><Icon name="logo" size={20} /></span>
           <span>
-            <span className="logo-name">경비 정산 사전검증</span>
-            <span className="logo-sub">한국해양진흥공사 · 팀 NOVA</span>
+            <span className={`logo-name ${user.role === 'employee' ? 'brand-font' : ''}`}>NOVA</span>
           </span>
         </button>
 
@@ -33,7 +32,7 @@ export default function Layout({ user, roleLabel, onLogout, onHome, onAsk, crumb
         </div>
       </header>
 
-      <main className="main">
+      <main className={`main ${askDock ? 'has-dock' : ''}`}>
         {crumbs.length > 1 && (
           <nav className="crumbs" aria-label="현재 위치">
             <button type="button" className="crumb-back" onClick={crumbs[crumbs.length - 2].go}>
@@ -51,6 +50,7 @@ export default function Layout({ user, roleLabel, onLogout, onHome, onAsk, crumb
         )}
         {children}
       </main>
+      {askDock && <AskDock page={askDock} />}
     </div>
   )
 }

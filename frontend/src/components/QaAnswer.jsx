@@ -58,6 +58,9 @@ export default function QaAnswer({ result }) {
         <GroundNotice grounded={grounded} count={sources.length} contact={result.contact} />
       </div>
       <p className="answer-text">{withCitations(answer, refs, activeRef, setActiveRef)}</p>
+      {!grounded && (
+        <p className="answer-hint">질문에 직급이나 출장 지역처럼 구체적인 조건을 함께 적어 다시 물어보면 더 잘 찾을 수 있어요.</p>
+      )}
       <SourceList sources={sources} activeRef={activeRef} onSelect={setActiveRef} />
     </div>
   )

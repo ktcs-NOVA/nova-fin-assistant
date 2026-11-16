@@ -6,8 +6,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { askQa } from '../api/client.js'
-import QaAnswer from '../components/QaAnswer.jsx'
-import ProcedureGuide from '../components/ProcedureGuide.jsx'
+import QaReply from '../components/QaReply.jsx'
+import NovaSay from '../components/NovaSay.jsx'
 
 // 예시 질문. 규정 질문과 절차 질문을 섞어 두면 챗봇이 알아서 고르는 모습을 볼 수 있습니다.
 const EXAMPLES = [
@@ -19,33 +19,11 @@ const EXAMPLES = [
 
 let nextId = 1
 
-function Clarify({ result, onPick }) {
-  return (
-    <div className="answer">
-      <p className="answer-text">{result.answer}</p>
-      <div className="chips clarify-options">
-        {result.options.map((task) => (
-          <button key={task} type="button" className="chip" onClick={() => onPick(`${task} 절차 알려줘`)}>
-            {task}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function Reply({ result, onAsk }) {
-  if (result.type === 'procedure' && result.procedure) {
-    return <ProcedureGuide result={result.procedure} />
-  }
-  if (result.type === 'clarify') return <Clarify result={result} onPick={onAsk} />
-  return <QaAnswer result={result} />
-}
-
-export default function QaPage() {
+export default function QaPage({ param }) {
   const [messages, setMessages] = useState([]) // { id, text, status: 'loading'|'done'|'error', result, error }
   const [input, setInput] = useState('')
   const endRef = useRef(null)
+  const askedRef = useRef(false)   // 홈 검색바에서 넘어온 질문은 한 번만 보냄 (개발 모드 이중 실행 방지)
 
   const busy = messages.some((m) => m.status === 'loading')
 
@@ -69,6 +47,14 @@ export default function QaPage() {
       setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, status: 'error', error: e.message } : m)))
     }
   }
+
+  useEffect(() => {
+    if (param?.ask && !askedRef.current) {
+      askedRef.current = true
+      send(param.ask)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function onKeyDown(e) {
     // Enter 로 보내기, Shift+Enter 는 줄바꿈. 한글 조합 중인 Enter 는 무시 (두 번 전송 방지)
@@ -96,7 +82,9 @@ export default function QaPage() {
       <div className="chat">
         {messages.length === 0 && (
           <div className="chat-empty">
-            <p>규정 내용은 근거 조항과 함께 답하고, 처리 절차를 물으면 단계별로 안내해요.</p>
+            <NovaSay>
+              <p className="answer-text">안녕하세요, NOVA예요! 규정이 궁금하면 근거 조항과 함께 답해 드리고, 처리 절차를 물으면 단계별로 안내해 드려요.</p>
+            </NovaSay>
             <div className="chips">
               {EXAMPLES.map((q) => (
                 <button key={q} type="button" className="chip" onClick={() => send(q)}>
@@ -110,11 +98,10 @@ export default function QaPage() {
         {messages.map((m) => (
           <div key={m.id} className="turn">
             <div className="bubble-user">{m.text}</div>
-            <div className="bubble-bot">
-              {m.status === 'loading' && <p className="loading">답변을 준비하는 중…</p>}
+            <NovaSay loading={m.status === 'loading'}>
               {m.status === 'error' && <div className="error">{m.error}</div>}
-              {m.status === 'done' && <Reply result={m.result} onAsk={send} />}
-            </div>
+              {m.status === 'done' && <QaReply result={m.result} onAsk={send} />}
+            </NovaSay>
           </div>
         ))}
         <div ref={endRef} />
