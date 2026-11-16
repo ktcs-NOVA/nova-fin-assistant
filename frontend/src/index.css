@@ -858,3 +858,69 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .calc-total, .calc-line-head b, .calc-formula { font-variant-numeric: tabular-nums; }
 @media (hover: none) { .btn:hover { border-color: var(--line); } .btn.primary:hover { border-color: var(--brand); } }
 .logo-name.brand-font { font-family: 'Jua', 'Noto Sans KR', system-ui, sans-serif; font-weight: 400; font-size: 24px; letter-spacing: .04em; color: var(--brand); }
+
+/* ---------- 기본 양식: 지출 결과서 + 검수확인서 (components/FormSheet.jsx) ----------
+   원 양식처럼 테두리 있는 표로 그리고, 칸의 출처를 배경색으로 구분합니다 (자동 / AI 제안 / 직접 입력 / 서명). */
+.form-sheets { display: grid; gap: 18px; margin: 14px 0; }
+.form-paper { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 26px 28px; max-width: 860px; margin: 0 auto; width: 100%; }
+.form-title { text-align: center; font-size: 21px; font-weight: 800; letter-spacing: .28em; padding: 10px 0; border: 2px solid var(--ink); margin-bottom: 14px; }
+.form-subtitle { text-align: center; font-weight: 700; letter-spacing: .2em; margin: 20px 0 8px; }
+.form-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 12px; font-size: 14px; }
+.form-table th, .form-table td { border: 1px solid var(--ink); padding: 7px 9px; vertical-align: middle; word-break: keep-all; overflow-wrap: anywhere; }
+.form-table th { background: var(--bg); font-weight: 700; text-align: center; }
+.form-info th { width: 24%; }
+.form-table .al-center { text-align: center; }
+.form-table .al-right { text-align: right; font-variant-numeric: tabular-nums; }
+.form-total th, .form-total td { font-weight: 700; }
+.form-closing { text-align: center; margin: 18px 0 4px; }
+.form-date { text-align: center; margin: 0 0 14px; font-weight: 600; }
+.form-signers th { width: 24%; }
+.form-seal-cell { width: 14%; text-align: center; }
+.form-seal { color: var(--muted); }
+.form-footnote { font-size: 13px; color: var(--muted); margin: 4px 0 0; }
+.form-table td.src-ai { background: var(--brand-soft); }
+.form-table td.src-manual { background: var(--warn-soft); }
+.form-table td.src-blank { background: repeating-linear-gradient(135deg, transparent 0 6px, var(--line) 6px 7px); }
+/* 칸 안의 입력창: 전역 입력창 모양(흰 상자)을 지우고 칸 색이 그대로 보이게 */
+.form-table .form-input { display: block; width: 100%; min-height: 0; border: 0; border-bottom: 1px dashed var(--muted); background: transparent; box-shadow: none; color: inherit; font: inherit; line-height: 1.45; padding: 2px 0; border-radius: 0; resize: none; overflow: hidden; }
+.form-table .form-input:focus { outline: 2px solid var(--brand); outline-offset: 3px; border-bottom-color: transparent; }
+.form-table .form-input.need { border-bottom: 2px solid var(--bad); }
+.form-guide { display: grid; gap: 12px; }
+.form-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.form-legend li { display: flex; align-items: center; gap: 6px; }
+.form-chip { display: inline-block; padding: 2px 9px; border: 1px solid var(--ink); border-radius: 4px; font-size: 12.5px; font-weight: 700; }
+.form-chip.src-auto { background: var(--panel); }
+.form-chip.src-ai { background: var(--brand-soft); }
+.form-chip.src-manual { background: var(--warn-soft); }
+.form-chip.src-blank { background: repeating-linear-gradient(135deg, transparent 0 6px, var(--line) 6px 7px); }
+.form-todo { display: grid; gap: 6px; padding: 12px 14px; border-radius: 10px; background: var(--warn-soft); }
+.form-todo.done { background: var(--good-soft); }
+.form-actions { display: grid; gap: 12px; }
+.doc-send { margin-top: 12px; }
+
+/* 관리자 상세: 첨부 서류 */
+.attached-docs { display: grid; gap: 10px; }
+.attached-need { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.attached-need li { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+.attached-doc { border-top: 1px solid var(--line); padding-top: 10px; }
+.attached-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; border: 0; background: none; padding: 4px 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.attached-doc .form-paper { padding: 18px; }
+
+@media (max-width: 640px) {
+  .form-paper { padding: 14px 10px; }
+  .form-table { font-size: 12.5px; }
+  .form-table th, .form-table td { padding: 5px 4px; }
+  .form-title { font-size: 17px; letter-spacing: .15em; }
+}
+
+/* 인쇄 · PDF 저장: 양식만 흰 종이에 */
+@media print {
+  body * { visibility: hidden; }
+  .form-sheets, .form-sheets * { visibility: visible; }
+  .form-sheets { position: absolute; inset: 0 auto auto 0; width: 100%; margin: 0; gap: 0; }
+  .form-paper { border: 0; border-radius: 0; max-width: none; padding: 0 0 24px; background: #fff; color: #000; break-after: page; }
+  .form-table th, .form-table td, .form-title { border-color: #000; }
+  .form-table th { background: #f1f1f1; }
+  .form-table td.src-ai, .form-table td.src-manual, .form-table td.src-blank { background: none; }
+  .form-table .form-input { border: 0; }
+}

@@ -62,6 +62,11 @@ export async function getChecklist(type = '국내출장') {
   return { ...checklistData, type }
 }
 
+// 목업에 없는 기능 (정산 건이 DB 에 있어야 하는 것들): 무엇이 안 되는지 알려 주고 멈춥니다.
+export async function unsupported(what) {
+  throw new Error(`${what}은(는) 백엔드를 연결해야 쓸 수 있어요. (목업 모드)`)
+}
+
 // 문서 작업: 목업은 이 브라우저(localStorage)에 저장해서 새로고침해도 남습니다. 초안 계산은 백엔드 drafts.py 와 같은 규칙이에요.
 const DOCS_KEY = 'nova.mock.documents'
 const DOC_REQUIRED = {

@@ -105,10 +105,36 @@ export function listDocuments() {
   return request('GET', '/api/documents')
 }
 
-/** 새 서류 저장. fields 는 { 항목: 값 } (값은 글자·숫자·글자 목록) */
-export function createDocument({ kind, title, fields }) {
-  if (USE_MOCK) return mock.createDocument({ kind, title, fields })
-  return request('POST', '/api/documents', { kind, title, fields })
+/** 새 서류 저장. fields 는 { 항목: 값 } (값은 글자·숫자·글자 목록).
+ *  submission_code(제출 번호)를 주면 그 정산 건의 증빙으로 붙습니다. 지출결과서는 꼭 있어야 하고, 한 건에 한 부라 이미 있으면 그 서류를 돌려줍니다. */
+export function createDocument({ kind, title, fields, submission_code }) {
+  if (USE_MOCK) return mock.createDocument({ kind, title, fields, submission_code })
+  return request('POST', '/api/documents', { kind, title, fields: fields ?? {}, ...(submission_code ? { submission_code } : {}) })
+}
+
+/** 지출결과서 양식(지출 결과서 + 검수확인서): { sheets: [{ title, info, table, extra, signers, evidence }], todo, ready }
+ *  칸마다 source(auto 자동 / ai AI 제안 / manual 직접 입력 / blank 서명) 와, 고칠 수 있는 칸이면 key 가 붙어 옵니다. */
+export function getDocumentForm(id) {
+  if (USE_MOCK) return mock.unsupported('지출 결과서 양식')
+  return request('GET', `/api/documents/${id}/form`)
+}
+
+/** AI 칸(상세내역·용도)을 다시 채웁니다. 직접 고친 칸은 그대로 둡니다. 바뀐 서류를 돌려줘요. */
+export function fillDocumentForm(id) {
+  if (USE_MOCK) return mock.unsupported('AI 채우기')
+  return request('POST', `/api/documents/${id}/fill`)
+}
+
+/** 확인을 마친 서류를 정산 건의 증빙으로 관리자에게 보냅니다. 보낸 뒤 고치면 다시 보내야 해요. */
+export function sendDocument(id) {
+  if (USE_MOCK) return mock.unsupported('관리자에게 보내기')
+  return request('POST', `/api/documents/${id}/send`)
+}
+
+/** 관리자: 정산 건에 붙어 온 서류 { expected: [종류], missing: [종류], documents: [{ id, kind, title, writer, sent_at, draft, form }] } */
+export function listSubmissionDocuments(code) {
+  if (USE_MOCK) return Promise.resolve({ expected: [], missing: [], documents: [] })
+  return request('GET', `/api/admin/submissions/${code}/documents`)
 }
 
 /** 입력값·제목·초안·확인 여부를 저장. 보낸 항목만 바뀝니다. 내용이 바뀌면 확인 완료는 자동으로 풀려요. */

@@ -6,7 +6,7 @@ import { docsForClaim } from '../utils/claimToDocs.js'
 export default function NextDocs({ src, user, onNavigate, compact = false }) {
   const docs = docsForClaim(src, user)
   if (!docs.length || !onNavigate) return null
-  const open = (d) => onNavigate('checklist', { newDoc: { kind: d.kind, fields: d.fields, origin: d.origin } })
+  const open = (d) => onNavigate('checklist', { newDoc: { kind: d.kind, fields: d.fields, origin: d.origin, submission_code: d.submission_code } })
 
   if (compact) {
     return (
@@ -18,7 +18,7 @@ export default function NextDocs({ src, user, onNavigate, compact = false }) {
   return (
     <div className="next-docs">
       <b>다음 단계 · 증빙 서류</b>
-      <p className="hint">방금 입력한 날짜·금액·참석자를 그대로 채워 드려요. 빈 칸만 적으면 초안을 만들 수 있어요.</p>
+      <p className="hint">방금 입력한 날짜·금액·참석자를 그대로 채워 드려요. 빈 칸만 적고 확인하면 관리자에게 보낼 수 있어요.</p>
       <div className="btn-row start">
         {docs.map((d) => <button key={d.kind} type="button" className="btn primary" onClick={() => open(d)}>{d.label} →</button>)}
       </div>

@@ -3,7 +3,7 @@
 // 쓰다 만 채로 저장하면 목록의 "작성 중"에 남아 이어서 쓸 수 있어요.
 
 import { useState } from 'react'
-import { createDocument, draftDocument, updateDocument } from '../api/client.js'
+import { createDocument, draftDocument, updateDocument, sendDocument } from '../api/client.js'
 
 // 종류별 입력 칸. type: text | date | number | list(쉼표로 구분) | area
 export const DOC_SCHEMA = {
@@ -86,7 +86,7 @@ export default function DocumentEditor({ doc, onBack, onChanged }) {
     const fields = toFields(kind, form)
     const next = saved.id
       ? await updateDocument(saved.id, { fields, ...(draftDirty ? { draft } : {}), ...extra })
-      : await createDocument({ kind, fields })
+      : await createDocument({ kind, fields, submission_code: doc.submission_code })
     setSaved(next)
     setConfirmed(next.confirmed)
     onChanged?.()
@@ -131,6 +131,8 @@ export default function DocumentEditor({ doc, onBack, onChanged }) {
         onChanged?.()
       }
     })
+
+  const send = () => run('send', async () => { setSaved(await sendDocument(saved.id)); onChanged?.() }, '관리자에게 보냈어요. 관리자 화면의 이 정산 건에 붙어서 보여요.')
 
   async function copyDraft() {
     try {
@@ -193,6 +195,15 @@ export default function DocumentEditor({ doc, onBack, onChanged }) {
           {draftDirty && (
             <div className="btn-row">
               <button type="button" className="btn small" disabled={Boolean(busy)} onClick={() => run('save', () => persist(), '고친 초안을 저장했어요.')}>고친 초안 저장</button>
+            </div>
+          )}
+          {/* 정산 건에서 만든 서류면 확인 뒤 그 건의 증빙으로 관리자에게 보냄 */}
+          {saved.submission_code && (
+            <div className="btn-row between doc-send">
+              <span className="hint">{saved.sent_at ? '관리자에게 보냈어요. 내용을 고치면 다시 보내야 해요.' : `확인 표시를 하면 정산 ${saved.submission_code}의 증빙으로 보낼 수 있어요.`}</span>
+              <button type="button" className="btn primary" disabled={Boolean(busy) || !confirmed || draftDirty || Boolean(saved.sent_at)} onClick={send}>
+                {busy === 'send' ? '보내는 중…' : saved.sent_at ? '보냄' : '관리자에게 보내기'}
+              </button>
             </div>
           )}
         </div>

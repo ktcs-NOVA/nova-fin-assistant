@@ -1,13 +1,17 @@
-// 문서 작업 (U-02): 출장보고서·회의록·출장원을 쓰다 말아도 저장해 두고 이어 쓰는 곳.
-// 정산 화면에서 넘어오면(param.newDoc: { kind, fields, origin }) 그 값이 채워진 새 서류 작성으로 바로 들어갑니다.
+// 문서 작업 (U-02): 출장보고서·회의록·출장원·지출 결과서를 쓰다 말아도 저장해 두고 이어 쓰는 곳.
+// 정산 화면에서 넘어오면(param.newDoc: { kind, fields, origin, submission_code }) 그 값이 채워진 새 서류 작성으로 바로 들어갑니다.
+// 지출 결과서(+검수확인서)는 줄글 초안이 아니라 양식이라 전용 편집기(ExpenseReportEditor)로 엽니다.
 
 import { useEffect, useState } from 'react'
 import { DOC_KINDS, deleteDocument, listDocuments } from '../api/client.js'
 import DocumentEditor, { DOC_SCHEMA } from '../components/DocumentEditor.jsx'
+import ExpenseReportEditor from '../components/ExpenseReportEditor.jsx'
+import { REPORT } from '../utils/claimToDocs.js'
 import Icon from '../components/Icons.jsx'
 
-const KIND_ICON = { 출장보고서: 'trip', 회의록: 'meeting', 출장원: 'card' }
-const KIND_CLASS = { 출장보고서: '', 회의록: 'ico-meeting', 출장원: 'ico-card' }
+const KIND_ICON = { 출장보고서: 'trip', 회의록: 'meeting', 출장원: 'card', [REPORT]: 'card' }
+const KIND_CLASS = { 출장보고서: '', 회의록: 'ico-meeting', 출장원: 'ico-card', [REPORT]: 'ico-card' }
+const KIND_NAME = { [REPORT]: '지출 결과서 · 검수확인서' }
 
 const when = (iso) => {
   const t = new Date(iso)
@@ -38,7 +42,8 @@ export default function DocumentsPage(props) {
   }
 
   if (editing) {
-    return <DocumentEditor key={editing.id ?? 'new'} doc={editing} onChanged={reload} onBack={() => { setEditing(null); reload() }} />
+    const Editor = editing.kind === REPORT ? ExpenseReportEditor : DocumentEditor
+    return <Editor key={editing.id ?? 'new'} doc={editing} onChanged={reload} onBack={() => { setEditing(null); reload() }} />
   }
 
   const working = (rows ?? []).filter((d) => d.status !== '작성 완료')
@@ -47,7 +52,7 @@ export default function DocumentsPage(props) {
   return (
     <div className="documents">
       <h1>문서 작업</h1>
-      <p className="hint">쓰던 서류를 저장해 두고, 나중에 이어서 쓸 수 있어요.</p>
+      <p className="hint">쓰던 서류를 저장해 두고, 나중에 이어서 쓸 수 있어요. 정산 건에서 만든 서류는 확인을 마치면 관리자에게 보낼 수 있어요.</p>
 
       {error && <div className="error">{error}</div>}
 
@@ -91,9 +96,9 @@ export default function DocumentsPage(props) {
                   <span className={`tile-icon ${KIND_CLASS[d.kind]}`}><Icon name={KIND_ICON[d.kind]} size={24} /></span>
                   <div className="doc-item-main">
                     <div className="recent-name">{d.title}</div>
-                    <div className="hint">{d.kind} · {when(d.updated_at)} 수정{d.draft ? ' · 초안 있음' : ''}</div>
+                    <div className="hint">{KIND_NAME[d.kind] ?? d.kind}{d.submission_code ? ` · 정산 ${d.submission_code}` : ''} · {when(d.updated_at)} 수정{d.draft ? ' · 초안 있음' : ''}</div>
                   </div>
-                  <span className={`badge ${d.status === '작성 완료' ? 'good' : 'muted'}`}>{d.status}</span>
+                  <span className={`badge ${d.status === '작성 완료' ? 'good' : 'muted'}`}>{d.sent_at ? '관리자에게 보냄' : d.status}</span>
                   {confirmId === d.id ? (
                     <span className="doc-actions">
                       <button type="button" className="btn small danger" onClick={() => remove(d.id)}>삭제 확인</button>

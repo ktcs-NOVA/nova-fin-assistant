@@ -5,6 +5,7 @@
 
 import { CLAIM } from './claimTypes.js'
 
+export const REPORT = '지출결과서'   // 지출 결과서 + 검수확인서 (기본 양식)
 const REGION_GROUPS = ['광역시', '기타']   // 숙박비 상한용 지역 구분이라 출장지 이름으로 쓰지 않음
 const sum = (items, test) => items.filter((it) => test(String(it.field ?? ''))).reduce((n, it) => n + (Number(it.amount) || 0), 0)
 const isTransport = (f) => /교통|운임|철도|KTX|SRT|항공|버스|택시|통행료|주유|유류|자가용|주차/.test(f)
@@ -29,18 +30,23 @@ function normalize(src) {
 }
 
 /**
- * 이 정산에 이어서 쓸 서류 목록: [{ kind, label, fields, origin }]
+ * 이 정산에 이어서 쓸 서류 목록: [{ kind, label, fields, origin, submission_code }]
+ * 제출한 건(제출 번호가 있음)이면 맨 앞에 지출 결과서(+검수확인서)가 붙고, 모든 서류가 그 정산 건의 증빙으로 연결됩니다.
  * src 는 청구 검증 요청(claim) 이거나 제출 건(목록·상세 응답). user 는 로그인한 사람.
  */
 export function docsForClaim(src, user) {
   const c = normalize(src)
   const origin = c.code ? `정산 ${c.code}` : '청구 검증'
+  const link = c.code ? { submission_code: c.code } : {}
+  // 지출 결과서는 금액·날짜를 정산 건에서 읽어 만들기 때문에 제출한 뒤에만 만들 수 있음
+  const report = c.code ? [{ kind: REPORT, label: '지출 결과서 만들기', origin, fields: {}, ...link }] : []
 
   if (c.type === CLAIM.MEETING) {
-    return [{
+    return [...report, {
       kind: '회의록',
       label: '회의록 초안 쓰기',
       origin,
+      ...link,
       fields: {
         meeting_title: c.meetingPurpose,
         meeting_date: c.firstDate,
@@ -64,10 +70,11 @@ export function docsForClaim(src, user) {
     }
     for (const k of Object.keys(fees)) if (!fees[k]) delete fees[k]
     return [
-      { kind: '출장보고서', label: '출장보고서 쓰기', origin, fields: { trip_start: start, trip_end: end, destination, ...fees } },
-      { kind: '출장원', label: '출장원 쓰기', origin, fields: { trip_start: start, trip_end: end, destination, total_amount: c.total || undefined, signer_name: user?.name ?? '' } },
+      ...report,
+      { kind: '출장보고서', label: '출장보고서 쓰기', origin, ...link, fields: { trip_start: start, trip_end: end, destination, ...fees } },
+      { kind: '출장원', label: '출장원 쓰기', origin, ...link, fields: { trip_start: start, trip_end: end, destination, total_amount: c.total || undefined, signer_name: user?.name ?? '' } },
     ]
   }
 
-  return []   // 기타 법인카드: 이어 쓸 서류 종류가 아직 없음
+  return report   // 기타 법인카드: 지출 결과서만
 }
