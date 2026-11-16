@@ -219,8 +219,18 @@ def test_fill_confirm_send_then_admin_receives(sub):
     before = client.get(f"/api/admin/submissions/{sub}/documents", headers=ADMIN).json()
     assert before["documents"] == [] and before["missing"] == ["지출결과서", "회의록"]
 
+    # 목록·상세의 서류 상태도 보내기 전에는 "받은 것 없음"
+    def docs_of(path):
+        data = client.get(path, headers=ADMIN).json()
+        row = next(x for x in data["items"] if x["id"] == sub) if "total" in data else data  # 목록이면 그 건을 찾음
+        return row["docs"]
+
+    assert docs_of("/api/admin/submissions") == {"expected": ["지출결과서", "회의록"], "sent": [], "missing": ["지출결과서", "회의록"]}
+
     sent = client.post(f"{url}/send", headers=ME).json()
     assert sent["sent_at"] is not None
+    assert docs_of("/api/admin/submissions") == {"expected": ["지출결과서", "회의록"], "sent": ["지출결과서"], "missing": ["회의록"]}
+    assert docs_of(f"/api/admin/submissions/{sub}")["sent"] == ["지출결과서"]
     got = client.get(f"/api/admin/submissions/{sub}/documents", headers=ADMIN).json()
     assert got["missing"] == ["회의록"]
     received = got["documents"][0]

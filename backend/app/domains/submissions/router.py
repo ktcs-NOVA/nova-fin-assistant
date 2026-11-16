@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.core.auth import get_current_user
 from app.core.db import get_db
+from app.domains.documents import service as documents
 from app.domains.submissions import service
 from app.domains.submissions.schemas import (
     DecisionRequest,
@@ -17,6 +18,12 @@ from app.models import User
 router = APIRouter(prefix="/api", tags=["정산 제출 · M-01 검토 대기함"])
 
 
+def _views(db: Session, subs: list) -> list[dict]:
+    """제출 건 응답 + 증빙 서류 상태(docs: 받아야 할 것 · 받은 것 · 안 온 것)."""
+    status = documents.doc_status(db, subs)
+    return [{**service.to_view(s), "docs": status[s.id]} for s in subs]
+
+
 # ---------- 직원 ----------
 @router.post("/submissions", response_model=SubmissionView, status_code=201, summary="청구 내역 제출 (검토 요청)")
 def create(req: SubmissionCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
@@ -26,7 +33,7 @@ def create(req: SubmissionCreate, db: Session = Depends(get_db), user: User = De
 @router.get("/submissions", response_model=SubmissionList, summary="내 제출 내역")
 def list_mine(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     rows = service.list_submissions(db, user)
-    return {"total": len(rows), "items": [service.to_view(s) for s in rows]}
+    return {"total": len(rows), "items": _views(db, rows)}
 
 
 # ---------- 회계 관리자 (M-01) ----------
@@ -34,13 +41,13 @@ def list_mine(db: Session = Depends(get_db), user: User = Depends(get_current_us
 def list_all(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     service.require_admin(user)
     rows = service.list_submissions(db)
-    return {"total": len(rows), "items": [service.to_view(s) for s in rows]}
+    return {"total": len(rows), "items": _views(db, rows)}
 
 
 @router.get("/admin/submissions/{code}", response_model=SubmissionView, summary="제출 건 상세")
 def detail(code: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     service.require_admin(user)
-    return service.to_view(service.get_submission(db, code))
+    return _views(db, [service.get_submission(db, code)])[0]
 
 
 @router.post("/admin/submissions/{code}/decision", response_model=SubmissionView, summary="승인 / 반려 저장")

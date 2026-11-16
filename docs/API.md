@@ -446,9 +446,28 @@ curl -s localhost:8000/api/checklists -H 'Authorization: Bearer <token>'
 - 관리자 응답: `{ expected: [종류], missing: [종류], documents: [{ id, kind, title, writer, sent_at, draft, form }] }`.
   `expected` 는 정산 유형별로 받아야 하는 서류입니다 (출장: 지출결과서 · 출장보고서 / 회의비: 지출결과서 · 회의록 / 그 밖: 지출결과서).
   보내지 않은 서류는 관리자에게 보이지 않습니다.
+- (2026-11-16) 제출 건 응답(`/api/submissions`, `/api/admin/submissions`, `/api/admin/submissions/{code}`)에 서류 상태 `docs: { expected: [종류], sent: [종류], missing: [종류] }` 가 함께 옵니다.
+  관리자 목록 · 홈의 "서류 1/2 · 서류 미제출" 표시가 이 값을 씁니다. `sent` 는 직원이 보내기까지 마친 서류만 셉니다.
 - **영수증 사진** (2026-11-16): 로그인한 상태로 `POST /api/receipt` 를 부르면 사진을 보관하고 응답에 `receipt_id` 를 함께 돌려줍니다 (로그인 없이 부르면 보관하지 않음).
   프론트는 이 번호를 청구 항목에 실어 제출하고(`items[].receipt_id`), 양식의 증빙 사진 칸이 `GET /api/receipts/{id}/image` 로 사진을 받습니다 (올린 본인 · 회계 관리자만, 그 밖에는 404).
   사진은 `backend/data/uploads/receipts/` 에 저장되고 저장소에는 올라가지 않습니다 (`.gitignore`).
+
+---
+
+### 3-12. 지출내역 엑셀 (`GET /api/ledger`, `GET /api/admin/ledger`) — 2026-11-16 추가
+
+제출한 정산 건의 지출 항목을 한 줄씩 정리한 엑셀(.xlsx) 파일을 돌려줍니다. JSON 이 아니라 파일입니다.
+
+| 하는 일 | 방식 | 주소 | 누가 |
+|---|---|---|---|
+| 내 정산 건의 지출내역 | GET | `/api/ledger` | 로그인한 직원 |
+| 전체 제출 건의 지출내역 | GET | `/api/admin/ledger` | 회계 관리자 (아니면 403) |
+
+- 표 구성: No · 구분(정산 유형) · 집행유형(계정과목, 없으면 "미입력") · 집행부서(관리자 파일은 "부서 성명") · 내용(품명 · 건명) · 금액 · 비고(제출 번호 · 지출일 · 상태).
+- 지출 한 건이 한 줄입니다 (합치지 않음). 지출일 순으로 정렬하고, **반려한 정산은 넣지 않습니다**.
+- 아래에 정산 유형별 소계와 합계가 붙습니다. 엑셀 수식(`SUMIF`, `SUM`)이라 줄을 고치면 다시 계산되고, 계산값도 함께 저장해서 수식을 계산하지 않는 미리보기에서도 숫자가 보입니다.
+- 프론트는 토큰을 실어 받아서 `지출내역_YYYYMMDD.xlsx` 로 저장합니다 (`downloadLedger`, `components/LedgerButton.jsx`). 버튼은 직원의 "내 정산 현황"과 관리자의 "정산 검토 대기함"에 있습니다.
+- 만드는 코드는 `backend/app/domains/ledger/excel.py` (라이브러리 `xlsxwriter`).
 
 ---
 

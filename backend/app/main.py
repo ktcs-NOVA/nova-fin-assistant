@@ -17,6 +17,7 @@ from app.domains.auth.router import router as auth_router
 from app.domains.checklist.router import router as checklist_router
 from app.domains.documents.router import admin_router as documents_admin_router
 from app.domains.documents.router import router as documents_router
+from app.domains.ledger.router import router as ledger_router
 from app.domains.procedure.router import router as procedure_router
 from app.domains.qa.router import router as qa_router
 from app.domains.receipt.router import router as receipt_router
@@ -71,4 +72,5 @@ app.include_router(voucher_router)  # POST /api/voucher-draft  (U-07 결의서 �
 app.include_router(receipt_router)  # POST /api/receipt  (U-06 영수증 인식)
 app.include_router(documents_router)  # /api/documents (문서 작업: 출장보고서·회의록·출장원·지출결과서)
 app.include_router(documents_admin_router)  # /api/admin/submissions/{code}/documents (첨부 서류)
+app.include_router(ledger_router)  # GET /api/ledger · /api/admin/ledger (지출내역 엑셀)
 app.include_router(submissions_router)  # /api/submissions (직원 제출) · /api/admin/submissions (M-01 검토)
