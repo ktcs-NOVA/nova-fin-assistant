@@ -82,6 +82,16 @@ def test_quantity_splits_only_when_it_divides_evenly():
     assert forms.suggest(TRIP_SUB)["detail_0"] == "26.11.10~26.11.11 출장 숙박비 (2박)"
 
 
+def test_ai_polish_is_dropped_when_it_changes_numbers():
+    from app.domains.documents.service import _keeps_facts
+
+    draft = "26.11.10~26.11.11 출장 숙박비 (1박)"
+    assert _keeps_facts(draft, "26.11.10~26.11.11 출장 숙박비(1박)")
+    assert not _keeps_facts(draft, "출장 숙박비")  # 날짜·박수를 빼면 안 씀
+    assert not _keeps_facts("업무협의 식대", "업무협의 식대 (4인)")  # 없는 숫자를 더해도 안 씀
+    assert not _keeps_facts(draft, "  ")
+
+
 def test_expected_documents_by_claim_type():
     assert forms.expected_kinds("국내출장") == ["지출결과서", "출장보고서", "출장원"]
     assert forms.expected_kinds("회의비") == ["지출결과서", "회의록"]

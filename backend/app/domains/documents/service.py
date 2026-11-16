@@ -30,8 +30,10 @@ POLISH_SYSTEM = (
 )
 FILL_SYSTEM = (
     "당신은 공공기관 지출 증빙 서류 작성 보조입니다. 각 줄은 '키: 초안 문구' 입니다. "
-    "초안을 서류에 적을 짧은 명사형 문구(30자 이내)로 다듬으세요. 초안에 없는 사실·날짜·금액·이름·인원을 "
-    "절대 추가하지 마세요. 줄마다 '키: 문구' 형식 그대로, 받은 키만 출력하세요."
+    "초안을 서류에 적을 자연스러운 명사형 문구(40자 이내)로 다듬으세요. "
+    "초안에 있는 날짜·기간·인원·박수 같은 숫자와 괄호 안 내용은 빼지 말고 그대로 두고, "
+    "초안에 없는 사실·날짜·금액·이름·인원은 절대 추가하지 마세요. 고칠 곳이 없으면 초안을 그대로 쓰세요. "
+    "줄마다 '키: 문구' 형식 그대로, 받은 키만 출력하세요."
 )
 
 
@@ -211,9 +213,15 @@ def _polish_cells(cells: dict[str, str]) -> dict[str, str]:
     out = dict(cells)
     for line in answer.splitlines():
         m = re.match(r"\s*([a-z]+_\d+)\s*[:：]\s*(.+)", line)
-        if m and m.group(1) in cells and m.group(2).strip():
+        if m and m.group(1) in cells and _keeps_facts(cells[m.group(1)], m.group(2)):
             out[m.group(1)] = m.group(2).strip()[:60]
     return out
+
+
+def _keeps_facts(draft: str, polished: str) -> bool:
+    """다듬은 문구가 초안의 숫자(날짜·인원·박수)를 하나도 빼거나 더하지 않았을 때만 씁니다."""
+    numbers = lambda t: sorted(re.findall(r"\d+", t))  # noqa: E731
+    return bool(polished.strip()) and numbers(draft) == numbers(polished)
 
 
 def send_document(db: Session, user: User, doc_id: int) -> WorkDocument:
