@@ -446,6 +446,8 @@ curl -s localhost:8000/api/checklists -H 'Authorization: Bearer <token>'
 - 관리자 응답: `{ expected: [종류], missing: [종류], documents: [{ id, kind, title, writer, sent_at, draft, form }] }`.
   `expected` 는 정산 유형별로 받아야 하는 서류입니다 (출장: 지출결과서 · 출장보고서 / 회의비: 지출결과서 · 회의록 / 그 밖: 지출결과서).
   보내지 않은 서류는 관리자에게 보이지 않습니다.
+- (2026-11-16) 제출 건 응답(`/api/submissions`, `/api/admin/submissions`, `/api/admin/submissions/{code}`)에 서류 상태 `docs: { expected: [종류], sent: [종류], missing: [종류] }` 가 함께 옵니다.
+  관리자 목록 · 홈의 "서류 1/2 · 서류 미제출" 표시가 이 값을 씁니다. `sent` 는 직원이 보내기까지 마친 서류만 셉니다.
 - **영수증 사진** (2026-11-16): 로그인한 상태로 `POST /api/receipt` 를 부르면 사진을 보관하고 응답에 `receipt_id` 를 함께 돌려줍니다 (로그인 없이 부르면 보관하지 않음).
   프론트는 이 번호를 청구 항목에 실어 제출하고(`items[].receipt_id`), 양식의 증빙 사진 칸이 `GET /api/receipts/{id}/image` 로 사진을 받습니다 (올린 본인 · 회계 관리자만, 그 밖에는 404).
   사진은 `backend/data/uploads/receipts/` 에 저장되고 저장소에는 올라가지 않습니다 (`.gitignore`).

@@ -264,6 +264,29 @@ def send_document(db: Session, user: User, doc_id: int) -> WorkDocument:
     return _get(db, user, doc.id)
 
 
+def doc_status(db: Session, subs: list[Submission]) -> dict[int, dict]:
+    """제출 건마다 받아야 할 서류 · 받은 서류 · 아직 안 온 서류 (목록 화면용, 조회는 한 번).
+
+    받은 서류는 직원이 "관리자에게 보내기"까지 마친 것만 셉니다.
+    """
+    ids = [s.id for s in subs]
+    sent: dict[int, list[str]] = {}
+    if ids:
+        rows = db.execute(
+            select(WorkDocument.submission_id, WorkDocument.kind)
+            .where(WorkDocument.submission_id.in_(ids), WorkDocument.sent_at.is_not(None))
+            .order_by(WorkDocument.sent_at, WorkDocument.id)
+        )
+        for sub_id, kind in rows:
+            sent.setdefault(sub_id, []).append(kind)
+    out = {}
+    for s in subs:
+        expected = forms.expected_kinds(s.type)
+        got = sent.get(s.id, [])
+        out[s.id] = {"expected": expected, "sent": got, "missing": [k for k in expected if k not in got]}
+    return out
+
+
 def submission_documents(db: Session, code: str) -> dict:
     """관리자: 이 정산 건에 붙어 온(보낸) 서류와, 아직 안 온 서류 종류."""
     sub = submissions.get_submission(db, code)

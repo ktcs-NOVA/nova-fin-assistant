@@ -911,13 +911,18 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .ledger-btn { margin-left: auto; display: inline-flex; align-items: center; gap: 10px; }
 .save-error { font-size: 13px; color: var(--bad); }
 
-/* 관리자 상세: 첨부 서류 */
+/* 관리자 상세: 첨부 서류 (받은 서류를 단추로 바꿔 보고, 처음 것은 열린 채로) */
 .attached-docs { display: grid; gap: 10px; }
-.attached-need { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 18px; }
-.attached-need li { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+.attached-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.attached-tab { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); color: inherit; font: inherit; font-weight: 600; cursor: pointer; }
+.attached-tab.on { border-color: var(--brand); background: var(--brand-soft); }
+.attached-tab.off { cursor: default; color: var(--muted); border-style: dashed; }
 .attached-doc { border-top: 1px solid var(--line); padding-top: 10px; }
-.attached-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; border: 0; background: none; padding: 4px 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.attached-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 4px; }
 .attached-doc .form-paper { padding: 18px; }
+/* 목록의 서류 상태 표시 */
+.alert-main .docs-badge { justify-self: start; overflow: visible; }
+.section-title .docs-badge { margin-left: 6px; vertical-align: middle; }
 
 @media (max-width: 640px) {
   .form-paper { padding: 14px 10px; }

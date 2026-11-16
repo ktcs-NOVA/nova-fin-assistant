@@ -11,6 +11,7 @@ import VerdictBadge from '../../components/VerdictBadge.jsx'
 import StatusTag from '../../components/StatusTag.jsx'
 import VerifyResult from '../../components/VerifyResult.jsx'
 import AttachedDocs from '../../components/AttachedDocs.jsx'
+import DocsBadge from '../../components/DocsBadge.jsx'
 import AccountReviewCard, { compareAccount, ACCOUNT_FIELD } from '../../components/AccountReviewCard.jsx'
 
 const won = (n) => n.toLocaleString('ko-KR') + '원'
@@ -122,8 +123,8 @@ export default function ReviewDetail({ id, onBack, onDecided }) {
       <h2 className="section-title">계정과목 검토</h2>
       <AccountReviewCard submission={sub} suggestion={acct.data} loading={acct.loading} error={acct.error} />
 
-      {/* 직원이 이 건에 붙여 보낸 증빙 서류 (지출 결과서·검수확인서, 회의록, 출장보고서 …) */}
-      <h2 className="section-title">첨부 서류</h2>
+      {/* 직원이 이 건에 붙여 보낸 증빙 서류 (지출 결과서·검수확인서, 회의록, 출장보고서 …). 승인·반려 판단 바로 위에 펼쳐서 보여 줌 */}
+      <h2 className="section-title">첨부 서류 <DocsBadge docs={sub.docs} /></h2>
       <AttachedDocs code={sub.id} />
 
       {/* 검토 패널 */}

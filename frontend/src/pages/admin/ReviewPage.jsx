@@ -1,6 +1,7 @@
 // M-01 정산 검토 대기함 (목록)
 // 확인이 필요한 건(검토 대기 중 보완 필요 → 담당자 확인 필요 → 계정과목 불일치, 그다음 반려한 건)이 위로 오고,
 // 판정·상태로 거를 수 있습니다. 행을 누르면 상세(ReviewDetail)로 들어갑니다.
+// "증빙 서류" 칸에는 직원이 보낸 서류가 몇 종 왔는지(서류 1/2 · 미제출) 보이고, 서류 내용은 상세에서 펼쳐 봅니다.
 // 정렬을 "최근 제출 순"으로 바꾸면 방금 들어온 건이 맨 위에 옵니다. 1시간 안에 들어온 건은 "새 제출" 표시가 붙습니다.
 // 문제 항목에는 AI 판정 항목 외에 계정과목 불일치(M-05)도 포함해, 상세·반려 사유와 개수가 맞도록 합니다.
 
@@ -11,6 +12,7 @@ import VerdictBadge from '../../components/VerdictBadge.jsx'
 import StatusTag from '../../components/StatusTag.jsx'
 import ReviewDetail from './ReviewDetail.jsx'
 import LedgerButton from '../../components/LedgerButton.jsx'
+import DocsBadge from '../../components/DocsBadge.jsx'
 import { useReviewQueue, countQueue, needsCheck, problemFields, byUrgency, byRecent, isFresh, submittedAgo, VIEW } from './reviewQueue.js'
 
 const NEEDS = '확인 필요'
@@ -121,7 +123,7 @@ export default function ReviewPage({ param }) {
             <thead>
               <tr>
                 <th>제출일</th><th>제출자</th><th>부서</th><th>유형</th><th>내용</th>
-                <th className="num">금액</th><th>AI 판정</th><th>문제 항목</th><th>상태</th>
+                <th className="num">금액</th><th>AI 판정</th><th>증빙 서류</th><th>문제 항목</th><th>상태</th>
               </tr>
             </thead>
             <tbody>
@@ -136,6 +138,7 @@ export default function ReviewPage({ param }) {
                     <td className="ellipsis">{r.purpose}</td>
                     <td className="num">{won(r.amount)}</td>
                     <td><VerdictBadge verdict={r.verdict} /></td>
+                    <td><DocsBadge docs={r.docs} /></td>
                     <td className="ellipsis muted-text">
                       {problems.length ? problems.join(', ') : '없음'}
                     </td>

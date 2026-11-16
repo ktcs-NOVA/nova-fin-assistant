@@ -1,12 +1,14 @@
 // 관리자 홈: 들어오자마자 제출 / 검토 대기 / 확인 필요 건수와, 확인이 필요한 건 목록이 바로 보입니다.
 // (2026-11-13 코칭: 깊이 들어가야 보이면 안 되고 앞단에서 검토할 수 있어야 함. 반려는 확인 필요에 포함)
 // 숫자·목록 기준은 검토 대기함과 같은 reviewQueue.js 를 씁니다. 숫자 카드나 행을 누르면 검토 대기함의 그 보기·그 건으로 갑니다.
+// 각 줄에는 증빙 서류가 몇 종 왔는지(서류 1/2 · 미제출)도 함께 보입니다.
 // "최근 제출"은 판정과 상관없이 가장 늦게 들어온 건입니다 — 직원이 방금 낸 건을 찾아다니지 않게 (통과한 건은 확인 필요 목록에 안 나오므로).
 
 import ReviewStats from '../../components/ReviewStats.jsx'
 import VerdictBadge from '../../components/VerdictBadge.jsx'
 import StatusTag from '../../components/StatusTag.jsx'
 import Icon from '../../components/Icons.jsx'
+import DocsBadge from '../../components/DocsBadge.jsx'
 import { STATUS } from '../../api/client.js'
 import { useReviewQueue, countQueue, needsCheck, problemFields, byUrgency, byRecent, isFresh, submittedAgo, VIEW } from './reviewQueue.js'
 
@@ -49,6 +51,7 @@ export default function AdminHomePage({ user, onNavigate }) {
                       {s.submitter} <span className="hint">{s.dept} · {submittedAgo(s)}</span>
                     </span>
                     <span className="hint">{s.id} · {s.type} · {s.purpose}</span>
+                    <DocsBadge docs={s.docs} />
                   </span>
                   <span className="alert-side">
                     <span className="alert-amount">{won(s.amount)}</span>
@@ -85,6 +88,7 @@ export default function AdminHomePage({ user, onNavigate }) {
                     <span className="recent-name">{s.submitter} <span className="hint">{s.dept}</span></span>
                     <span className="hint">{s.type} · {s.purpose} · {s.date}</span>
                     <span className="alert-problems">{problems.length ? problems.join(', ') : s.status === STATUS.REJECTED ? '반려 후 다시 제출 대기' : '문제 항목 없음'}</span>
+                    <DocsBadge docs={s.docs} />
                   </span>
                   <span className="alert-side">
                     <span className="alert-amount">{won(s.amount)}</span>
