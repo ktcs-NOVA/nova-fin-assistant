@@ -406,6 +406,52 @@ curl -s localhost:8000/api/checklists -H 'Authorization: Bearer <token>'
 
 ---
 
+### 3-11. 문서 작업 · 증빙 서류 보내기 (`/api/documents`) — 2026-11-16 양식·보내기 추가
+
+직원이 쓰는 서류(출장보고서 · 회의록 · 출장원 · **지출결과서**)를 저장하고, 정산 건의 증빙으로 관리자에게 보냅니다.
+
+| 하는 일 | 방식 | 주소 | 프론트가 보내는 것 |
+|---|---|---|---|
+| 내 서류 목록 | GET | `/api/documents` | 없음 |
+| 새 서류 | POST | `/api/documents` | `{ kind, fields, title?, submission_code? }` |
+| 저장 · 확인 | PATCH | `/api/documents/{id}` | `{ fields?, draft?, title?, confirmed? }` |
+| 줄글 초안 | POST | `/api/documents/{id}/draft` | 없음 (정산 건 없이 따로 쓴 출장보고서 · 회의록, 출장원) |
+| 양식 보기 | GET | `/api/documents/{id}/form` | 없음 (양식 서류) |
+| AI 가 쓰는 칸 채우기 | POST | `/api/documents/{id}/fill` | 없음 (양식 서류) |
+| 관리자에게 보내기 | POST | `/api/documents/{id}/send` | 없음 |
+| 삭제 | DELETE | `/api/documents/{id}` | 없음 |
+| (관리자) 정산 건의 첨부 서류 | GET | `/api/admin/submissions/{code}/documents` | 없음 |
+
+- `submission_code`(제출 번호)를 주면 그 정산 건에 붙습니다. 내가 낸 건만 되고, 남의 건이면 404.
+- 응답(서류 한 건)에 `submission_code`, `sent_at`(보낸 시각, 안 보냈으면 `null`)이 추가됐습니다.
+- **보내기 조건**: 정산 건에 붙은 서류 + `confirmed: true`. 보낸 뒤 내용을 고치면 `confirmed`·`sent_at` 이 풀려서 다시 보내야 합니다 (관리자가 옛 내용을 보지 않게).
+- **양식 서류** (기본 양식 3종): 지출결과서는 항상, 회의록 · 출장보고서는 **정산 건에 붙었을 때** 양식으로 만들어집니다.
+  정산 건 없이 따로 쓴 회의록 · 출장보고서와 출장원은 예전처럼 줄글 초안(`/draft`)입니다.
+  - 정산 건 하나에 같은 양식은 한 부입니다 (이미 있으면 그 서류를 돌려줌). 지출결과서는 정산 건에서만 만들 수 있습니다.
+  - 금액 · 날짜 · 건명 · 부서 · 참석자는 저장하지 않고 정산 건에서 매번 읽습니다. `fields` 에는 직원이 고칠 수 있는 칸만 들어갑니다.
+    - 지출결과서: `detail_0…`(상세내역), `use_0…`(용도), `inspector`(검사(수)자), `remark`(특이 사항)
+    - 회의록: `content`(회의 내용)
+    - 출장보고서: `destination`(출장지), `content`(출장 내용)
+    - 공통: `ai_keys`(지금 값이 AI 가 쓴 그대로인 칸 목록. 직원이 고치면 프론트가 빼서 보냄)
+  - `GET …/form` 응답: `{ kind, submission_code, sheets: [{ title, blocks: [...] }], todo[], ready }`. 블록 종류:
+    `info`(머리표 `rows:[{label, cell}]`) · `table`(`caption?, columns, rows, total?`) · `field`(넓은 글 칸 `label, cell`) ·
+    `note`(`text, style`) · `signers`(`rows:[{role, cell}]`) · `evidence`(`title, items:[{date, label, payment, amount, receipt_id}]`) · `photos`(`title, hint`).
+    칸 하나는 `{ value, source, align? }` 이고 고칠 수 있는 칸에는 `key, label, required, placeholder, ai, multiline, limit` 가 더 붙습니다.
+    `source` 는 `auto`(정산 건에서 가져옴) / `ai`(AI 가 씀) / `manual`(직접 입력) / `blank`(서명 · 사진, 시스템 밖) 입니다.
+    `todo` 는 꼭 채워야 하는데 비어 있는 칸 목록이고, 비어 있으면 `confirmed: true` 가 400 으로 막힙니다.
+  - `POST …/fill`: 지출결과서는 상세내역 · 용도 문구를 다시 제안하고, 회의록 · 출장보고서는 직원이 적은 `content` 메모를 보고서 문체로 다듬습니다.
+    다듬은 글의 숫자(날짜 · 인원 · 금액)가 원래 글과 달라지면 쓰지 않고 그대로 둡니다. 직원이 직접 고친 칸은 건드리지 않습니다.
+  - `evidence` 의 `receipt_id` 는 보관해 둔 영수증 사진 번호입니다 (아래 영수증 사진 참고). 제출한 사람이 올린 사진만 붙고, 없으면 `null`.
+  - 칸 구성은 `backend/app/domains/documents/forms.py` 한 곳에서 정합니다.
+- 관리자 응답: `{ expected: [종류], missing: [종류], documents: [{ id, kind, title, writer, sent_at, draft, form }] }`.
+  `expected` 는 정산 유형별로 받아야 하는 서류입니다 (출장: 지출결과서 · 출장보고서 / 회의비: 지출결과서 · 회의록 / 그 밖: 지출결과서).
+  보내지 않은 서류는 관리자에게 보이지 않습니다.
+- **영수증 사진** (2026-11-16): 로그인한 상태로 `POST /api/receipt` 를 부르면 사진을 보관하고 응답에 `receipt_id` 를 함께 돌려줍니다 (로그인 없이 부르면 보관하지 않음).
+  프론트는 이 번호를 청구 항목에 실어 제출하고(`items[].receipt_id`), 양식의 증빙 사진 칸이 `GET /api/receipts/{id}/image` 로 사진을 받습니다 (올린 본인 · 회계 관리자만, 그 밖에는 404).
+  사진은 `backend/data/uploads/receipts/` 에 저장되고 저장소에는 올라가지 않습니다 (`.gitignore`).
+
+---
+
 ## 4. 에러일 때 돌려주는 모양 (함께 정할 것)
 
 백엔드가 실패했을 때도 프론트가 "문제가 생겼습니다"를 띄워야 합니다. 아래처럼 통일하면 프론트는 성공/실패 두 경우만 처리하면 됩니다.

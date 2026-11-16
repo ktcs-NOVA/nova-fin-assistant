@@ -1,13 +1,26 @@
-"""문서 작업: 내 서류 저장·수정·초안 만들기. 다른 사람 서류는 없는 것처럼 404 로 답합니다."""
+"""문서 작업: 내 서류 저장·수정·초안 만들기. 다른 사람 서류는 없는 것처럼 404 로 답합니다.
+
+정산 건에서 만든 서류는 그 건에 붙고(submission), 확인을 마치면 관리자에게 보낼 수 있습니다(sent_at).
+정산 건에 붙은 지출결과서·회의록·출장보고서는 줄글 초안이 아니라 양식(forms.py)으로 만들어집니다.
+(정산 건 없이 따로 쓴 회의록·출장보고서는 예전처럼 줄글 초안 방식입니다.)
+"""
+
+import re
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.ai import llm
 from app.core.config import settings
 from app.core.errors import AppError
-from app.domains.documents import drafts
-from app.models import User, WorkDocument
+from app.domains.documents import drafts, forms
+from app.domains.receipt import service as receipts
+from app.domains.submissions import service as submissions
+from app.models import Submission, User, WorkDocument
+
+KST = ZoneInfo("Asia/Seoul")
 
 STATUS_WORKING = "작성 중"
 STATUS_DONE = "작성 완료"
@@ -17,11 +30,20 @@ POLISH_SYSTEM = (
     "자연스러운 한 문단으로 다듬으세요. 메모에 없는 사실·날짜·금액·이름을 절대 추가하지 마세요. "
     "다듬은 문단만 출력하세요."
 )
+FILL_SYSTEM = (
+    "당신은 공공기관 지출 증빙 서류 작성 보조입니다. 각 줄은 '키: 초안 문구' 입니다. "
+    "초안을 서류에 적을 자연스러운 명사형 문구(40자 이내)로 다듬으세요. "
+    "초안에 있는 날짜·기간·인원·박수 같은 숫자와 괄호 안 내용은 빼지 말고 그대로 두고, "
+    "초안에 없는 사실·날짜·금액·이름·인원은 절대 추가하지 마세요. 고칠 곳이 없으면 초안을 그대로 쓰세요. "
+    "줄마다 '키: 문구' 형식 그대로, 받은 키만 출력하세요."
+)
 
 
 def _get(db: Session, user: User, doc_id: int) -> WorkDocument:
     doc = db.scalar(
-        select(WorkDocument).where(WorkDocument.id == doc_id, WorkDocument.user_id == user.id)
+        select(WorkDocument)
+        .options(selectinload(WorkDocument.submission))
+        .where(WorkDocument.id == doc_id, WorkDocument.user_id == user.id)
     )
     if doc is None:
         raise AppError("서류를 찾을 수 없습니다.", 404)
@@ -36,25 +58,60 @@ def list_documents(db: Session, user: User) -> list[WorkDocument]:
     return list(
         db.scalars(
             select(WorkDocument)
+            .options(selectinload(WorkDocument.submission))
             .where(WorkDocument.user_id == user.id)
             .order_by(WorkDocument.updated_at.desc(), WorkDocument.id.desc())
         )
     )
 
 
+def _my_submission(db: Session, user: User, code: str) -> Submission:
+    """내가 낸 정산 건만. 남의 건은 없는 것처럼 404."""
+    sub = submissions.get_submission(db, code)
+    if sub.user_id != user.id:
+        raise AppError(f"제출 건 {code} 을(를) 찾을 수 없습니다.", 404)
+    return sub
+
+
 def create_document(
-    db: Session, user: User, kind: str, title: str | None, fields: dict
+    db: Session,
+    user: User,
+    kind: str,
+    title: str | None,
+    fields: dict,
+    submission_code: str | None = None,
 ) -> WorkDocument:
+    sub = _my_submission(db, user, submission_code) if submission_code else None
+
+    if kind == forms.KIND and sub is None:
+        raise AppError("지출 결과서는 제출한 정산 건에서 만들 수 있습니다.")
+    if sub is not None and kind in forms.FORM_KINDS:
+        existing = db.scalar(
+            select(WorkDocument)
+            .options(selectinload(WorkDocument.submission))
+            .where(
+                WorkDocument.user_id == user.id,
+                WorkDocument.kind == kind,
+                WorkDocument.submission_id == sub.id,
+            )
+        )
+        if existing is not None:
+            return existing  # 한 정산 건에 같은 양식은 한 부
+        view = submissions.to_view(sub)
+        # 금액·날짜·참석자는 정산 건에서 읽으므로 저장하지 않고, 고칠 수 있는 칸만 둡니다.
+        fields = forms.initial_fields(kind, view, fields)
+        title = (title or "").strip() or forms.default_title(kind, view)
+
     doc = WorkDocument(
         user_id=user.id,
+        submission_id=sub.id if sub else None,
         kind=kind,
         title=(title or "").strip() or drafts.default_title(kind, fields),
         fields=fields,
     )
     db.add(doc)
     db.commit()
-    db.refresh(doc)
-    return doc
+    return _get(db, user, doc.id)
 
 
 def get_document(db: Session, user: User, doc_id: int) -> WorkDocument:
@@ -73,11 +130,18 @@ def update_document(db: Session, user: User, doc_id: int, req) -> WorkDocument:
     if req.title is not None and req.title.strip():
         doc.title = req.title.strip()
     if req.confirmed is True:
-        if not doc.draft.strip():
+        if _is_form(doc):
+            lacking = _form(db, doc, user)["todo"]
+            if lacking:
+                names = ", ".join(t["label"] for t in lacking)
+                raise AppError(f"아직 비어 있는 칸이 있습니다: {names}")
+        elif not doc.draft.strip():
             raise AppError("초안이 아직 없어서 확인 완료로 바꿀 수 없습니다.")
         doc.confirmed = True
     elif req.confirmed is False or content_changed:
         doc.confirmed = False  # 내용이 바뀌면 다시 읽고 확인해야 함
+    if content_changed or not doc.confirmed:
+        doc.sent_at = None  # 보낸 뒤에 고치면 다시 보내야 함 (관리자가 옛 내용을 보지 않게)
     doc.status = STATUS_DONE if doc.confirmed else STATUS_WORKING
     db.commit()
     db.refresh(doc)
@@ -92,15 +156,143 @@ def delete_document(db: Session, user: User, doc_id: int) -> None:
 def make_draft(db: Session, user: User, doc_id: int) -> WorkDocument:
     """입력한 값으로 초안을 만들어 draft 에 저장. 비어 있는 칸이 있으면 400."""
     doc = _get(db, user, doc_id)
+    if _is_form(doc):
+        raise AppError("이 서류는 초안 대신 양식으로 만들어집니다.")
     lacking = drafts.missing(doc.kind, doc.fields)
     if lacking:
         raise AppError(f"초안을 만들려면 먼저 입력해 주세요: {', '.join(lacking)}")
     doc.draft = drafts.build(doc.kind, doc.fields, _who(user), polish=_polisher())
     doc.confirmed = False
+    doc.sent_at = None
     doc.status = STATUS_WORKING
     db.commit()
     db.refresh(doc)
     return doc
+
+
+# ---------------------------------------------------------------------------
+# 양식 (지출결과서 + 검수확인서) · 관리자에게 보내기
+# ---------------------------------------------------------------------------
+def _is_form(doc: WorkDocument) -> bool:
+    """양식으로 만드는 서류인지: 지출결과서는 항상, 회의록·출장보고서는 정산 건에 붙었을 때."""
+    return doc.kind == forms.KIND or (doc.kind in forms.FORM_KINDS and doc.submission_id is not None)
+
+
+def _view(db: Session, sub: Submission) -> dict:
+    """양식에 쓸 제출 건. 영수증 사진 번호는 제출한 사람이 올린 것만 남깁니다."""
+    view = submissions.to_view(sub)
+    mine = receipts.owned_ids(db, sub.user_id, [e.get("receipt_id") for e in view["expenses"]])
+    for e in view["expenses"]:
+        rid = e.get("receipt_id")
+        e["receipt_id"] = int(rid) if rid is not None and str(rid).isdigit() and int(rid) in mine else None
+    return view
+
+
+def _form(db: Session, doc: WorkDocument, writer: User) -> dict:
+    if not _is_form(doc):
+        raise AppError("양식으로 보는 서류가 아닙니다.")
+    if doc.submission is None:
+        raise AppError("이 서류가 붙어 있던 정산 건이 없어졌습니다.", 404)
+    today = (doc.sent_at or datetime.now(KST)).astimezone(KST).date()
+    return forms.build(doc.kind, _view(db, doc.submission), doc.fields, _who(writer), today)
+
+
+def get_form(db: Session, user: User, doc_id: int) -> dict:
+    return _form(db, _get(db, user, doc_id), user)
+
+
+def fill_form(db: Session, user: User, doc_id: int) -> WorkDocument:
+    """AI 가 쓰는 부분을 채웁니다. 직원이 직접 고친 칸은 건드리지 않습니다.
+
+    지출결과서: 상세내역·용도 문구를 다시 제안. 회의록·출장보고서: 직원이 적은 메모(content)를 보고서 문체로 다듬음.
+    """
+    doc = _get(db, user, doc_id)
+    if not _is_form(doc) or doc.submission is None:
+        raise AppError("양식으로 보는 서류가 아닙니다.")
+    kept = set(doc.fields.get("ai_keys") or [])
+    if doc.kind == forms.KIND:
+        base = forms.suggest(submissions.to_view(doc.submission))
+        # 비어 있거나, 아직 AI 제안 그대로인 칸만 대상
+        targets = {k: v for k, v in base.items() if not str(doc.fields.get(k) or "").strip() or k in kept}
+        filled = _polish_cells(targets)
+    else:
+        memo = str(doc.fields.get("content") or "").strip()
+        if not memo:
+            raise AppError(f"먼저 {'회의' if doc.kind == forms.MINUTES else '출장'} 내용을 메모로 적어 주세요. 적은 내용을 AI 가 다듬습니다.")
+        polished = _polisher()(memo)
+        # 메모에 없던 숫자가 생기거나 있던 숫자가 빠지면 다듬은 글을 쓰지 않음
+        filled = {"content": polished} if polished != memo and _keeps_facts(memo, polished) else {}
+    doc.fields = {**doc.fields, **filled, "ai_keys": sorted(kept | set(filled))}
+    doc.confirmed = False
+    doc.sent_at = None
+    doc.status = STATUS_WORKING
+    db.commit()
+    return _get(db, user, doc.id)
+
+
+def _polish_cells(cells: dict[str, str]) -> dict[str, str]:
+    """제안 문구를 AI 로 다듬습니다. AI 가 꺼져 있거나 실패하면 규칙으로 만든 문구를 그대로 씁니다."""
+    if not cells or settings.ai_mock:
+        return dict(cells)
+    try:
+        answer = llm.chat(FILL_SYSTEM, "\n".join(f"{k}: {v}" for k, v in cells.items()))
+    except Exception:  # noqa: BLE001 — 다듬기는 선택 기능
+        return dict(cells)
+    out = dict(cells)
+    for line in answer.splitlines():
+        m = re.match(r"\s*([a-z]+_\d+)\s*[:：]\s*(.+)", line)
+        if m and m.group(1) in cells and _keeps_facts(cells[m.group(1)], m.group(2)):
+            out[m.group(1)] = m.group(2).strip()[:60]
+    return out
+
+
+def _keeps_facts(draft: str, polished: str) -> bool:
+    """다듬은 문구가 초안의 숫자(날짜·인원·박수)를 하나도 빼거나 더하지 않았을 때만 씁니다."""
+    numbers = lambda t: sorted(re.findall(r"\d+", t))  # noqa: E731
+    return bool(polished.strip()) and numbers(draft) == numbers(polished)
+
+
+def send_document(db: Session, user: User, doc_id: int) -> WorkDocument:
+    """확인을 마친 서류를 정산 건의 증빙으로 관리자에게 보냅니다."""
+    doc = _get(db, user, doc_id)
+    if doc.submission is None:
+        raise AppError("정산 건에서 만든 서류만 관리자에게 보낼 수 있습니다.")
+    if not doc.confirmed:
+        raise AppError("내용을 읽고 확인 표시를 한 뒤에 보낼 수 있습니다.")
+    doc.sent_at = datetime.now(KST)
+    db.commit()
+    return _get(db, user, doc.id)
+
+
+def submission_documents(db: Session, code: str) -> dict:
+    """관리자: 이 정산 건에 붙어 온(보낸) 서류와, 아직 안 온 서류 종류."""
+    sub = submissions.get_submission(db, code)
+    docs = list(
+        db.scalars(
+            select(WorkDocument)
+            .options(selectinload(WorkDocument.submission))
+            .where(WorkDocument.submission_id == sub.id, WorkDocument.sent_at.is_not(None))
+            .order_by(WorkDocument.sent_at, WorkDocument.id)
+        )
+    )
+    expected = forms.expected_kinds(sub.type)
+    got = {d.kind for d in docs}
+    return {
+        "expected": expected,
+        "missing": [k for k in expected if k not in got],
+        "documents": [
+            {
+                "id": d.id,
+                "kind": d.kind,
+                "title": d.title,
+                "writer": _who(sub.user),
+                "sent_at": d.sent_at,
+                "draft": d.draft,
+                "form": _form(db, d, sub.user) if _is_form(d) else None,
+            }
+            for d in docs
+        ],
+    }
 
 
 def _polisher():

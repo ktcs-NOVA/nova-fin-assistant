@@ -21,3 +21,6 @@ experiments/receipt-ocr/receipts/*
 !experiments/receipt-ocr/receipts/.gitkeep
 experiments/receipt-ocr/results/*
 !experiments/receipt-ocr/results/.gitkeep
+
+# 직원이 올린 영수증 사진 (개인정보) — 로컬에만 보관
+backend/data/uploads/

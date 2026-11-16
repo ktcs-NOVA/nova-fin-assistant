@@ -8,12 +8,19 @@ import base64
 import logging
 import re
 import time
+import uuid
+from pathlib import Path
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from app.ai import llm
 from app.ai.masking import mask
 from app.core.config import settings
+from app.core.constants import ROLE_ADMIN
 from app.core.errors import AppError
 from app.domains.receipt.schemas import PURPOSES, ReceiptRequest, ReceiptResponse
+from app.models import Receipt, User
 
 log = logging.getLogger("nova.receipt")
 
@@ -159,3 +166,53 @@ def recognize(req: ReceiptRequest) -> dict:
     log.info("receipt %s (%d KB) → %s / %s원 / %s (%.1fs)", req.filename, len(image) // 1024,
              result.get("merchant"), result.get("total_amount"), result.get("confidence"), elapsed)
     return result
+
+
+# ---------------------------------------------------------------------------
+# 영수증 사진 보관 (검수확인서·출장보고서의 증빙 사진 칸에 씀)
+# ---------------------------------------------------------------------------
+# 사진은 개인정보가 들어 있을 수 있어 저장소에 올리지 않습니다 (backend/data/uploads/ 는 .gitignore).
+UPLOAD_DIR = Path(__file__).resolve().parents[3] / "data" / "uploads" / "receipts"
+_EXT = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp"}
+_MEDIA = {ext: media for media, ext in _EXT.items()}
+
+
+def store(db: Session, user: User, req: ReceiptRequest, result: dict) -> int | None:
+    """인식한 사진을 보관하고 번호를 돌려줍니다. 보관에 실패해도 인식 결과는 그대로 쓰게 None 을 돌려줍니다."""
+    name = f"{uuid.uuid4().hex}{_EXT.get(req.media_type, '.jpg')}"
+    try:
+        UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+        (UPLOAD_DIR / name).write_bytes(_decode_image(req))
+        row = Receipt(
+            user_id=user.id,
+            image_path=name,
+            ocr_result={k: v for k, v in result.items() if not k.startswith("_")},
+            confidence=result.get("confidence"),
+        )
+        db.add(row)
+        db.commit()
+        return row.id
+    except Exception as e:  # noqa: BLE001 — 사진 보관은 부가 기능
+        db.rollback()
+        (UPLOAD_DIR / name).unlink(missing_ok=True)  # 기록 없이 사진만 남지 않게
+        log.warning("receipt %s 사진 보관 실패: %s", req.filename, e)
+        return None
+
+
+def image_file(db: Session, user: User, receipt_id: int) -> tuple[Path, str]:
+    """사진 파일과 종류. 올린 본인과 회계 관리자만 볼 수 있고, 그 밖에는 없는 것처럼 404."""
+    row = db.get(Receipt, receipt_id)
+    allowed = row is not None and (row.user_id == user.id or user.role == ROLE_ADMIN)
+    path = UPLOAD_DIR / Path(row.image_path).name if allowed and row.image_path else None
+    if path is None or not path.is_file():
+        raise AppError("영수증 사진을 찾을 수 없습니다.", 404)
+    return path, _MEDIA.get(path.suffix, "application/octet-stream")
+
+
+def owned_ids(db: Session, user_id: int, ids) -> set[int]:
+    """ids 중 이 사람이 올린 영수증 번호만 (남의 영수증 번호를 정산 건에 끼워 넣지 못하게)."""
+    wanted = {int(i) for i in ids if isinstance(i, int) or (isinstance(i, str) and i.isdigit())}
+    if not wanted:
+        return set()
+    return set(db.scalars(select(Receipt.id).where(Receipt.user_id == user_id, Receipt.id.in_(wanted))))
+

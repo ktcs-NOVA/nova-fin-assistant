@@ -118,6 +118,7 @@ export default function ReceiptPage({ onSendToVerify, param }) {
       card_last4: form.card_last4 || null,
       approval_no: form.approval_no || null,
       receipt_file: photo.file,
+      receipt_id: raw?.receipt_id ?? null,   // 백엔드가 보관한 사진 번호 (증빙 서류의 사진 칸에 씀)
       edited_fields: FIELDS.filter((f) => String(raw[f.key] ?? '') !== String(form[f.key] ?? '')).map((f) => f.key),
     })
   }
@@ -138,6 +139,7 @@ export default function ReceiptPage({ onSendToVerify, param }) {
         payment: '법인카드',
         note: '',
         receipt_file: draft.receipt_file,
+        receipt_id: draft.receipt_id,
       }],
     })
   }

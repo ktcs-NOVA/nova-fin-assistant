@@ -30,3 +30,17 @@ def get_current_user(
     if user is None:
         raise AppError(TOKEN_INVALID, 401)
     return user
+
+
+def get_optional_user(
+    authorization: str | None = Header(default=None),
+    db: Session = Depends(get_db),
+) -> User | None:
+    """로그인했으면 그 사람, 아니면 None (로그인 없이도 쓸 수 있는 API 에서 '누가 했는지'만 알고 싶을 때)."""
+    if not authorization or not authorization.lower().startswith("bearer "):
+        return None
+    employee_no = read_token(authorization[7:])
+    if employee_no is None:
+        return None
+    return db.scalar(select(User).where(User.employee_no == employee_no))
+

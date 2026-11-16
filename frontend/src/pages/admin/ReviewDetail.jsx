@@ -10,6 +10,7 @@ import Stepper from '../../components/Stepper.jsx'
 import VerdictBadge from '../../components/VerdictBadge.jsx'
 import StatusTag from '../../components/StatusTag.jsx'
 import VerifyResult from '../../components/VerifyResult.jsx'
+import AttachedDocs from '../../components/AttachedDocs.jsx'
 import AccountReviewCard, { compareAccount, ACCOUNT_FIELD } from '../../components/AccountReviewCard.jsx'
 
 const won = (n) => n.toLocaleString('ko-KR') + '원'
@@ -120,6 +121,10 @@ export default function ReviewDetail({ id, onBack, onDecided }) {
       {/* M-05: 직원이 적은 계정과목 vs AI 제안 */}
       <h2 className="section-title">계정과목 검토</h2>
       <AccountReviewCard submission={sub} suggestion={acct.data} loading={acct.loading} error={acct.error} />
+
+      {/* 직원이 이 건에 붙여 보낸 증빙 서류 (지출 결과서·검수확인서, 회의록, 출장보고서 …) */}
+      <h2 className="section-title">첨부 서류</h2>
+      <AttachedDocs code={sub.id} />
 
       {/* 검토 패널 */}
       <h2 className="section-title">검토</h2>
