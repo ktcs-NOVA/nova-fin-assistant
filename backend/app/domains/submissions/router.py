@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.auth import get_current_user
@@ -13,7 +14,7 @@ from app.domains.submissions.schemas import (
     SubmissionList,
     SubmissionView,
 )
-from app.models import User
+from app.models import Submission, User
 
 router = APIRouter(prefix="/api", tags=["정산 제출 · M-01 검토 대기함"])
 
@@ -21,7 +22,15 @@ router = APIRouter(prefix="/api", tags=["정산 제출 · M-01 검토 대기함"
 def _views(db: Session, subs: list) -> list[dict]:
     """제출 건 응답 + 증빙 서류 상태(docs: 받아야 할 것 · 받은 것 · 안 온 것)."""
     status = documents.doc_status(db, subs)
-    return [{**service.to_view(s), "docs": status[s.id]} for s in subs]
+    # 반려된 건을 고쳐 다시 낸 건이 있으면 그 새 번호 (가장 최근 것)
+    codes = [s.code for s in subs]
+    again: dict[str, str] = {}
+    if codes:
+        rows = db.execute(
+            select(Submission.resubmit_of, Submission.code).where(Submission.resubmit_of.in_(codes)).order_by(Submission.id)
+        )
+        again = {old: new for old, new in rows}
+    return [{**service.to_view(s), "docs": status[s.id], "resubmitted_as": again.get(s.code)} for s in subs]
 
 
 # ---------- 직원 ----------
@@ -53,7 +62,7 @@ def detail(code: str, db: Session = Depends(get_db), user: User = Depends(get_cu
 @router.post("/admin/submissions/{code}/decision", response_model=SubmissionView, summary="승인 / 반려 저장")
 def decide(code: str, req: DecisionRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     service.require_admin(user)
-    return service.to_view(service.decide(db, user, code, req.decision, req.message))
+    return service.to_view(service.decide(db, user, code, req.decision, req.message, req.issues))
 
 
 @router.post("/admin/submissions/{code}/reject-draft", response_model=RejectDraftResponse, summary="반려 메시지 초안 (근거 기반)")

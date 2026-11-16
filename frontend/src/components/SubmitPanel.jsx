@@ -22,9 +22,10 @@ function defaultPurpose(claim) {
   return first ? `${first} (${claim.trip_type})` : `${claim.trip_type} 지출 정산`
 }
 
-export default function SubmitPanel({ claim, result, user, onNavigate }) {
-  const [purpose, setPurpose] = useState(() => defaultPurpose(claim))
-  const [account, setAccount] = useState(() => defaultAccount(claim))
+export default function SubmitPanel({ claim, result, user, onNavigate , resubmit }) {
+  // resubmit: 반려된 건을 고쳐 다시 내는 것이면 { of: 원래 번호, purpose, account } — 건명·계정과목을 이어받고 그 건의 재제출로 보냄
+  const [purpose, setPurpose] = useState(() => resubmit?.purpose || defaultPurpose(claim))
+  const [account, setAccount] = useState(() => resubmit?.account || defaultAccount(claim))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [done, setDone] = useState(null)   // 제출 완료된 건
@@ -40,7 +41,7 @@ export default function SubmitPanel({ claim, result, user, onNavigate }) {
     setBusy(true)
     setError('')
     try {
-      setDone(await createSubmission(claim, { purpose: purpose.trim(), account: account || null, verify_result: result }))
+      setDone(await createSubmission(claim, { purpose: purpose.trim(), account: account || null, verify_result: result, ...(resubmit?.of ? { resubmit_of: resubmit.of } : {}) }))
     } catch (e) {
       setError(e.message)
     } finally {
@@ -62,6 +63,7 @@ export default function SubmitPanel({ claim, result, user, onNavigate }) {
   return (
     <div className="card submit-panel">
       <h3>검토 요청 (제출)</h3>
+      {resubmit?.of && <div className="notice">반려된 {resubmit.of} 건을 고쳐서 다시 제출하는 정산이에요. 관리자 화면에도 다시 낸 건으로 표시됩니다.</div>}
       <p className="hint">판정 결과와 함께 회계 관리자 검토 대기함으로 보냅니다. 계정과목은 관리자 화면에서 AI 제안과 비교됩니다.</p>
       <div className="submit-fields">
         <label className="field">

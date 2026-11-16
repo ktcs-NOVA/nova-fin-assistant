@@ -85,6 +85,16 @@ def _default_purpose(trip_type: str, trip: dict, items: list[dict]) -> str:
     return f"{first} ({trip_type})" if first != trip_type else f"{trip_type} 지출 정산"
 
 
+def _resubmit_target(db: Session, user: User, code) -> str | None:
+    """고쳐서 다시 내는 건이면 원래 번호를 확인: 내가 낸, 반려된 건이어야 합니다."""
+    if not code:
+        return None
+    old = db.scalar(select(Submission).where(Submission.code == str(code), Submission.user_id == user.id))
+    if old is None or old.status != STATUS_REJECTED:
+        raise AppError("다시 제출하려는 건을 찾을 수 없거나 반려된 건이 아닙니다.")
+    return old.code
+
+
 def create_submission(db: Session, user: User, req: dict) -> Submission:
     items = req.get("items") or []
     if not items:
@@ -94,7 +104,7 @@ def create_submission(db: Session, user: User, req: dict) -> Submission:
     now = datetime.now(KST)
 
     # AI 사전검증: 프론트가 보낸 결과가 있으면 그대로, 없으면 다시 돌림
-    claim = {k: v for k, v in req.items() if k not in {"purpose", "account", "verify_result"}}
+    claim = {k: v for k, v in req.items() if k not in {"purpose", "account", "verify_result", "resubmit_of"}}
     verify = req.get("verify_result") or verify_service.verify(claim)
 
     start, end = _parse_date(trip_in.get("start_date")), _parse_date(trip_in.get("end_date"))
@@ -140,6 +150,7 @@ def create_submission(db: Session, user: User, req: dict) -> Submission:
         purpose=(req.get("purpose") or _default_purpose(trip_type, trip_in, items))[:200],
         total_amount=sum(e.amount for e in expenses),
         account=(req.get("account") or None),
+        resubmit_of=_resubmit_target(db, user, req.get("resubmit_of")),
         status=STATUS_PENDING,
         step=STEP_ADMIN_REVIEW,
         verdict=verify.get("overall"),
@@ -248,7 +259,7 @@ def to_view(sub: Submission) -> dict:
             {
                 "field": e.field, "amount": e.amount, "date": e.used_date.isoformat(),
                 "time": e.used_time.strftime("%H:%M") if e.used_time else None,
-                "payment": e.payment, "merchant": e.merchant, "note": e.note,
+                "payment": e.payment, "merchant": e.merchant, "merchant_type": e.merchant_type, "note": e.note,
                 "attendees": e.attendees or [],  # 회의비 참석자 (회의 목적은 extra.meeting_purpose)
                 **(e.extra or {}),
             }
@@ -257,8 +268,11 @@ def to_view(sub: Submission) -> dict:
         # 출장 건이면 기간·지역 (직원 화면에서 출장보고서·출장원을 이어 쓸 때 채움)
         "trip": {
             "start_date": sub.trip.start_date.isoformat(), "end_date": sub.trip.end_date.isoformat(),
-            "region": sub.trip.region, "destination": sub.trip.destination,
+            "region": sub.trip.region, "destination": sub.trip.destination, "vehicle": sub.trip.vehicle,
         } if sub.trip else None,
+        # 반려 사유를 직원 화면에 항목별로 (반려가 아니면 빈 목록) · 고쳐서 다시 낸 건이면 원래 번호
+        "decision_issues": decision_issues(sub, last_review),
+        "resubmit_of": sub.resubmit_of,
         "decision_message": last_review.message if last_review else None,
         "decided_at": last_review.created_at.astimezone(KST).date().isoformat() if last_review and last_review.created_at else None,
     }
@@ -267,7 +281,37 @@ def to_view(sub: Submission) -> dict:
 # ---------------------------------------------------------------------------
 # 관리자 승인/반려
 # ---------------------------------------------------------------------------
-def decide(db: Session, admin: User, code: str, decision: str, message: str) -> Submission:
+_ISSUE_KEYS = ("field", "verdict", "message", "basis", "fix")
+
+
+def _clean_issues(issues: list[dict]) -> list[dict]:
+    """반려 사유 항목에서 직원에게 보여 줄 다섯 가지만, 글자로 남깁니다."""
+    out = []
+    for it in issues[:30]:
+        row = {k: str(it.get(k)).strip()[:500] for k in _ISSUE_KEYS if it.get(k)}
+        if row.get("field") or row.get("message"):
+            out.append(row)
+    return out
+
+
+def decision_issues(sub: Submission, review: Review | None) -> list[dict]:
+    """직원 화면에 항목별로 보여 줄 반려 사유. 예전 기록(항목명·근거만 저장)은 AI 판정 결과에서 설명·수정 방법을 채웁니다."""
+    if review is None or review.decision != STATUS_REJECTED:
+        return []
+    found = (sub.verify_result or {}).get("items", [])
+    out = []
+    for src in review.sources or []:
+        row = dict(src)
+        if not row.get("message"):
+            match = next((it for it in found if it.get("field") == row.get("field") and it.get("basis") == row.get("basis")), None)
+            for k in ("verdict", "message", "fix"):
+                if match and match.get(k):
+                    row.setdefault(k, match[k])
+        out.append(row)
+    return out
+
+
+def decide(db: Session, admin: User, code: str, decision: str, message: str, issues: list[dict] | None = None) -> Submission:
     if decision not in (STATUS_APPROVED, STATUS_REJECTED):
         raise AppError(f"decision 은 '{STATUS_APPROVED}' 또는 '{STATUS_REJECTED}' 여야 합니다.")
     sub = get_submission(db, code)
@@ -277,14 +321,16 @@ def decide(db: Session, admin: User, code: str, decision: str, message: str) -> 
     if decision == STATUS_REJECTED and not message:
         raise AppError("반려 사유(message)를 적어 주세요.")
 
-    issues = [it for it in (sub.verify_result or {}).get("items", []) if it.get("verdict") != VERDICT_OK]
+    # 반려 사유 항목: 관리자가 고른 것이 오면 그것을, 안 오면(예전 화면) AI 판정의 문제 항목 전체를 기록
+    if issues is None:
+        issues = [it for it in (sub.verify_result or {}).get("items", []) if it.get("verdict") != VERDICT_OK]
     db.add(
         Review(
             submission=sub,
             reviewer_id=admin.id,
             decision=decision,
             message=message or None,
-            sources=[{"field": it.get("field"), "basis": it.get("basis")} for it in issues] or None,
+            sources=_clean_issues(issues) or None,
         )
     )
     sub.status = decision

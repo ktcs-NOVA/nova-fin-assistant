@@ -37,6 +37,7 @@ class SubmissionCreate(BaseModel):
     purpose: str | None = None  # 건명. 없으면 자동 생성
     account: str | None = None  # 직원이 적은 계정과목 (M-05)
     verify_result: dict[str, Any] | None = None  # 이미 받은 /api/verify 응답. 없으면 서버가 다시 검증
+    resubmit_of: str | None = None  # 반려된 내 정산 건을 고쳐 다시 내는 것이면 그 건의 번호
 
     @field_validator("items")
     @classmethod
@@ -79,6 +80,9 @@ class SubmissionList(BaseModel):
 class DecisionRequest(BaseModel):
     decision: str  # 승인 / 반려
     message: str = ""
+    # 반려할 때 관리자가 고른 사유 항목 [{ field, verdict, message, basis, fix }] — 직원 화면에 항목별로 보여 줌.
+    # 안 보내면(None) 예전처럼 AI 판정의 문제 항목 전체를 사유로 기록합니다.
+    issues: list[dict[str, Any]] | None = None
 
 
 class RejectDraftRequest(BaseModel):

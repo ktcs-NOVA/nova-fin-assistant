@@ -30,6 +30,8 @@ class Submission(TimestampMixin, Base):
     purpose: Mapped[str] = mapped_column(String(200))
     total_amount: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     account: Mapped[str | None] = mapped_column(String(30))  # 직원이 결의서에 적은 계정과목 (M-05 비교용)
+    # 반려된 건을 고쳐 다시 낸 것이면 그 반려 건의 번호 (S-2026-175)
+    resubmit_of: Mapped[str | None] = mapped_column(String(20), index=True)
 
     status: Mapped[str] = mapped_column(String(10), default="검토 대기", server_default="검토 대기")
     step: Mapped[int | None] = mapped_column(Integer)  # 상단 처리 단계 표시용
