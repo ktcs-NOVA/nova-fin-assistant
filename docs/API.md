@@ -446,6 +446,11 @@ curl -s localhost:8000/api/checklists -H 'Authorization: Bearer <token>'
 - 관리자 응답: `{ expected: [종류], missing: [종류], documents: [{ id, kind, title, writer, sent_at, draft, form }] }`.
   `expected` 는 정산 유형별로 받아야 하는 서류입니다 (출장: 지출결과서 · 출장보고서 / 회의비: 지출결과서 · 회의록 / 그 밖: 지출결과서).
   보내지 않은 서류는 관리자에게 보이지 않습니다.
+- (2026-11-16) **반려 사유를 직원에게 항목별로 · 고쳐서 다시 제출**
+  - `POST /api/admin/submissions/{code}/decision` 요청에 `issues: [{ field, verdict, message, basis, fix }]` 를 실을 수 있습니다 (반려할 때 관리자가 고른 사유 항목). 안 보내면 예전처럼 AI 판정의 문제 항목 전체가 기록됩니다.
+  - 제출 건 응답에 `decision_issues`(반려 사유 항목, 반려가 아니면 `[]`), `resubmit_of`(고쳐서 다시 낸 건이면 원래 반려 건 번호), `resubmitted_as`(이 반려 건을 고쳐 다시 낸 새 번호, 목록·상세 응답에만)가 추가됐습니다.
+  - `POST /api/submissions` 요청에 `resubmit_of: "S-2026-175"` 를 실으면 그 반려 건의 재제출로 기록됩니다. 내가 낸 반려 건이 아니면 400.
+  - 응답의 `expenses[]` 에 `merchant_type`, `trip` 에 `vehicle` 이 추가됐습니다 (다시 제출할 때 그대로 이어받기 위함).
 - (2026-11-16) 제출 건 응답(`/api/submissions`, `/api/admin/submissions`, `/api/admin/submissions/{code}`)에 서류 상태 `docs: { expected: [종류], sent: [종류], missing: [종류] }` 가 함께 옵니다.
   관리자 목록 · 홈의 "서류 1/2 · 서류 미제출" 표시가 이 값을 씁니다. `sent` 는 직원이 보내기까지 마친 서류만 셉니다.
 - **영수증 사진** (2026-11-16): 로그인한 상태로 `POST /api/receipt` 를 부르면 사진을 보관하고 응답에 `receipt_id` 를 함께 돌려줍니다 (로그인 없이 부르면 보관하지 않음).

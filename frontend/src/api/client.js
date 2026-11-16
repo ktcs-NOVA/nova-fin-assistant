@@ -248,9 +248,10 @@ export function getSubmission(id) {
 }
 
 /** 승인/반려 저장. decision: '승인' | '반려' */
-export function decideSubmission(id, decision, message = '') {
+export function decideSubmission(id, decision, message = '', issues) {
   if (USE_MOCK) return mock.decideSubmission(id, decision, message)
-  return request('POST', `/api/admin/submissions/${encodeURIComponent(id)}/decision`, { decision, message })
+  // issues: 반려할 때 관리자가 고른 사유 항목 [{ field, verdict, message, basis, fix }] — 직원 화면에 항목별로 보임
+  return request('POST', `/api/admin/submissions/${encodeURIComponent(id)}/decision`, { decision, message, ...(issues ? { issues } : {}) })
 }
 
 /** 반려 메시지 초안 (백엔드 RAG 생성): { message, sources[] }

@@ -6,7 +6,8 @@
 //   청구 항목 (행 추가): 항목명, 금액, 사용일, 메모 + 숙박비면 박수·조식 포함, 철도·항공이면 좌석 등급
 // 요청 JSON 모양은 docs/API.md 3-2 그대로이고, 선택 칸은 값이 있을 때만 보냅니다.
 //
-// prefill: 다른 화면에서 "청구 검증으로 보내기"로 넘어온 초기값 ({ from, trip_type, grade?, trip?, items }).
+// prefill: 다른 화면에서 "청구 검증으로 보내기"로 넘어온 초기값 ({ from, trip_type, grade?, trip?, items, meeting?, resubmit? }).
+//   resubmit 은 반려된 건을 고쳐 다시 낼 때만: { of: 원래 제출 번호, purpose, account } (utils/resubmit.js)
 //   - 영수증 등록(U-06, from: 'receipt'): 항목에 가맹점·업종·사용 시각·결제수단(법인카드)이 함께 오고, 화면엔 읽기 전용으로 보여 주며 요청에 그대로 실립니다.
 //   - 출장비 계산(U-05, from: 'travel'): 직급·출장 정보와 계산된 항목(일비·식비·숙박비 상한·운임)이 옵니다. 숙박비는 상한이므로 실제 금액으로 고쳐 검증합니다.
 
@@ -219,7 +220,9 @@ export default function VerifyPage({ prefill, user, onNavigate }) {
             <h2>청구 기본 정보</h2>
             <button type="button" className="btn" onClick={loadSample}>출장 예시 불러오기</button>
           </div>
-          {receiptCount > 0 && <p className="notice wiz-banner">영수증 등록에서 {receiptCount}건을 넘겨받았어요. 결제수단은 법인카드로 채웠어요.</p>}
+          {prefill?.resubmit?.of ? (
+            <p className="notice wiz-banner">반려된 {prefill.resubmit.of} 건의 내용을 그대로 불러왔어요. 반려 사유에 맞게 고친 뒤 다시 검증하고 제출해 주세요.</p>
+          ) : receiptCount > 0 && <p className="notice wiz-banner">영수증 등록에서 {receiptCount}건을 넘겨받았어요. 결제수단은 법인카드로 채웠어요.</p>}
           <div className="form-grid">
             <label className="field">
               <span className="field-label">청구 유형 *</span>
@@ -420,7 +423,7 @@ export default function VerifyPage({ prefill, user, onNavigate }) {
       {/* ---------- 제출 ---------- */}
       {stepId === 'submit' && result && claim && (
         <div className="wiz-card">
-          <SubmitPanel claim={claim} result={result} user={user} onNavigate={onNavigate} />
+          <SubmitPanel claim={claim} result={result} user={user} onNavigate={onNavigate} resubmit={prefill?.resubmit} />
           <div className="wiz-nav">
             <button type="button" className="btn" onClick={back}>이전</button>
             <button type="button" className="btn" onClick={() => onNavigate?.('type')}>새 정산 시작</button>

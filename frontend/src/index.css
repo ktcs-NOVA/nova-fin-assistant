@@ -907,6 +907,21 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .form-actions { display: grid; gap: 12px; }
 .doc-send { margin-top: 12px; }
 
+/* 내 정산 현황: 반려 건 (사유를 항목별로 펼쳐 보여 주는 카드) */
+.reject-banner { display: flex; align-items: center; gap: 8px; padding: 11px 14px; margin-bottom: 12px; border: 1px solid var(--bad); border-radius: 10px; background: var(--bad-soft); color: var(--bad); }
+.recent-list li.rejected-card { display: block; border-color: var(--bad); }
+.recent-list li.rejected-card.settled { border-color: var(--line); }
+.rejected-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.rejected-again { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 10px; padding: 8px 12px; border-radius: 8px; background: var(--good-soft); color: var(--good); }
+.rejected-body { display: grid; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+.rejected-issues { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.rejected-issues li { display: grid; gap: 4px; justify-items: start; padding: 2px 0 2px 12px; border: 0; border-left: 3px solid var(--warn); border-radius: 0; background: none; }
+.rejected-issues li.fix { border-left-color: var(--bad); }
+.rejected-issues p { margin: 0; line-height: 1.55; }
+.rejected-basis { font-size: 13px; text-align: left; }
+.rejected-fix { font-size: 13.5px; padding: 6px 10px; border-radius: 8px; background: var(--good-soft); color: var(--good); }
+.rejected-actions { justify-content: flex-end; flex-wrap: wrap; }
+
 /* 지출내역 엑셀 받기 버튼: 제목 줄·도구 줄의 오른쪽 끝 */
 .ledger-btn { margin-left: auto; display: inline-flex; align-items: center; gap: 10px; }
 .save-error { font-size: 13px; color: var(--bad); }

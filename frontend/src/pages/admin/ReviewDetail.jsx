@@ -77,7 +77,11 @@ export default function ReviewDetail({ id, onBack, onDecided }) {
     setSaving(true)
     setError('')
     try {
-      await decideSubmission(sub.id, decision, draft)
+      // 반려면 고른 사유 항목을 함께 저장 → 직원의 "내 정산 현황"에 항목별(문제·근거·수정 방법)로 보임
+      const issues = decision === STATUS.REJECTED
+        ? problems.filter((it) => picked.includes(it.field)).map(({ field, verdict, message, basis, fix }) => ({ field, verdict, message, basis, fix }))
+        : undefined
+      await decideSubmission(sub.id, decision, draft, issues)
       onDecided()
     } catch (e) {
       setError(e.message)
@@ -112,6 +116,7 @@ export default function ReviewDetail({ id, onBack, onDecided }) {
           <dt>금액</dt><dd>{won(sub.amount)}</dd>
           <dt>계정과목</dt><dd>{sub.account || <span className="muted-text">미입력</span>}</dd>
           <dt>제출일</dt><dd>{sub.submitted_at}</dd>
+          {sub.resubmit_of && (<><dt>다시 제출</dt><dd>반려한 <b>{sub.resubmit_of}</b> 건을 직원이 고쳐서 다시 낸 정산</dd></>)}
         </dl>
       </div>
 
