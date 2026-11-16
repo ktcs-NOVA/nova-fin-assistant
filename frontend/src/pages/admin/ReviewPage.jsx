@@ -10,6 +10,7 @@ import ReviewStats from '../../components/ReviewStats.jsx'
 import VerdictBadge from '../../components/VerdictBadge.jsx'
 import StatusTag from '../../components/StatusTag.jsx'
 import ReviewDetail from './ReviewDetail.jsx'
+import LedgerButton from '../../components/LedgerButton.jsx'
 import { useReviewQueue, countQueue, needsCheck, problemFields, byUrgency, byRecent, isFresh, submittedAgo, VIEW } from './reviewQueue.js'
 
 const NEEDS = '확인 필요'
@@ -104,6 +105,8 @@ export default function ReviewPage({ param }) {
           </select>
         </label>
         <span className="hint">{visible.length}건 표시</span>
+        {/* 전체 제출 건의 지출내역 엑셀 (반려한 건 제외, 필터와 무관) */}
+        <LedgerButton all />
       </div>
 
       {error && <div className="error">{error}</div>}

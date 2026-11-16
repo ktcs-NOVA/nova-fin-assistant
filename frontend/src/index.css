@@ -907,6 +907,10 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .form-actions { display: grid; gap: 12px; }
 .doc-send { margin-top: 12px; }
 
+/* 지출내역 엑셀 받기 버튼: 제목 줄·도구 줄의 오른쪽 끝 */
+.ledger-btn { margin-left: auto; display: inline-flex; align-items: center; gap: 10px; }
+.save-error { font-size: 13px; color: var(--bad); }
+
 /* 관리자 상세: 첨부 서류 */
 .attached-docs { display: grid; gap: 10px; }
 .attached-need { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 18px; }

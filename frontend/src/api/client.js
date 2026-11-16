@@ -142,6 +142,32 @@ export async function getReceiptImageUrl(id) {
   return URL.createObjectURL(await res.blob())
 }
 
+/** 지출내역 엑셀(.xlsx)을 받아 파일로 내려받게 합니다. 직원은 내 정산 건, 관리자(all=true)는 전체 제출 건. 반려한 건은 빠집니다.
+ *  파일 이름: 지출내역_YYYYMMDD.xlsx */
+export async function downloadLedger({ all = false } = {}) {
+  if (USE_MOCK) return mock.unsupported('지출내역 엑셀')
+  const token = loadSession()?.token
+  let res
+  try {
+    res = await fetch(`${API_BASE}${all ? '/api/admin/ledger' : '/api/ledger'}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  } catch {
+    throw new Error(`백엔드(${API_BASE})에 연결할 수 없습니다. 서버가 켜져 있는지 확인해 주세요.`)
+  }
+  if (!res.ok) {
+    let message = `지출내역 엑셀을 만들지 못했습니다 (HTTP ${res.status})`
+    try { message = (await res.json())?.error ?? message } catch { /* 본문이 JSON 이 아니면 기본 문구 */ }
+    throw new Error(message)
+  }
+  const url = URL.createObjectURL(await res.blob())
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `지출내역_${new Date().toISOString().slice(0, 10).replaceAll('-', '')}.xlsx`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
 /** 관리자: 정산 건에 붙어 온 서류 { expected: [종류], missing: [종류], documents: [{ id, kind, title, writer, sent_at, draft, form }] } */
 export function listSubmissionDocuments(code) {
   if (USE_MOCK) return Promise.resolve({ expected: [], missing: [], documents: [] })

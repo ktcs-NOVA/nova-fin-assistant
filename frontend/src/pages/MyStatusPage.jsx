@@ -5,6 +5,7 @@ import { listMySubmissions } from '../api/client.js'
 import VerdictBadge from '../components/VerdictBadge.jsx'
 import StatusTag from '../components/StatusTag.jsx'
 import NextDocs from '../components/NextDocs.jsx'
+import LedgerButton from '../components/LedgerButton.jsx'
 
 const won = (n) => Number(n).toLocaleString('ko-KR') + '원'
 
@@ -25,6 +26,8 @@ export default function MyStatusPage({ user, onNavigate }) {
       <div className="page-title">
         <h1>내 정산 현황</h1>
         <span className="desc">제출한 정산과 검토 상태</span>
+        {/* 내 정산 건의 지출 항목을 한 줄씩 정리한 엑셀 (반려된 건 제외) */}
+        {rows?.length > 0 && <LedgerButton />}
       </div>
       {error && <div className="empty" role="alert">{error}</div>}
       {!error && rows === null && <div className="empty">불러오는 중…</div>}
