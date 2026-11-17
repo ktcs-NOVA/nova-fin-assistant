@@ -4,12 +4,14 @@
 
 const LABEL = { 지출결과서: '지출 결과서' }
 
-export default function DocsBadge({ docs }) {
+// quiet: 미제출을 알약 대신 옅은 글자로 (목록에서 줄마다 같은 표시가 반복될 때)
+export default function DocsBadge({ docs, quiet = false }) {
   if (!docs?.expected?.length) return null   // 목업처럼 서류 상태가 없는 응답
   const total = docs.expected.length
   const got = total - docs.missing.length
   const tone = got === total ? 'good' : got > 0 ? 'warn' : 'muted'
   const names = (list) => list.map((k) => LABEL[k] ?? k).join(', ')
   const title = docs.missing.length ? `아직 안 온 서류: ${names(docs.missing)}` : `받은 서류: ${names(docs.expected)}`
+  if (quiet && got === 0) return <span className="muted-text" title={title}>미제출</span>
   return <span className={`badge ${tone} docs-badge`} title={title}>{got === 0 ? '서류 미제출' : `서류 ${got}/${total}`}</span>
 }

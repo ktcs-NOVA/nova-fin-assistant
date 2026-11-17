@@ -77,6 +77,31 @@ export function problemFields(r, acctIssue) {
   ]
 }
 
+/** 확인할 것을 한 줄씩: [{ field, text }] — text 는 "항목 · 왜 걸렸는지" (AI 판정의 설명 그대로, 칸에서 말줄임) */
+export function problemReasons(r, acctIssue) {
+  return [
+    ...(r.items ?? []).filter((it) => it.verdict !== VERDICT.OK).map((it) => ({ field: it.field, text: `${it.field} · ${it.message ?? ''}` })),
+    ...(acctIssue[r.id] ? [{ field: ACCOUNT_FIELD, text: `${ACCOUNT_FIELD} · ${r.account ? 'AI 제안과 다름' : '미입력'}` }] : []),
+  ]
+}
+
+// 확인 필요의 네 종류 (홈·대기함의 종류별 단추). 건수는 countQueue 의 같은 이름 값
+export const KIND = { FIX: 'fix', CHECK: 'check', ACCOUNT: 'account', REJECTED: 'rejected' }
+export const KINDS = [
+  { id: KIND.FIX, label: '보완 필요' },
+  { id: KIND.CHECK, label: '담당자 확인' },
+  { id: KIND.ACCOUNT, label: '계정과목' },
+  { id: KIND.REJECTED, label: '반려' },
+]
+/** 이 건이 그 종류에 드는지 (countQueue 와 같은 기준) */
+export function isKind(r, kind, acctIssue) {
+  if (kind === KIND.REJECTED) return r.status === STATUS.REJECTED
+  if (r.status !== STATUS.PENDING) return false
+  if (kind === KIND.FIX) return r.verdict === VERDICT.FIX
+  if (kind === KIND.CHECK) return r.verdict === VERDICT.CHECK
+  return r.verdict === VERDICT.OK && !!acctIssue[r.id]   // 계정과목: AI 판정은 통과했지만 과목이 다르거나 비어 있음
+}
+
 const VERDICT_ORDER = { [VERDICT.FIX]: 0, [VERDICT.CHECK]: 1, [VERDICT.OK]: 2 }
 const STATUS_ORDER = { [STATUS.PENDING]: 0, [STATUS.REJECTED]: 1, [STATUS.APPROVED]: 2 }
 
