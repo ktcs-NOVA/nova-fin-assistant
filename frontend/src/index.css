@@ -766,6 +766,36 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
   .wsteps { padding: 12px 14px; }
   .wsteps li + li::before { margin: 0 6px; }
 }
+/* 건너뛸 수 있는 단계 표시 (관리자 검토): 단계를 누를 수 있고, 확인할 것이 있는 단계는 빨간 ! */
+.wstep-btn { display: flex; align-items: center; gap: 8px; border: 0; background: none; padding: 0; font: inherit; color: inherit; cursor: pointer; border-radius: 999px; }
+.wstep-btn:focus-visible { outline: 3px solid var(--brand); outline-offset: 3px; }
+.wsteps.pickable li.issue, .wsteps.pickable li.has-issue { color: var(--bad); }
+.wsteps.pickable li.issue .wstep-no { background: var(--bad); border-color: var(--bad); color: #fff; }
+.wsteps.pickable li.now.has-issue .wstep-no { border-color: var(--bad); color: var(--bad); }
+.wsteps.pickable li.done { color: var(--good); }
+.wsteps.pickable li.done .wstep-no { background: var(--good); border-color: var(--good); color: #fff; }
+.wsteps.pickable li.done + li::before, .wsteps.pickable li.now::before { background: var(--line); }
+/* 관리자 검토 단계 화면 */
+.review-wizard .toolbar { margin-bottom: 0; }
+.review-nav { margin-left: auto; display: inline-flex; gap: 8px; }
+.review-head { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 16px 20px; }
+.review-head h1 { margin: 0 0 2px; font-size: 20px; }
+.wiz-step { display: grid; gap: 14px; }
+.wiz-step-head h2 { margin: 0 0 4px; font-size: 19px; }
+.wiz-step-head .hint { margin: 0; }
+.review-summary { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.review-wizard .wiz-more:not([open]) { gap: 0; padding: 8px 16px; }
+.review-wizard .review-panel textarea { min-height: 150px; }
+.review-summary button { display: grid; grid-template-columns: 110px 1fr; gap: 12px; align-items: baseline; width: 100%; padding: 12px 16px; border: 1px solid var(--line); border-left: 4px solid var(--good); border-radius: 12px; background: var(--panel); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.review-summary button.issue { border-left-color: var(--bad); }
+.review-summary button.issue span { color: var(--bad); font-weight: 600; }
+.review-summary button.pending { border-left-color: var(--line); }
+.review-summary button.ok span { color: var(--good); }
+.review-summary button:hover { background: var(--brand-soft); }
+@media (max-width: 640px) {
+  .review-head { flex-direction: column; align-items: flex-start; }
+  .review-summary button { grid-template-columns: 1fr; gap: 2px; }
+}
 .wiz-card { padding: 24px; display: grid; gap: 14px; align-content: start; }
 .wiz-card h2 { margin: 0; }
 .wiz-banner { margin: 0; font-weight: 600; background: var(--brand-soft); color: var(--brand); border-color: transparent; flex-direction: row; align-items: center; }
