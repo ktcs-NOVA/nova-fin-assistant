@@ -1,7 +1,8 @@
 // M-01 정산 검토 대기함 (목록)
 // 확인이 필요한 건(검토 대기 중 보완 필요 → 담당자 확인 필요 → 계정과목 불일치, 그다음 반려한 건)이 위로 오고,
 // 판정·상태로 거를 수 있습니다. 행을 누르면 상세(ReviewDetail)로 들어갑니다.
-// "증빙 서류" 칸에는 직원이 보낸 서류가 몇 종 왔는지(서류 1/2 · 미제출) 보이고, 서류 내용은 상세에서 펼쳐 봅니다.
+// 표는 칸 8개: "확인할 것"에 왜 걸렸는지 한 줄, "서류"에 직원이 보낸 서류가 몇 종 왔는지. 서류 내용은 상세에서 봅니다.
+// 숫자 카드 아래 단추로 확인 필요를 종류별(보완 필요 · 담당자 확인 · 계정과목 · 반려)로 걸러 볼 수 있습니다.
 // 정렬을 "최근 제출 순"으로 바꾸면 방금 들어온 건이 맨 위에 옵니다. 1시간 안에 들어온 건은 "새 제출" 표시가 붙습니다.
 // 문제 항목에는 AI 판정 항목 외에 계정과목 불일치(M-05)도 포함해, 상세·반려 사유와 개수가 맞도록 합니다.
 
@@ -13,7 +14,8 @@ import StatusTag from '../../components/StatusTag.jsx'
 import ReviewDetail from './ReviewDetail.jsx'
 import LedgerButton from '../../components/LedgerButton.jsx'
 import DocsBadge from '../../components/DocsBadge.jsx'
-import { useReviewQueue, countQueue, needsCheck, problemFields, byUrgency, byRecent, isFresh, submittedAgo, VIEW } from './reviewQueue.js'
+import NeedsKinds from '../../components/NeedsKinds.jsx'
+import { useReviewQueue, countQueue, needsCheck, problemReasons, isKind, byUrgency, byRecent, isFresh, submittedAgo, VIEW, KIND } from './reviewQueue.js'
 
 const NEEDS = '확인 필요'
 const ALL = '전체'
@@ -30,11 +32,20 @@ const VIEW_FILTERS = {
   [VIEW.NEEDS]: { verdict: NEEDS, status: ALL },
 }
 
-// param: 관리자 홈에서 넘어올 때 { view, status?, id?, sort? } — 볼 방식, 바로 열 건, 정렬
+// 종류별 단추(보완 필요 · 담당자 확인 · 계정과목 · 반려) ↔ 필터 두 개
+const ACCOUNT = '계정과목'
+const KIND_FILTERS = {
+  [KIND.FIX]: { verdict: VERDICT.FIX, status: STATUS.PENDING },
+  [KIND.CHECK]: { verdict: VERDICT.CHECK, status: STATUS.PENDING },
+  [KIND.ACCOUNT]: { verdict: ACCOUNT, status: STATUS.PENDING },
+  [KIND.REJECTED]: { verdict: ALL, status: STATUS.REJECTED },
+}
+
+// param: 관리자 홈에서 넘어올 때 { view, kind?, status?, id?, sort? } — 볼 방식(또는 종류), 바로 열 건, 정렬
 export default function ReviewPage({ param }) {
   const { rows: loaded, acctIssue, error, reload } = useReviewQueue()
   const loading = loaded === null
-  const first = VIEW_FILTERS[param?.view] ?? VIEW_FILTERS[VIEW.NEEDS]
+  const first = KIND_FILTERS[param?.kind] ?? VIEW_FILTERS[param?.view] ?? VIEW_FILTERS[VIEW.NEEDS]
   const [verdictFilter, setVerdictFilter] = useState(first.verdict) // '전체' | '확인 필요' | 각 판정
   const [statusFilter, setStatusFilter] = useState(param?.status ?? first.status)
   const [selectedId, setSelectedId] = useState(param?.id ?? null)
@@ -43,9 +54,17 @@ export default function ReviewPage({ param }) {
   const counts = useMemo(() => (loaded ? countQueue(loaded, acctIssue) : null), [loaded, acctIssue])
   const activeView = Object.keys(VIEW_FILTERS).find((v) => VIEW_FILTERS[v].verdict === verdictFilter && VIEW_FILTERS[v].status === statusFilter)
 
+  const activeKind = Object.keys(KIND_FILTERS).find((k) => KIND_FILTERS[k].verdict === verdictFilter && KIND_FILTERS[k].status === statusFilter)
+
   function pickView(view) {
     setVerdictFilter(VIEW_FILTERS[view].verdict)
     setStatusFilter(VIEW_FILTERS[view].status)
+  }
+  // 종류 단추: 다시 누르면 풀려서 확인 필요 전체로
+  function pickKind(kind) {
+    const f = KIND_FILTERS[kind] ?? VIEW_FILTERS[VIEW.NEEDS]
+    setVerdictFilter(f.verdict)
+    setStatusFilter(f.status)
   }
 
   const visible = useMemo(() => (loaded ?? [])
@@ -53,6 +72,7 @@ export default function ReviewPage({ param }) {
     .filter((r) => {
       if (verdictFilter === ALL) return true
       if (verdictFilter === NEEDS) return needsCheck(r, acctIssue)
+      if (verdictFilter === ACCOUNT) return isKind(r, KIND.ACCOUNT, acctIssue)
       return r.verdict === verdictFilter
     })
     .sort(SORTERS[sort]),
@@ -84,6 +104,7 @@ export default function ReviewPage({ param }) {
 
       {/* 요약 숫자: 누르면 그 보기로 */}
       <ReviewStats counts={counts} active={activeView} onPick={pickView} />
+      <NeedsKinds counts={counts} active={activeKind} onPick={pickKind} />
 
       {/* 필터 */}
       <div className="toolbar">
@@ -95,6 +116,7 @@ export default function ReviewPage({ param }) {
             <option>{VERDICT.FIX}</option>
             <option>{VERDICT.CHECK}</option>
             <option>{VERDICT.OK}</option>
+            <option>{ACCOUNT}</option>
           </select>
         </label>
         <label className="field-inline">
@@ -126,30 +148,35 @@ export default function ReviewPage({ param }) {
         <div className="empty">조건에 맞는 제출 건이 없습니다.</div>
       ) : (
         <div className="table-wrap">
-          <table className="table">
+          {/* 칸 8개: 노트북 너비에서 가로로 넘치지 않게 너비를 고정하고, 긴 글은 말줄임 (마우스를 올리면 전체) */}
+          <table className="table review-table">
+            <colgroup>
+              <col className="c-date" /><col className="c-who" /><col className="c-type" /><col className="c-what" />
+              <col className="c-amount" /><col className="c-verdict" /><col className="c-reason" /><col className="c-docs" />
+            </colgroup>
             <thead>
               <tr>
-                <th>제출일</th><th>제출자</th><th>부서</th><th>유형</th><th>내용</th>
-                <th className="num">금액</th><th>AI 판정</th><th>증빙 서류</th><th>문제 항목</th><th>상태</th>
+                <th>제출일</th><th>제출자</th><th>유형</th><th>내용</th>
+                <th className="num">금액</th><th>판정</th><th>확인할 것</th><th>서류</th>
               </tr>
             </thead>
             <tbody>
               {visible.map((r) => {
-                const problems = problemFields(r, acctIssue)
+                const reasons = problemReasons(r, acctIssue)
+                const all = reasons.map((x) => x.text).join('\n')
                 return (
                   <tr key={r.id} className={`clickable${isFresh(r) ? ' fresh' : ''}`} onClick={() => setSelectedId(r.id)}>
                     <td className="nowrap">{isFresh(r) ? <><span className="badge new">새 제출</span> {submittedAgo(r)}</> : r.submitted_at.slice(5)}</td>
-                    <td>{r.submitter}</td>
-                    <td>{r.dept}</td>
-                    <td>{r.type}</td>
-                    <td className="ellipsis">{r.purpose}</td>
+                    <td className="ellipsis" title={`${r.submitter} · ${r.dept}`}>{r.submitter} <span className="muted-text">{r.dept}</span></td>
+                    <td className="ellipsis">{r.type}</td>
+                    <td className="ellipsis" title={r.purpose}>{r.purpose}</td>
                     <td className="num">{won(r.amount)}</td>
-                    <td><VerdictBadge verdict={r.verdict} /></td>
-                    <td><DocsBadge docs={r.docs} /></td>
-                    <td className="ellipsis muted-text">
-                      {problems.length ? problems.join(', ') : '없음'}
+                    {/* 검토 대기면 AI 판정, 처리한 건이면 승인·반려 */}
+                    <td>{r.status === STATUS.PENDING ? <VerdictBadge verdict={r.verdict} /> : <StatusTag status={r.status} />}</td>
+                    <td className={`ellipsis${reasons.length ? ' reason' : ' muted-text'}`} title={all}>
+                      {reasons.length ? <>{reasons[0].text}{reasons.length > 1 && <span className="more"> 외 {reasons.length - 1}건</span>}</> : '없음'}
                     </td>
-                    <td><StatusTag status={r.status} /></td>
+                    <td><DocsBadge quiet docs={r.docs} /></td>
                   </tr>
                 )
               })}
