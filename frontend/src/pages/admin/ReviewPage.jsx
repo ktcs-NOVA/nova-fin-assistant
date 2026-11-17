@@ -59,11 +59,18 @@ export default function ReviewPage({ param }) {
   [loaded, statusFilter, verdictFilter, acctIssue, sort])
 
   if (selectedId) {
+    // 지금 보이는 목록(필터·정렬 적용) 안에서의 위치 → 상세에서 이전 건·다음 건으로 이동
+    const ids = visible.map((r) => r.id)
+    const at = ids.indexOf(selectedId)
+    const nav = at >= 0 ? { index: at, total: ids.length, prevId: ids[at - 1], nextId: ids[at + 1], onGo: setSelectedId } : null
     return (
       <ReviewDetail
+        key={selectedId}
         id={selectedId}
+        nav={nav}
         onBack={() => setSelectedId(null)}
-        onDecided={() => { setSelectedId(null); reload() }}
+        // 결정하면 목록으로 돌아가지 않고 다음 건으로 (마지막 건이었으면 목록으로)
+        onDecided={() => { setSelectedId(nav?.nextId ?? null); reload() }}
       />
     )
   }
