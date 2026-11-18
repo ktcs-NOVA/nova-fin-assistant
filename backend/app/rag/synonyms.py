@@ -8,8 +8,6 @@
 새 표현은 평가(scripts.eval_qa)에서 놓친 질문을 보고 추가하세요.
 """
 
-import re
-
 SYNONYMS: dict[str, str] = {
     # 법인카드
     "법카": "법인카드",
@@ -94,15 +92,36 @@ SYNONYMS: dict[str, str] = {
     "결재는누가": "전결권자 직원복무",
 }
 
-_SPACES = re.compile(r"\s+")
+
+def _word_starts(question: str) -> tuple[str, set[int]]:
+    """띄어쓰기를 지운 질문과, 그 안에서 각 낱말이 시작하는 위치."""
+    squashed, starts = "", set()
+    for word in question.lower().split():
+        starts.add(len(squashed))
+        squashed += word
+    return squashed, starts
+
+
+def _has_key(squashed: str, starts: set[int], key: str) -> bool:
+    """사전 표현이 낱말 첫머리에서 시작할 때만 맞음으로 봅니다.
+
+    글자 일부만 맞아도 걸리면 '경조사비', '행사 비용', '예방주사 비용'이 '사비'(개인 돈)로 잡혀
+    엉뚱한 규정 용어가 붙습니다. 띄어쓰기는 무시하므로 '내 차' → '내차' 는 그대로 맞습니다.
+    """
+    i = squashed.find(key)
+    while i != -1:
+        if i in starts:
+            return True
+        i = squashed.find(key, i + 1)
+    return False
 
 
 def extra_terms(question: str) -> list[str]:
     """질문에 있는 사전 표현에 대응하는 규정 용어 (질문에 이미 있는 말은 뺌)."""
-    squashed = _SPACES.sub("", question).lower()
+    squashed, starts = _word_starts(question)
     extra: list[str] = []
     for key, terms in SYNONYMS.items():
-        if key in squashed:
+        if _has_key(squashed, starts, key):
             for term in terms.split():
                 if term not in extra and term not in question:
                     extra.append(term)

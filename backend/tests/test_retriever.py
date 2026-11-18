@@ -90,3 +90,16 @@ def test_appendix_labels_from_article_text():
     assert appendix_labels(content) == ["별표 1"]
     assert appendix_labels("국외여비는 별표 3 및 별표 3의2에 따른다") == ["별표 3", "별표 3의2"]
     assert appendix_labels("<별표> 1. 전사 공통 사항") == []  # 전결표 머리는 번호가 없음
+
+
+def test_expand_matches_only_at_word_start():
+    # '사비'(개인 돈)가 낱말 중간에 걸리면 엉뚱한 규정 용어가 붙음
+    assert expand("경조사비는 아무나 낼 수 있어?") == "경조사비는 아무나 낼 수 있어?"
+    assert expand("거래처 행사 비용을 미리 결제해도 돼?") == "거래처 행사 비용을 미리 결제해도 돼?"
+    assert "개인카드" in expand("사비로 먼저 결제했어")
+
+
+def test_fuse_weights_lower_second_ranking():
+    # 같은 순위라도 비중이 낮은 쪽(키워드)만 1위인 조각은 뒤로 밀림
+    assert fuse([1, 2], [2, 1], weights=[1.0, 0.5])[0] == 1
+    assert fuse([1, 2], [2, 1], weights=[0.5, 1.0])[0] == 2

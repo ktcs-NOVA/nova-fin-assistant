@@ -3,6 +3,10 @@
     uv run python -m scripts.eval_qa                    # 검색 + 답변 생성까지
     uv run python -m scripts.eval_qa --retrieval-only   # 검색만 (빠르고 비용 거의 없음)
     uv run python -m scripts.eval_qa --k 10             # 상위 몇 개까지 볼지
+    uv run python -m scripts.eval_qa --file data/eval/qa_holdout.csv   # 과적합 확인용 새 질문
+
+과적합 확인용 질문(qa_holdout.csv)은 사전·프롬프트를 고칠 때 보지 않는 질문입니다.
+여기서 틀린 질문을 보고 사전을 고치면 그 질문은 더 이상 확인용이 아니므로, 고쳤다면 새 질문으로 바꿔 주세요.
 
 평가 질문: data/eval/qa_eval.csv
 - expected    : '규정명 조항', 여러 개면 ; 로 구분, 비우면 근거 없음 질문
@@ -92,12 +96,17 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="U-01 규정 Q&A 평가")
     parser.add_argument("--k", type=int, default=5, help="상위 몇 개까지 볼지 (기본 5)")
     parser.add_argument("--retrieval-only", action="store_true", help="답변 생성 없이 검색만 평가")
+    parser.add_argument(
+        "--file",
+        default=str(EVAL_FILE),
+        help="평가 질문 파일 (기본 qa_eval.csv, 과적합 확인용은 data/eval/qa_holdout.csv)",
+    )
     args = parser.parse_args()
 
     if settings.ai_mock:
         print("⚠ OPENAI_API_KEY 가 없어 목업 모드입니다. 점수가 의미 없습니다.\n")
 
-    with open(EVAL_FILE, encoding="utf-8-sig", newline="") as f:
+    with open(args.file, encoding="utf-8-sig", newline="") as f:
         cases = list(csv.DictReader(f))
 
     rows, by_cat = [], defaultdict(list)
@@ -141,7 +150,9 @@ def main() -> None:
             rows.append(row)
             by_cat[case["category"]].append(row)
             mark = {1: "✅", 0: "❌"}.get(row["hitk"], "—") if expected else "—"
-            print(f"{mark} [{row['category']}] {row['question'][:30]:<30} → {row['top1']} ({row['top1_score']})")
+            print(
+                f"{mark} [{row['category']}] {row['question'][:30]:<30} → {row['top1']} ({row['top1_score']})"
+            )
 
     RESULT_DIR.mkdir(parents=True, exist_ok=True)
     out = RESULT_DIR / f"qa_{datetime.now():%Y%m%d_%H%M}.csv"
@@ -173,10 +184,14 @@ def main() -> None:
         for g in groups:
             cited = {1: "✅", 0: "❌"}.get(g["same_cited"], "—")
             top1 = {1: "✅", 0: "❌"}[g["same_top1"]]
-            print(f"{g['group']:<10} 질문 {g['size']}개 | 1위 동일 {top1} | 같은 정답 조항으로 답변 {cited}")
+            print(
+                f"{g['group']:<10} 질문 {g['size']}개 | 1위 동일 {top1} | 같은 정답 조항으로 답변 {cited}"
+            )
             if g["same_cited"] == 0 or (g["same_cited"] == "" and not g["same_top1"]):
                 for r in g["items"]:
-                    print(f"    [{r['id']}] {r['question']}\n        → {r.get('cited') or r['top1'] or '(근거 없음)'}")
+                    print(
+                        f"    [{r['id']}] {r['question']}\n        → {r.get('cited') or r['top1'] or '(근거 없음)'}"
+                    )
         print(f"\n1위 동일: {pct([g['same_top1'] for g in groups])}")
         print(f"표현 일치: {pct([g['same_cited'] for g in groups])}")
 
@@ -186,7 +201,9 @@ def main() -> None:
     if misses:
         print(f"\n----- 상위 {args.k} 안에서 못 찾은 질문 -----")
         for r in misses:
-            print(f"[{r['id']}] {r['question']}\n    정답: {r['expected']}\n    검색: {r[f'top{args.k}']}")
+            print(
+                f"[{r['id']}] {r['question']}\n    정답: {r['expected']}\n    검색: {r[f'top{args.k}']}"
+            )
     print(f"\n자세한 결과: {out}")
 
 

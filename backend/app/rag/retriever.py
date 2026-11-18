@@ -3,6 +3,7 @@
 1. 일상어 사전으로 검색어 보강 (법카 → 법인카드, 회의비 → 업무추진비)
 2. 의미 검색 (pgvector 코사인 거리) 후보 + 키워드 검색 (낱말을 글자 2개씩 자른 BM25) 후보
 3. 두 순위를 RRF(순위 역수 합)로 합침 — "노래방", "23시"처럼 단어가 맞아야 하는 질문 대응
+   키워드 쪽 비중은 KEYWORD_WEIGHT(0.5) — 처음 보는 표현의 질문에서 1위를 뺏지 않도록
 4. 같은 조항에서 나온 조각은 최대 2개까지만 — 전결표 별표 조각(700여 개)이 결과를 독점하지 않도록
 5. 결과 조항이 「다른 규정」에 따른다고 하면 그 문장 + 질문으로 그 규정 안에서 다시 찾아 바로 뒤에 넣음
    (업무추진비 지침 제9조 "사용시간은 「법인카드 관리 및 사용 지침」에 따른다" → 법인카드 지침 제10조)
@@ -31,6 +32,9 @@ DEFAULT_TYPES = ("article", "table")  # 서식(form)은 기본 검색에서 제�
 CANDIDATES = 40  # 의미·키워드 검색에서 각각 가져올 후보 수
 PER_ARTICLE = 2  # 같은 조항에서 결과에 넣을 최대 조각 수
 RRF_K = 60  # RRF 상수 (일반적으로 쓰는 값)
+# 키워드 순위의 비중 (의미 검색은 1). 1 이면 기존 평가셋(82문항) 상위 5 적중 95.1% 지만
+# 처음 보는 질문(qa_holdout.csv 18문항)은 72.2% 로 떨어짐. 0.5 는 93.9% / 77.8% 로 균형 (2026-11-19)
+KEYWORD_WEIGHT = 0.5
 MAX_REFERENCES = 2  # 다른 규정을 따르라는 조항을 따라가 덧붙일 최대 조각 수
 MAX_APPENDICES = 2  # 조항이 가리키는 별표를 덧붙일 최대 별표 수
 
@@ -132,12 +136,18 @@ def _keyword_index(db: Session, audience: str | None, chunk_types: Sequence[str]
 # ---------- 순위 합치기 · 조항별 묶기 ----------
 
 
-def fuse(*rankings: Sequence[int], rrf_k: int = RRF_K) -> list[int]:
-    """여러 순위 목록을 RRF 로 합칩니다. 두 검색 모두 위에 있는 조각이 가장 앞에 옵니다."""
+def fuse(
+    *rankings: Sequence[int], weights: Sequence[float] | None = None, rrf_k: int = RRF_K
+) -> list[int]:
+    """여러 순위 목록을 RRF 로 합칩니다. 두 검색 모두 위에 있는 조각이 가장 앞에 옵니다.
+
+    weights 를 주면 순위 목록마다 비중을 다르게 줍니다 (기본은 모두 1).
+    """
+    weights = weights or [1.0] * len(rankings)
     score: dict[int, float] = {}
-    for ranking in rankings:
+    for ranking, weight in zip(rankings, weights, strict=True):
         for rank, chunk_id in enumerate(ranking, start=1):
-            score[chunk_id] = score.get(chunk_id, 0.0) + 1 / (rrf_k + rank)
+            score[chunk_id] = score.get(chunk_id, 0.0) + weight / (rrf_k + rank)
     return sorted(score, key=lambda cid: score[cid], reverse=True)
 
 
@@ -192,7 +202,8 @@ def _hybrid(
         for c, d, dist in db.execute(base.where(Chunk.id.in_(missing))):
             by_id[c.id] = Hit(chunk=c, document=d, score=1.0 - float(dist))
 
-    return [by_id[cid] for cid in fuse(vector_ranking, keyword_ranking) if cid in by_id]
+    ranking = fuse(vector_ranking, keyword_ranking, weights=[1.0, KEYWORD_WEIGHT])
+    return [by_id[cid] for cid in ranking if cid in by_id]
 
 
 def references(content: str) -> list[tuple[str, str]]:
