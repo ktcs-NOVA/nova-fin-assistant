@@ -2,8 +2,34 @@
 
 from types import SimpleNamespace
 
-from app.rag.retriever import KeywordIndex, bigrams, diversify, fuse
+from app.rag.retriever import (
+    KeywordIndex,
+    bigrams,
+    diversify,
+    fuse,
+    references,
+    without_title_words,
+)
 from app.rag.synonyms import expand
+
+REF_CONTENT = (
+    "제9조(기타) 그 외 법인카드 사용시간 등은 「법인카드 관리 및 사용 지침」에 따른다.\n"
+    "제10조(모니터링) 「직제규정」 및 「직제규정 시행세칙」에 따라 점검한다."
+)
+
+
+def test_references_find_other_regulation_and_sentence():
+    refs = references(REF_CONTENT)
+    # '~에 따라'는 위임 근거라 따라가지 않고, '~에 따른다'만 따라감
+    assert [title for title, _ in refs] == ["법인카드 관리 및 사용 지침"]
+    assert refs[0][1].startswith("그 외 법인카드 사용시간")  # 조 머리는 뺌
+
+
+def test_without_title_words_drops_source_regulation_name():
+    title = "업무추진비 및 조직관리비 집행 지침"
+    assert (
+        without_title_words("업무추진비는 몇 시까지 쓸 수 있어?", title) == "몇 시까지 쓸 수 있어?"
+    )
 
 
 def hit(title: str, article: str, chunk_id: int):

@@ -43,7 +43,7 @@ SYNONYMS: dict[str, str] = {
     # 회의비·회식 = 업무추진비
     "회식": "업무추진비",
     "회의비": "업무추진비",
-    "밥값": "업무추진비 식비",
+    "밥값": "식비",
     "쪼개": "2건 이상 1건으로 보아 분할",
     "나눠": "2건 이상 1건으로 보아 분할",
     "나눠서": "2건 이상 1건으로 보아 분할",
@@ -97,8 +97,8 @@ SYNONYMS: dict[str, str] = {
 _SPACES = re.compile(r"\s+")
 
 
-def expand(question: str) -> str:
-    """질문에 사전 표현이 있으면 규정 용어를 덧붙인 검색어를 돌려줍니다. 없으면 질문 그대로."""
+def extra_terms(question: str) -> list[str]:
+    """질문에 있는 사전 표현에 대응하는 규정 용어 (질문에 이미 있는 말은 뺌)."""
     squashed = _SPACES.sub("", question).lower()
     extra: list[str] = []
     for key, terms in SYNONYMS.items():
@@ -106,4 +106,10 @@ def expand(question: str) -> str:
             for term in terms.split():
                 if term not in extra and term not in question:
                     extra.append(term)
+    return extra
+
+
+def expand(question: str) -> str:
+    """질문에 사전 표현이 있으면 규정 용어를 덧붙인 검색어를 돌려줍니다. 없으면 질문 그대로."""
+    extra = extra_terms(question)
     return f"{question} ({' '.join(extra)})" if extra else question

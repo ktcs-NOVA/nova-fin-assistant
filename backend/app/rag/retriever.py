@@ -4,6 +4,8 @@
 2. 의미 검색 (pgvector 코사인 거리) 후보 + 키워드 검색 (낱말을 글자 2개씩 자른 BM25) 후보
 3. 두 순위를 RRF(순위 역수 합)로 합침 — "노래방", "23시"처럼 단어가 맞아야 하는 질문 대응
 4. 같은 조항에서 나온 조각은 최대 2개까지만 — 전결표 별표 조각(700여 개)이 결과를 독점하지 않도록
+5. 결과 조항이 「다른 규정」에 따른다고 하면 그 문장 + 질문으로 그 규정 안에서 다시 찾아 바로 뒤에 넣음
+   (업무추진비 지침 제9조 "사용시간은 「법인카드 관리 및 사용 지침」에 따른다" → 법인카드 지침 제10조)
 
 점수(Hit.score)는 그대로 코사인 유사도라서 답변 쪽 기준(RAG_MIN_SCORE)은 바뀌지 않습니다.
 """
@@ -27,6 +29,11 @@ DEFAULT_TYPES = ("article", "table")  # 서식(form)은 기본 검색에서 제�
 CANDIDATES = 40  # 의미·키워드 검색에서 각각 가져올 후보 수
 PER_ARTICLE = 2  # 같은 조항에서 결과에 넣을 최대 조각 수
 RRF_K = 60  # RRF 상수 (일반적으로 쓰는 값)
+MAX_REFERENCES = 2  # 다른 규정을 따르라는 조항을 따라가 덧붙일 최대 조각 수
+
+# 「법인카드 관리 및 사용 지침」에 따른다 / 을 준용한다
+_ARTICLE_HEAD = re.compile(r"^\s*제\d+조(?:의\d+)?\([^)]*\)|^\s*[①-⑳]")
+_REFERENCE = re.compile(r"「([^」]+)」(?:에\s*따른다|을\s*준용|를\s*준용)")
 
 _WORD = re.compile(r"[0-9a-z가-힣]+")
 
@@ -145,6 +152,63 @@ def diversify(hits: Sequence[Hit], k: int, per_article: int = PER_ARTICLE) -> li
 # ---------- 검색 ----------
 
 
+def _hybrid(
+    db: Session,
+    text: str,
+    *,
+    audience: str | None,
+    chunk_types: Sequence[str],
+    title: str | None = None,
+) -> list[Hit]:
+    """의미 검색 + 키워드 검색 후보를 RRF 로 합친 순위. title 을 주면 그 규정 안에서만."""
+    qv = embed_query(text)
+    distance = Chunk.embedding.cosine_distance(qv).label("distance")
+    base = (
+        select(Chunk, Document, distance)
+        .join(Document, Chunk.document_id == Document.id)
+        .where(Document.is_current.is_(True), Chunk.embedding.is_not(None))
+        .where(Chunk.chunk_type.in_(chunk_types))
+    )
+    if audience:  # 직원은 직원용+공통, 관리자는 관리자용+공통
+        base = base.where(Document.audience.in_([AUDIENCE_ALL, audience]))
+    if title:
+        base = base.where(Document.title == title)
+
+    by_id: dict[int, Hit] = {}
+    for c, d, dist in db.execute(base.order_by(distance).limit(CANDIDATES)):
+        by_id[c.id] = Hit(chunk=c, document=d, score=1.0 - float(dist))
+    vector_ranking = list(by_id)
+
+    index = _keyword_index(db, audience, chunk_types)
+    keyword_ranking = index.search(text, len(index.ids) if title else CANDIDATES)
+    missing = [cid for cid in keyword_ranking if cid not in by_id]
+    if missing:  # 키워드로만 찾은 조각도 코사인 점수를 붙임 (title 밖의 조각은 여기서 걸러짐)
+        for c, d, dist in db.execute(base.where(Chunk.id.in_(missing))):
+            by_id[c.id] = Hit(chunk=c, document=d, score=1.0 - float(dist))
+
+    return [by_id[cid] for cid in fuse(vector_ranking, keyword_ranking) if cid in by_id]
+
+
+def references(content: str) -> list[tuple[str, str]]:
+    """조항 본문에서 「규정명」에 따른다 / 준용한다 로 가리키는 (규정명, 그 문장)."""
+    found: dict[str, str] = {}
+    for line in content.splitlines():
+        sentence = _ARTICLE_HEAD.sub("", line).strip()  # '제9조(기타)' 같은 머리는 검색에 방해
+        for title in _REFERENCE.findall(line):
+            found.setdefault(title, sentence)
+    return list(found.items())
+
+
+def without_title_words(text: str, title: str) -> str:
+    """질문에서 원래 규정명의 낱말(업무추진비는 → 빼기)을 지웁니다.
+
+    참조된 규정 안에서 다시 찾을 때 원래 규정명이 남아 있으면,
+    그 이름을 언급만 하는 조항(예: 법인카드 지침 제5조 사용범위)이 앞서기 때문입니다.
+    """
+    names = [w for w in title.split() if len(w) >= 2 and w not in {"및", "규정", "지침"}]
+    return " ".join(w for w in text.split() if not any(w.startswith(n) for n in names))
+
+
 def search(
     db: Session,
     query: str,
@@ -155,28 +219,23 @@ def search(
 ) -> list[Hit]:
     k = k or settings.rag_top_k
     expanded = expand(query)
-    qv = embed_query(expanded)
-    distance = Chunk.embedding.cosine_distance(qv).label("distance")
+    hits = diversify(_hybrid(db, expanded, audience=audience, chunk_types=chunk_types), k)
 
-    base = (
-        select(Chunk, Document, distance)
-        .join(Document, Chunk.document_id == Document.id)
-        .where(Document.is_current.is_(True), Chunk.embedding.is_not(None))
-        .where(Chunk.chunk_type.in_(chunk_types))
-    )
-    if audience:  # 직원은 직원용+공통, 관리자는 관리자용+공통
-        base = base.where(Document.audience.in_([AUDIENCE_ALL, audience]))
-
-    by_id: dict[int, Hit] = {}
-    for c, d, dist in db.execute(base.order_by(distance).limit(CANDIDATES)):
-        by_id[c.id] = Hit(chunk=c, document=d, score=1.0 - float(dist))
-    vector_ranking = list(by_id)
-
-    keyword_ranking = _keyword_index(db, audience, chunk_types).search(expanded, CANDIDATES)
-    missing = [cid for cid in keyword_ranking if cid not in by_id]
-    if missing:
-        for c, d, dist in db.execute(base.where(Chunk.id.in_(missing))):
-            by_id[c.id] = Hit(chunk=c, document=d, score=1.0 - float(dist))
-
-    ranked = [by_id[cid] for cid in fuse(vector_ranking, keyword_ranking) if cid in by_id]
-    return diversify(ranked, k)
+    # 결과 조항이 「다른 규정」을 따르라고 하면, 질문 + 그 문장으로 그 규정 안에서 다시 찾아 바로 뒤에 넣음
+    out, have, added = list(hits), {h.chunk.id for h in hits}, 0
+    for h in hits:
+        for title, sentence in references(h.chunk.content):
+            if title == h.document.title or added >= MAX_REFERENCES:
+                continue
+            found = _hybrid(
+                db,
+                f"{without_title_words(expanded, h.document.title)} {sentence}",
+                audience=audience,
+                chunk_types=chunk_types,
+                title=title,
+            )
+            if found and found[0].chunk.id not in have:
+                out.insert(out.index(h) + 1, found[0])
+                have.add(found[0].chunk.id)
+                added += 1
+    return out[:k]
