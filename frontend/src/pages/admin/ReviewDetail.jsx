@@ -252,21 +252,30 @@ export default function ReviewDetail({ id, onBack, onDecided, nav }) {
             <div className="card review-panel">
               <div className="review-col">
                 <h3>반려 사유 선택</h3>
-                {problems.length === 0 && <p className="hint">AI가 찾은 문제 항목이 없습니다. 반려하려면 직접 메시지를 작성하세요.</p>}
-                <ul className="check-list">
-                  {problems.map((it) => (
-                    <li key={it.field}>
-                      <label>
-                        <input type="checkbox" checked={picked.includes(it.field)} onChange={() => toggle(it.field)} />
-                        <span><b>{it.field}</b> · {it.message} <span className="muted-text">({it.basis})</span></span>
-                      </label>
-                    </li>
-                  ))}
-                </ul>
-                <button className="btn" onClick={makeDraft} disabled={drafting || picked.length === 0}>
-                  {drafting ? '작성 중…' : '근거 기반 반려 메시지 초안 생성'}
-                </button>
-                <p className="hint">초안은 백엔드가 규정 근거(RAG)로 작성합니다. 내용을 확인하고 고친 뒤 반려하세요.</p>
+                {problems.length === 0 ? (
+                  <p className="hint">AI가 찾은 문제 항목이 없어요. 그래도 반려해야 하면 오른쪽에 사유를 직접 적어 주세요.</p>
+                ) : (
+                  <>
+                    <ul className="check-list">
+                      {problems.map((it) => (
+                        <li key={it.field}>
+                          <label>
+                            <input type="checkbox" checked={picked.includes(it.field)} onChange={() => toggle(it.field)} />
+                            <span><b>{it.field}</b> · {it.message} <span className="muted-text">({it.basis})</span></span>
+                          </label>
+                        </li>
+                      ))}
+                    </ul>
+                    <button className="btn" onClick={makeDraft} disabled={drafting || picked.length === 0}>
+                      {drafting ? '작성 중…' : '근거 기반 반려 메시지 초안 생성'}
+                    </button>
+                    <p className="hint">
+                      {picked.length === 0
+                        ? '사유를 하나 이상 체크하면 초안을 만들 수 있어요.'
+                        : '초안은 백엔드가 규정 근거(RAG)로 작성합니다. 내용을 확인하고 고친 뒤 반려하세요.'}
+                    </p>
+                  </>
+                )}
               </div>
 
               <div className="review-col">
@@ -275,7 +284,7 @@ export default function ReviewDetail({ id, onBack, onDecided, nav }) {
                   rows={6}
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
-                  placeholder="초안을 생성하거나 직접 작성하세요."
+                  placeholder={problems.length === 0 ? '반려 사유를 직접 작성하세요.' : '초안을 생성하거나 직접 작성하세요.'}
                 />
                 <div className="btn-row">
                   <button className="btn danger" onClick={() => decide(STATUS.REJECTED)} disabled={saving}>반려</button>
