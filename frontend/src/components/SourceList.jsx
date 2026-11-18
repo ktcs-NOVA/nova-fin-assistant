@@ -1,8 +1,9 @@
 // 근거·출처 목록 (U-03): 답변이 참고한 규정 조항, 개정일, 원문 링크
 // sources[] 한 개 모양: { ref, regulation, article, revised_at, url }
 // activeRef 와 같은 번호의 항목을 강조합니다 (본문의 [1] 을 누르면 해당 출처가 강조됨).
+// onPeek / onPeekEnd 를 주면 마우스를 올렸을 때 조항 본문 미리보기를 엽니다 (QaAnswer).
 
-export default function SourceList({ sources, activeRef, onSelect }) {
+export default function SourceList({ sources, activeRef, onSelect, onPeek, onPeekEnd }) {
   if (!sources?.length) return null
 
   return (
@@ -16,7 +17,10 @@ export default function SourceList({ sources, activeRef, onSelect }) {
               <button
                 type="button"
                 className={`source ${activeRef === ref ? 'on' : ''}`}
-                onClick={() => onSelect?.(ref)}
+                onClick={(e) => onSelect?.(ref, e.currentTarget)}
+                onMouseEnter={onPeek && s.excerpt ? (e) => onPeek(ref, e.currentTarget) : undefined}
+                onMouseLeave={onPeekEnd}
+                aria-haspopup={s.excerpt ? 'dialog' : undefined}
               >
                 <span className="source-ref">{ref}</span>
                 <span className="source-name">

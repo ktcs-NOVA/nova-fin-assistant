@@ -110,6 +110,15 @@ app.add_middleware(
 > | `contact` | `grounded` 가 `false` 일 때 안내할 담당자 `{ department, name, phone }`. 지금은 시연용 가상 계정이고, 계정이 없으면 `null` |
 >
 > 도구 선택 정확도는 `uv run python -m scripts.eval_route` 로 확인합니다 (`data/eval/route_eval.csv`).
+>
+> **2026-11-18 추가 (U-03 근거 미리보기)** — 규정 Q&A 의 `sources[]` 에만 채워지고, 다른 기능의 `sources` 는 `null` 입니다.
+>
+> | 필드 | 뜻 |
+> |---|---|
+> | `sources[].chunk_type` | `article` 조문 / `table` 별표. `table` 이면 화면에서 표로 그림 |
+> | `sources[].excerpt` | 조항 본문. 별표는 한 행이 `구분: 직원(3급 이하) \| 식비(1일당): 27 \| …` 한 줄. 인용 번호·근거 조항에 마우스를 올리면(휴대폰은 탭) 보여 줌 |
+>
+> 조항이 "별표 1에 따라"처럼 표를 가리키면 백엔드가 그 별표를 근거에 함께 넣어, 답변이 "별표를 확인하세요" 대신 숫자로 답합니다.
 
 ### 3-2. 청구 검증 (`POST /api/verify`) ★ 모양을 꼭 고정해야 하는 부분
 

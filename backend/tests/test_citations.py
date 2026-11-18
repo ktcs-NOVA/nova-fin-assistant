@@ -6,18 +6,23 @@ from types import SimpleNamespace
 from app.rag.answerer import tidy_citations
 
 
-def hit(title: str, article: str):
+def hit(title: str, article: str, content: str = "", chunk_type: str = "article"):
     return SimpleNamespace(
         document=SimpleNamespace(title=title, source_url=None),
-        chunk=SimpleNamespace(article=article, revised_at=date(2025, 9, 23)),
+        chunk=SimpleNamespace(
+            article=article,
+            revised_at=date(2025, 9, 23),
+            content=content or f"{article} 본문",
+            chunk_type=chunk_type,
+        ),
         score=0.5,
     )
 
 
 HITS = [
     hit("여비규정", "제30조"),
-    hit("여비규정", "제13조"),
-    hit("여비규정", "제13조"),
+    hit("여비규정", "제13조", "제13조(교통비) ① 앞부분"),
+    hit("여비규정", "제13조", "제13조(교통비) (계속) ⑤ 뒷부분"),
     hit("여비규정", "제14조"),
 ]
 
@@ -34,6 +39,18 @@ def test_same_article_chunks_share_number():
     reply, sources, _ = tidy_citations("근거[2][3]", HITS)
     assert reply == "근거[1][1]"
     assert len(sources) == 1
+    # 같은 조항의 나뉜 조각은 본문을 이어 붙여 한 출처로 보여 줌
+    assert sources[0]["excerpt"].splitlines() == [
+        "제13조(교통비) ① 앞부분",
+        "제13조(교통비) (계속) ⑤ 뒷부분",
+    ]
+
+
+def test_sources_carry_excerpt_and_type():
+    table = hit("여비규정", "별표 1", "구분: 직원(3급 이하) | 식비(1일당): 27", "table")
+    _, sources, _ = tidy_citations("식비는 27천원[1]", [table])
+    assert sources[0]["chunk_type"] == "table"
+    assert sources[0]["excerpt"].startswith("구분: 직원(3급 이하)")
 
 
 def test_invented_citation_removed():
