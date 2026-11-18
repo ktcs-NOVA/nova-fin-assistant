@@ -76,6 +76,7 @@ cd backend
 
 - 서버: http://localhost:8000 · API 테스트 화면: http://localhost:8000/docs
 - `backend/.env` 의 `OPENAI_API_KEY` 를 비우면 목업 AI 로 동작합니다.
+- 출장비 계산의 **경로 조회**는 `backend/.env` 에 네이버 지도 키(`NAVER_MAPS_KEY_ID` · `NAVER_MAPS_KEY`)를 넣어야 동작합니다. 비워 두면 거리를 직접 입력합니다. (`backend/.env.example` 참고)
 
 ## 프론트엔드 실행
 

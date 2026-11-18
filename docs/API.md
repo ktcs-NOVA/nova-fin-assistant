@@ -253,6 +253,22 @@ app.add_middleware(
 - 화면은 `summary.estimated_max` 를 "받을 수 있는 금액"으로 크게 보여주고, `lines` 로 항목별 계산식을 보여주면 됩니다.
 - `verify_request` 를 그대로 `/api/verify` 에 보내면 U-04 검증으로 이어집니다.
 
+#### 경로 조회 (`POST /api/route`) — 2026-11-18 추가, 로그인 필요
+
+출장비 계산 화면의 "경로 조회". 회사(본사) → 도착지의 **자동차 편도 거리**를 네이버 지도 API 로 가져옵니다 (키는 서버에만 둠).
+
+```json
+// 요청
+{ "destination": "부산광역시 연제구 중앙대로 1001" }
+// 응답
+{ "destination": "부산광역시 연제구 중앙대로 1001", "distance_km": 12.3, "duration_min": 25 }
+```
+
+- 서버가 부르는 것: 네이버 클라우드 플랫폼 Maps 의 **Geocoding**(주소 → 좌표) → **Directions 5**(자동차 경로). 거리는 실시간 교통에 따라 조금씩 달라질 수 있어, 화면에서 운행거리를 직접 고칠 수 있습니다.
+- 키: `backend/.env` 의 `NAVER_MAPS_KEY_ID` · `NAVER_MAPS_KEY` (콘솔 > Maps > Application 에서 Geocoding · Directions 5 선택). 출발지는 `ROUTE_ORIGIN_ADDRESS` (기본: 본사 주소).
+- Geocoding 은 주소만 찾습니다. "부산시청" 같은 **장소 이름**으로도 찾으려면 네이버 개발자센터 검색 API(지역) 키(`NAVER_SEARCH_CLIENT_ID` · `NAVER_SEARCH_CLIENT_SECRET`)를 추가합니다 (선택).
+- 에러: 키 없음 `503` · 도착지를 못 찾음/경로 없음 `404` · 네이버 API 오류 `502`. 화면은 `error` 문장을 그대로 보여 주고 거리를 직접 입력하게 합니다.
+
 ### 3-6. 결의서 초안 (`POST /api/voucher-draft`) — U-07
 
 > 2026-11-08 추가. 자세한 규칙은 [U-07_결의서초안.md](U-07_결의서초안.md) 참고.

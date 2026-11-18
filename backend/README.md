@@ -120,5 +120,6 @@ uv run alembic upgrade head
 | `{"error": "DB에 연결할 수 없습니다…"}` | Docker Desktop 실행 후 `server.cmd` 다시 |
 | 5432 포트 사용 중 | `.env` 의 `DB_PORT` · `DATABASE_URL` 포트를 같이 변경 |
 | health 가 `ai: mock` | `.env` 에 `OPENAI_API_KEY` 입력 |
+| 경로 조회가 "설정되지 않았습니다" | `.env` 에 `NAVER_MAPS_KEY_ID` · `NAVER_MAPS_KEY` 입력 후 서버 다시 켜기 (네이버 클라우드 콘솔 > Maps, Geocoding · Directions 5 선택) |
 | 콘솔 한글 깨짐 | `setx PYTHONUTF8 1` 후 새 터미널 |
 | DB 초기화 | `db.cmd reset` → `setup.cmd` |

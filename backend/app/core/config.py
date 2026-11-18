@@ -37,6 +37,16 @@ class Settings(BaseSettings):
     auth_secret: str = "nova-dev-secret-change-me"
     auth_token_days: int = 7
 
+    # 경로 조회 (POST /api/route): 네이버 클라우드 플랫폼 Maps 의 Geocoding · Directions 5.
+    # 비어 있으면 경로 조회는 503 으로 "설정되지 않음"을 알리고, 화면은 거리를 직접 입력하게 합니다.
+    naver_maps_key_id: str = ""
+    naver_maps_key: str = ""
+    # (선택) 네이버 검색 API(지역) — "부산시청" 같은 장소 이름으로도 찾고 싶을 때. 없으면 주소로만 찾습니다.
+    naver_search_client_id: str = ""
+    naver_search_client_secret: str = ""
+    # 출발지(회사) 주소 — ALIO 공시 기준 한국해양진흥공사 본사
+    route_origin_address: str = "부산광역시 해운대구 마린시티2로 38"
+
     # RAG
     rag_top_k: int = 5
     rag_min_score: float = 0.3
