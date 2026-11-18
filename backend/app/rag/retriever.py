@@ -6,6 +6,8 @@
 4. 같은 조항에서 나온 조각은 최대 2개까지만 — 전결표 별표 조각(700여 개)이 결과를 독점하지 않도록
 5. 결과 조항이 「다른 규정」에 따른다고 하면 그 문장 + 질문으로 그 규정 안에서 다시 찾아 바로 뒤에 넣음
    (업무추진비 지침 제9조 "사용시간은 「법인카드 관리 및 사용 지침」에 따른다" → 법인카드 지침 제10조)
+6. 결과 조항이 "별표 1에 따라"처럼 표를 가리키면 그 별표를 바로 뒤에 덧붙임 (금액이 별표에 있으므로)
+   이 조각은 상위 k 개 밖에 추가로 붙습니다.
 
 점수(Hit.score)는 그대로 코사인 유사도라서 답변 쪽 기준(RAG_MIN_SCORE)은 바뀌지 않습니다.
 """
@@ -30,6 +32,10 @@ CANDIDATES = 40  # 의미·키워드 검색에서 각각 가져올 후보 수
 PER_ARTICLE = 2  # 같은 조항에서 결과에 넣을 최대 조각 수
 RRF_K = 60  # RRF 상수 (일반적으로 쓰는 값)
 MAX_REFERENCES = 2  # 다른 규정을 따르라는 조항을 따라가 덧붙일 최대 조각 수
+MAX_APPENDICES = 2  # 조항이 가리키는 별표를 덧붙일 최대 별표 수
+
+# 별표 1에 따라 / 별표 3의2 → '1', '3의2'
+_APPENDIX_MENTION = re.compile(r"별표\s*(\d+(?:의\d+)?)")
 
 # 「법인카드 관리 및 사용 지침」에 따른다 / 을 준용한다
 _ARTICLE_HEAD = re.compile(r"^\s*제\d+조(?:의\d+)?\([^)]*\)|^\s*[①-⑳]")
@@ -238,4 +244,55 @@ def search(
                 out.insert(out.index(h) + 1, found[0])
                 have.add(found[0].chunk.id)
                 added += 1
-    return out[:k]
+    return follow_appendices(db, out[:k], expanded, audience, chunk_types)
+
+
+def appendix_labels(content: str) -> list[str]:
+    """조항 본문이 가리키는 별표 이름 ('별표 1에 따라' → '별표 1'). 전결표 '<별표>' 처럼 번호 없는 건 제외."""
+    return list(dict.fromkeys(f"별표 {n}" for n in _APPENDIX_MENTION.findall(content)))
+
+
+def follow_appendices(
+    db: Session,
+    hits: list[Hit],
+    query: str,
+    audience: str | None,
+    chunk_types: Sequence[str],
+) -> list[Hit]:
+    """조항이 '별표 1에 따라'처럼 표를 가리키면, 그 별표를 조항 바로 뒤에 덧붙입니다.
+
+    금액·한도는 대부분 별표에 있는데, 질문과 비슷한 건 조항 쪽이라 별표가 검색에서 빠지곤 합니다.
+    그러면 답변이 숫자 없이 "별표를 확인하세요"로 끝나므로 표를 함께 넘깁니다.
+    덧붙인 조각의 점수는 가리킨 조항의 점수를 따릅니다 (그 조항이 근거로 쓰일 때만 의미가 있으므로).
+    """
+    out = list(hits)
+    present = {(h.document.id, h.chunk.article) for h in hits}
+    added = 0
+    # 질문의 주제 규정(1위 조항의 규정)에서만 따라감. 회식 질문에 4위로 섞인 여비규정 식비 조항이
+    # 출장 여비표를 끌고 와서 "회식비 1인당 3만 원" 같은 엉뚱한 답이 나온 적이 있음
+    topic = hits[0].document.id if hits else None
+    for h in hits:
+        if h.document.id != topic:
+            continue
+        for label in appendix_labels(h.chunk.content):
+            if added >= MAX_APPENDICES or (h.document.id, label) in present:
+                continue
+            chunks = db.scalars(
+                select(Chunk)
+                .where(Chunk.document_id == h.document.id, Chunk.article == label)
+                .where(Chunk.chunk_type.in_(chunk_types))
+                .order_by(Chunk.seq)
+            ).all()
+            if not chunks:
+                continue
+            if len(chunks) > PER_ARTICLE:  # 긴 별표는 질문과 키워드가 가장 맞는 묶음만
+                order = _keyword_index(db, audience, chunk_types).search(query, len(chunks) * 50)
+                rank = {cid: i for i, cid in enumerate(order)}
+                chunks = sorted(chunks, key=lambda c: rank.get(c.id, len(rank)))[:PER_ARTICLE]
+            pos = out.index(h) + 1
+            for c in chunks:
+                out.insert(pos, Hit(chunk=c, document=h.document, score=h.score))
+                pos += 1
+            present.add((h.document.id, label))
+            added += 1
+    return out

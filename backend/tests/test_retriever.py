@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 from app.rag.retriever import (
     KeywordIndex,
+    appendix_labels,
     bigrams,
     diversify,
     fuse,
@@ -80,3 +81,12 @@ def test_diversify_limits_chunks_per_article():
     hits += [hit("업무추진비 지침", "제8조", 10), hit("여비규정", "제13조", 11)]
     picked = diversify(hits, 5, per_article=2)
     assert [h.chunk.id for h in picked] == [0, 1, 10, 11]
+
+
+def test_appendix_labels_from_article_text():
+    content = (
+        "① 일비, 식비는 별표 1의 금액을 기준으로 지급한다.\n② 숙박비는 별표 1에 정하는 한도 내 실비"
+    )
+    assert appendix_labels(content) == ["별표 1"]
+    assert appendix_labels("국외여비는 별표 3 및 별표 3의2에 따른다") == ["별표 3", "별표 3의2"]
+    assert appendix_labels("<별표> 1. 전사 공통 사항") == []  # 전결표 머리는 번호가 없음
