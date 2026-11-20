@@ -1,9 +1,8 @@
-// 로그인 / 회원가입 화면 (좌: 서비스 소개 / 우: 폼). 위쪽 직원·관리자 탭으로 들어갈 계정 종류를 고릅니다.
-// 사번(또는 이메일)+비밀번호로 POST /api/auth/login, 가입은 POST /api/auth/signup (항상 직원 계정).
-// 탭과 계정의 실제 역할이 다르면 들어가지 않고 탭을 바꾸라고 안내합니다. 시연 계정·공통 비밀번호는 auth/accounts.js.
+// 로그인 / 회원가입 화면 (좌: 서비스 소개 / 우: 폼). 사번(또는 이메일)+비밀번호로 POST /api/auth/login, 가입은 POST /api/auth/signup (항상 직원 계정).
+// 직원인지 관리자인지는 계정이 정합니다. 아래 '시연 계정'을 누르면 바로 로그인합니다(VITE_SHOW_DEMO=false 면 숨김). 시연 계정·공통 비밀번호는 auth/accounts.js.
 
 import { useState } from 'react'
-import { DEMO_ACCOUNTS, DEMO_PASSWORD, GRADES, ROLE, ROLE_LABEL } from '../auth/accounts.js'
+import { DEMO_ACCOUNTS, DEMO_PASSWORD, GRADES, ROLE_LABEL } from '../auth/accounts.js'
 import { login, signup, USE_MOCK, API_BASE } from '../api/client.js'
 import mascot from '../assets/nova-mascot.png'
 import PasswordField from '../components/PasswordField.jsx'
@@ -11,46 +10,25 @@ import EmailField from '../components/EmailField.jsx'
 
 const EMPTY_SIGNUP = { name: '', employeeNo: '', department: '', grade: GRADES[0], email: '', password: '' }
 
-const TABS = [
-  { role: ROLE.EMPLOYEE, label: '직원' },
-  { role: ROLE.ADMIN, label: '관리자' },
-]
+const SHOW_DEMO = import.meta.env.VITE_SHOW_DEMO !== 'false'
 
 export default function LoginPage({ onLogin }) {
-  const [role, setRole] = useState(ROLE.EMPLOYEE)
-  const [mode, setMode] = useState('login')            // 'login' | 'signup' (가입은 직원 탭에서만)
+  const [mode, setMode] = useState('login')            // 'login' | 'signup' (가입은 항상 직원 계정)
   const [loginId, setLoginId] = useState('')
   const [password, setPassword] = useState('')
   const [form, setForm] = useState(EMPTY_SIGNUP)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const isAdmin = role === ROLE.ADMIN
-  const signupMode = !isAdmin && mode === 'signup'
-  const demos = DEMO_ACCOUNTS.filter((a) => a.role === role)
+  const signupMode = mode === 'signup'
   const setField = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
-
-  function pickRole(next) {
-    setRole(next); setMode('login'); setError(''); setLoginId(''); setPassword('')
-  }
-
-  // 응답 계정의 역할이 고른 탭과 같을 때만 들어감
-  function enter(session) {
-    if (session.user.role !== role) {
-      setError(session.user.role === ROLE.ADMIN
-        ? '관리자 계정이에요. 위에서 “관리자” 탭을 선택해 주세요.'
-        : '직원 계정이에요. 위에서 “직원” 탭을 선택해 주세요.')
-      return
-    }
-    onLogin(session)
-  }
 
   async function submitLogin(e) {
     e.preventDefault()
     if (!loginId.trim() || !password) { setError('사번(또는 이메일)과 비밀번호를 입력해 주세요.'); return }
     setLoading(true); setError('')
     try {
-      enter(await login(loginId.trim(), password))
+      onLogin(await login(loginId.trim(), password))
     } catch (err) {
       setError(err.message)
     } finally {
@@ -73,8 +51,16 @@ export default function LoginPage({ onLogin }) {
     }
   }
 
-  function fillDemo(a) {
-    setLoginId(a.employee_no); setPassword(DEMO_PASSWORD); setError('')
+  // 시연 계정: 누르면 바로 로그인
+  async function demoLogin(a) {
+    setLoading(true); setError('')
+    try {
+      onLogin(await login(a.employee_no, DEMO_PASSWORD))
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -102,21 +88,10 @@ export default function LoginPage({ onLogin }) {
             </span>
           </div>
 
-          <div>
-            <div className="login-q">어떤 계정으로 들어가시나요?</div>
-            <div className="seg" role="tablist">
-              {TABS.map((t) => (
-                <button key={t.role} type="button" role="tab" aria-selected={role === t.role} className={role === t.role ? 'on' : ''} onClick={() => pickRole(t.role)}>{t.label}</button>
-              ))}
-            </div>
-          </div>
-
           <div className="login-head">
-            <h2>{isAdmin ? '관리자 로그인' : signupMode ? '처음이신가요?' : '다시 오셨네요'}</h2>
+            <h2>{signupMode ? '처음이신가요?' : '로그인'}</h2>
             <p className="hint">
-              {isAdmin ? '검토 대기함과 승인·반려를 관리해요.'
-                : signupMode ? '직급은 규정 판정(숙박비·교통 등급 등)에 사용돼요.'
-                : '사번 또는 이메일로 로그인하세요.'}
+              {signupMode ? '직급은 규정 판정(숙박비·교통 등급 등)에 사용돼요.' : '사번 또는 이메일로 로그인하세요.'}
             </p>
           </div>
 
@@ -160,28 +135,26 @@ export default function LoginPage({ onLogin }) {
             <form className="login-form" onSubmit={submitLogin}>
               <label className="field">
                 <span className="field-label">사번 또는 이메일</span>
-                <input type="text" value={loginId} onChange={(e) => setLoginId(e.target.value)} autoComplete="username" placeholder={isAdmin ? '예) A2001' : '예) E1001'} />
+                <input type="text" value={loginId} onChange={(e) => setLoginId(e.target.value)} autoComplete="username" placeholder="예) E1001" />
               </label>
               <label className="field">
                 <span className="field-label">비밀번호</span>
                 <PasswordField value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" placeholder="비밀번호를 입력하세요" />
               </label>
-              <button className="btn primary login-submit" type="submit" disabled={loading}>{loading ? '확인 중…' : isAdmin ? '관리자로 로그인' : '로그인'}</button>
-              {isAdmin
-                ? <p className="hint center">관리자 계정은 담당자가 따로 만들어 드려요. 회원가입은 직원만 할 수 있어요.</p>
-                : <p className="hint center">계정이 없으신가요? <button type="button" className="link-btn" onClick={() => { setMode('signup'); setError('') }}>회원가입</button></p>}
+              <button className="btn primary login-submit" type="submit" disabled={loading}>{loading ? '확인 중…' : '로그인'}</button>
+              <p className="hint center">계정이 없으신가요? <button type="button" className="link-btn" onClick={() => { setMode('signup'); setError('') }}>회원가입</button></p>
             </form>
           )}
 
-          {!signupMode && (
+          {SHOW_DEMO && !signupMode && (
             <section className="login-demo">
-              <h2>시연 계정 <span className="hint">(비밀번호 공통 {DEMO_PASSWORD} · 누르면 채워집니다)</span></h2>
+              <h2>시연 계정으로 바로 둘러보기</h2>
               <div className="login-accounts">
-                {demos.map((a) => (
-                  <button key={a.employee_no} type="button" className={`login-account ${a.role}`} onClick={() => fillDemo(a)}>
+                {DEMO_ACCOUNTS.map((a) => (
+                  <button key={a.employee_no} type="button" className={`login-account ${a.role}`} onClick={() => demoLogin(a)} disabled={loading}>
                     <span className="login-avatar">{a.name.slice(0, 1)}</span>
                     <span className="login-name">{a.name}</span>
-                    <span className="login-meta">{ROLE_LABEL[a.role]} · {a.department} · {a.employee_no}</span>
+                    <span className="login-meta">{ROLE_LABEL[a.role]} · {a.department}</span>
                   </button>
                 ))}
               </div>
