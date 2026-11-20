@@ -1067,3 +1067,44 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
   .form-table .form-input { border: 0; }
   .form-receipt { max-height: 320px; }
 }
+
+/* 문서 작업 양식: ① 작성하기 / ② 양식으로 보기 탭, 아래에 붙는 버튼 줄 (미리보기안) */
+.doc-tabs { max-width: 420px; }
+.write-view { display: grid; gap: 12px; }
+.write-summary-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.write-summary dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 6px 18px; margin: 0; }
+.write-summary dl > div { display: flex; gap: 10px; }
+.write-summary dt { color: var(--muted); min-width: 112px; white-space: nowrap; }
+.write-summary dd { margin: 0; font-weight: 600; }
+.write-group { display: grid; gap: 14px; }
+.write-group h3 { margin: 0; font-size: 16px; display: flex; align-items: baseline; gap: 8px; }
+.write-sheet { display: grid; gap: 12px; }
+.write-sheet + .write-sheet { padding-top: 12px; border-top: 1px solid var(--line); }
+.write-sheet-title { font-size: 13px; font-weight: 700; color: var(--muted); }
+.write-field { display: grid; gap: 6px; }
+.write-label { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; }
+.write-tags { margin-left: auto; display: inline-flex; gap: 6px; align-items: center; }
+.write-req { font-size: 12px; color: var(--muted); }
+.write-req.on { color: var(--bad); font-weight: 700; }
+.write-input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; font: inherit; line-height: 1.5; resize: vertical; }
+.write-field.src-ai .write-input { background: var(--brand-soft); }
+.write-field.src-manual .write-input { background: var(--warn-soft); }
+.write-field.need .write-input { border-color: var(--bad); }
+.write-input:focus { outline: 2px solid var(--brand); outline-offset: 1px; }
+.write-where { font-size: 12px; }
+.form-actions-bar { position: sticky; bottom: 0; z-index: 5; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px 16px;
+  margin-top: 4px; padding: 12px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px 14px 0 0; box-shadow: 0 -6px 18px rgba(15, 23, 42, .08); }
+.form-actions-send { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+/* 아래 버튼 줄이 있는 화면에서는 규정 물어보기 단추를 버튼 줄 위로 */
+body:has(.form-actions-bar) .ask-fab { bottom: 100px; }
+/* 문서 양식 위쪽을 한 줄로: 출처 안내는 회색 한 줄, 탭 옆에 "적을 칸 N개" */
+.doc-source { margin: -6px 0 0; font-size: 13px; }
+.doc-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px 16px; }
+.doc-toolbar .doc-tabs { flex: 0 1 420px; }
+.doc-todo { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 14px; }
+.doc-todo b { color: var(--bad); }
+.doc-todo.done { color: var(--good); font-weight: 600; }
+.doc-todo-chip { border: 1px solid var(--warn); background: var(--warn-soft); color: inherit; font: inherit; font-size: 13px; padding: 4px 10px; border-radius: 999px; cursor: pointer; }
+.doc-todo-chip:hover { border-color: var(--bad); }
+.doc-legend { display: flex; justify-content: center; font-size: 12.5px; }
+.doc-legend .form-legend { gap: 6px 14px; }

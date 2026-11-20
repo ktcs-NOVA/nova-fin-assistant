@@ -18,6 +18,39 @@ export function blockCells(block) {
   return []
 }
 
+/**
+ * "작성하기" 화면용: 고칠 수 있는 칸마다 어느 장의 어떤 줄인지 붙여서 돌려줍니다.
+ * 표 안의 칸이면 같은 줄의 품명·금액을 ctx 로, 그 칸의 열 이름(상세내역·용도)을 name 으로 씁니다.
+ */
+export function editableWithContext(form) {
+  const out = []
+  for (const sh of form?.sheets ?? []) {
+    for (const b of sh.blocks) {
+      if (b.type === 'table') {
+        const labels = b.columns.map((c) => c.label)
+        const pick = (row, re) => { const i = labels.findIndex((l) => re.test(l)); return i >= 0 ? String(row[i]?.value ?? '') : '' }
+        b.rows.forEach((row) => row.forEach((cell, j) => {
+          if (!cell.key) return
+          const item = pick(row, /품명/)
+          const amount = pick(row, /^금액/)
+          out.push({ ...cell, sheet: sh.title, name: labels[j], ctx: [item, amount && (amount.endsWith('원') ? amount : `${amount}원`)].filter(Boolean).join(' · ') })
+        }))
+      } else {
+        blockCells(b).filter((c) => c.key).forEach((cell) => out.push({ ...cell, sheet: sh.title, name: cell.label, ctx: '' }))
+      }
+    }
+  }
+  return out
+}
+
+/** 양식 첫 장의 머리표(건명·부서 …) — 작성하기 화면 위쪽 요약용 */
+export function formSummary(form) {
+  const info = form?.sheets?.[0]?.blocks.find((b) => b.type === 'info')
+  const total = form?.sheets?.[0]?.blocks.find((b) => b.type === 'table' && b.total)?.total
+  const rows = (info?.rows ?? []).filter((r) => !r.cell.key).map((r) => ({ label: r.label, value: String(r.cell.value ?? '') }))
+  return total ? [...rows, { label: '합계', value: total.value }] : rows
+}
+
 /** 양식 안의 고칠 수 있는 칸 전부 (안내 목록용, 위에서 아래 순서) */
 export function editableCells(form) {
   return (form?.sheets ?? []).flatMap((sh) => sh.blocks.flatMap(blockCells)).filter((c) => c.key)
