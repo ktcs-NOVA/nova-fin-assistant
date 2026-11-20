@@ -69,7 +69,7 @@ export default function HomePage({ user, onNavigate }) {
         </button>
         <button type="button" className="tile" onClick={() => onNavigate('checklist')}>
           <span className="tile-title">문서 작업</span>
-          <span className="tile-desc">출장보고서·회의록·출장원을 쓰다 말아도 저장해 두고, 이어서 써요.</span>
+          <span className="tile-desc">정산한 건의 지출 결과서·회의록·출장보고서를 양식으로 쓰고, 관리자에게 보내요.</span>
           <span className="tile-go">{workingDocs ? `이어서 쓰기 ${workingDocs}건 →` : '열기 →'}</span>
         </button>
       </div>
