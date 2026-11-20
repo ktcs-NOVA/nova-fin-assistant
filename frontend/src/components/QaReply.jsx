@@ -19,10 +19,10 @@ function Clarify({ result, onPick }) {
   )
 }
 
-export default function QaReply({ result, onAsk }) {
+export default function QaReply({ result, onAsk, onOpenSource }) {
   if (result.type === 'procedure' && result.procedure) {
     return <ProcedureGuide result={result.procedure} />
   }
   if (result.type === 'clarify') return <Clarify result={result} onPick={onAsk} />
-  return <QaAnswer result={result} />
+  return <QaAnswer result={result} onOpenSource={onOpenSource} />
 }

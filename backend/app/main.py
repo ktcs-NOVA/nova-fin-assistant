@@ -21,6 +21,7 @@ from app.domains.ledger.router import router as ledger_router
 from app.domains.procedure.router import router as procedure_router
 from app.domains.qa.router import router as qa_router
 from app.domains.receipt.router import router as receipt_router
+from app.domains.regulations.router import router as regulations_router
 from app.domains.submissions.router import router as submissions_router
 from app.domains.travel.router import router as travel_router
 from app.domains.verify import service as verify_service
@@ -64,6 +65,7 @@ def health() -> dict:
 # ---------- 기능 라우터 등록: 새 기능은 여기 한 줄 ----------
 app.include_router(auth_router)  # POST /api/auth/signup · /api/auth/login · GET /api/auth/me
 app.include_router(qa_router)  # POST /api/qa
+app.include_router(regulations_router)  # GET /api/regulations · /api/regulations/{id} (U-03 원문 보기)
 app.include_router(verify_router)  # POST /api/verify  (규칙 엔진 연결)
 app.include_router(checklist_router)  # GET  /api/checklist
 app.include_router(procedure_router)  # POST /api/procedure  (U-02, 예시 응답)

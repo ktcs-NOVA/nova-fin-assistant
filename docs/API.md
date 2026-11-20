@@ -483,6 +483,31 @@ curl -s localhost:8000/api/checklists -H 'Authorization: Bearer <token>'
 - 프론트는 토큰을 실어 받아서 `지출내역_YYYYMMDD.xlsx` 로 저장합니다 (`downloadLedger`, `components/LedgerButton.jsx`). 버튼은 직원의 "내 정산 현황"과 관리자의 "정산 검토 대기함"에 있습니다.
 - 만드는 코드는 `backend/app/domains/ledger/excel.py` (라이브러리 `xlsxwriter`).
 
+### 3-13. 규정 원문 (`GET /api/regulations`, `GET /api/regulations/{id}`) — U-03, 2026-11-20 추가
+
+'규정 확인하기' 화면의 **원문 보기** 탭이 씁니다. 적재된 규정을 조문·별표 순서대로 돌려줍니다. 로그인 없이도 되며, 로그인하면 역할에 맞는 문서만(직원은 공통+직원용, 관리자는 공통+관리자용) 보입니다.
+
+| 하는 일 | 방식 | 주소 |
+|---|---|---|
+| 규정 목록 | GET | `/api/regulations` → `[{ id, title, revised_at, sections }]` |
+| 규정 원문 | GET | `/api/regulations/{id}` → 아래 모양 (없으면 404) |
+
+```json
+{
+  "id": 9, "title": "여비규정", "revised_at": "2026-10-21", "source_file": "여비규정(2026년도 10월 21일 개정).hwpx",
+  "sections": [
+    { "key": "제14조", "article": "제14조", "title": "일비, 식비, 숙박비", "kind": "article",
+      "chapter": "제2장 국내여비", "head": null, "revised_at": "2026-10-21", "content": "제14조(일비, 식비, 숙박비) ① …" },
+    { "key": "별표 1", "article": "별표 1", "title": "국내여비지급표", "kind": "table", "content": "[별표 1] 국내여비지급표\n구분: 직원(3급 이하) | 식비(1일당): 27 | …" }
+  ]
+}
+```
+
+- `kind`: `article` 조문 / `table` 별표 / `form` 별지 서식. 별표는 한 행이 `제목: 값 | 제목: 값` 한 줄이라 화면에서 표로 그립니다 (`utils/excerpt.js` 의 `parseTable`).
+- 검색용으로 잘게 나눈 조각을 다시 이어 붙인 것입니다. 긴 조문·별표의 `(계속)` 머리 줄은 빼고, 전결표는 구역(`head`)마다 한 묶음으로, 반복되던 `※ 안내`는 한 번만 넣습니다.
+- 같은 이름의 묶음이 여러 개면 `key` 에 번호가 붙습니다 (`별표#1`, `별표#2` …). 화면 이동에는 `key` 를 씁니다.
+- 규정 Q&A 답변의 근거(`sources[]`)에서 "원문에서 보기"를 누르면 `regulation` + `article` 로 같은 조항을 찾고, 전결표처럼 같은 `article` 이 여러 개면 `excerpt` 첫 줄로 고릅니다.
+
 ---
 
 ## 4. 에러일 때 돌려주는 모양 (함께 정할 것)
