@@ -156,12 +156,32 @@ function Block({ block, fields, onEdit }) {
   return null
 }
 
+// 결재란: 제목 오른쪽 위의 작은 표. 직위 아래 칸은 인쇄한 뒤 서명·날인합니다 (결재가 넘어가는 기능은 없음).
+function ApprovalBox({ approval }) {
+  return (
+    <table className="form-table form-approval" aria-label="결재란">
+      <tbody>
+        <tr>
+          <th scope="row" rowSpan={2} className="form-approval-label">{approval.label}</th>
+          {approval.roles.map((r) => <th key={r} scope="col">{r}</th>)}
+        </tr>
+        <tr>{approval.roles.map((r) => <td key={r} className="src-blank" aria-label={`${r} 서명 칸`} />)}</tr>
+      </tbody>
+    </table>
+  )
+}
+
 export default function FormSheet({ form, fields, onEdit }) {
   return (
     <div className="form-sheets">
       {form.sheets.map((sh) => (
         <div key={sh.title} className="form-paper">
-          <div className="form-title">{sh.title}</div>
+          {sh.approval ? (
+            <div className="form-head">
+              <div className="form-title">{sh.title}</div>
+              <ApprovalBox approval={sh.approval} />
+            </div>
+          ) : <div className="form-title">{sh.title}</div>}
           {sh.blocks.map((b, i) => <Block key={i} block={b} fields={fields} onEdit={onEdit} />)}
         </div>
       ))}

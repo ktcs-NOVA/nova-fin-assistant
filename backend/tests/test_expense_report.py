@@ -51,6 +51,17 @@ def report(sub=SUB, fields=None, writer="박철환 (총무인사부)", today=dat
 
 
 # ── 양식 계산 (DB 불필요) ──
+def test_approval_box_is_on_report_and_trip_report_only():
+    """결재란(담당·팀장·부서장)은 지출 결과서와 출장보고서 제목 옆에만 붙습니다."""
+    sheets = report()["sheets"]
+    assert sheets[0]["approval"] == {"label": "결재", "roles": ["담당", "팀장", "부서장"]}
+    assert "approval" not in sheets[1]  # 검수확인서
+    trip = forms.build(forms.TRIP_REPORT, TRIP_SUB, {}, "박철환")
+    assert trip["sheets"][0]["approval"]["roles"] == ["담당", "팀장", "부서장"]
+    minutes = forms.build(forms.MINUTES, SUB, {}, "박철환")
+    assert "approval" not in minutes["sheets"][0]
+
+
 def test_amounts_and_dates_always_come_from_the_settlement():
     form = report(fields={"detail_0": "아무 말", "amount": 999})
     assert [s["title"] for s in form["sheets"]] == ["지출 결과서", "검수확인서"]
