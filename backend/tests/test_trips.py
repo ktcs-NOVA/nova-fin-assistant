@@ -119,6 +119,22 @@ def test_request_then_settle_links_same_trip(made):
     assert after["stage"] == "정산 제출" and after["submission"]["id"] == sub["id"]
     assert client.delete(f"/api/trips/{trip['id']}", headers=auth("E1001")).status_code == 409
 
+    # 반려 → 고쳐서 다시 내면 같은 출장 신청에 다시 붙어 카드가 새 정산을 가리킴
+    r = client.post(
+        f"/api/admin/submissions/{sub['id']}/decision",
+        json={"decision": "반려", "message": "테스트 반려"},
+        headers=auth("A2001"),
+    )
+    assert r.status_code == 200, r.text
+    again = {k: v for k, v in claim.items() if k != "trip_id"}
+    r = client.post(
+        "/api/submissions", json={**again, "resubmit_of": sub["id"]}, headers=auth("E1001")
+    )
+    assert r.status_code == 201, r.text
+    made["subs"].append(r.json()["id"])
+    latest = client.get(f"/api/trips/{trip['id']}", headers=auth("E1001")).json()["submission"]
+    assert latest["id"] == r.json()["id"] and latest["status"] == "검토 대기"
+
 
 def test_cancel_and_ownership(made):
     trip = request_trip(made, start_date="2099-01-01", end_date="2099-01-01")

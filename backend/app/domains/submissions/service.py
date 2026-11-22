@@ -114,6 +114,15 @@ def create_submission(db: Session, user: User, req: dict) -> Submission:
 
     start, end = _parse_date(trip_in.get("start_date")), _parse_date(trip_in.get("end_date"))
     trip = None
+    if not req.get("trip_id") and req.get("resubmit_of"):
+        # 신청한 출장으로 낸 정산이 반려돼 다시 내는 것이면 같은 출장 신청에 다시 붙임 (내 출장 카드가 반려에 멈추지 않게)
+        old = db.scalar(
+            select(Submission).where(
+                Submission.code == str(req["resubmit_of"]), Submission.user_id == user.id
+            )
+        )
+        if old is not None and old.trip is not None and old.trip.status == trips_service.REQUESTED:
+            req = {**req, "trip_id": old.trip.id}
     if req.get("trip_id"):
         # 출장 신청에서 이어 온 정산: 새 출장을 만들지 않고 신청한 출장에 붙임 (출장보고서가 목적·출장지를 이어받음)
         trip = trips_service.own_trip(db, user, int(req["trip_id"]))

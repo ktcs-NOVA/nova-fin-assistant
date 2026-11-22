@@ -118,7 +118,8 @@ export default function TimeField({ value, onChange, label, after = '', placehol
         onKeyDown={key}
       />
       {open && slots.length > 0 && (
-        <ul className="time-list" ref={listRef} role="listbox" aria-label={`${label} 목록`}>
+        // onClick 막기: 이 칸이 <label> 안에 있어서, 목록을 누른 클릭이 label 을 타고 입력칸으로 가 목록이 다시 열림
+        <ul className="time-list" ref={listRef} role="listbox" aria-label={`${label} 목록`} onClick={(e) => e.preventDefault()}>
           {slots.map((m, i) => (
             <li
               key={m}

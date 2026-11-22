@@ -250,7 +250,7 @@ export default function TripRequestPage({ user, onNavigate, param }) {
                 ? <button type="button" className="btn" onClick={cancel}>신청 취소</button>
                 : <button type="button" className="btn" onClick={() => onNavigate('home')}>홈으로</button>}
             {done.submission
-              ? <button type="button" className="btn primary" onClick={() => onNavigate('mystatus')}>서류 쓰기 →</button>
+              ? <button type="button" className="btn primary" onClick={() => onNavigate('mystatus')}>{done.submission.status === '반려' ? '다시 내기 →' : '서류 쓰기 →'}</button>
               : settleable(done)
                 ? <button type="button" className="btn primary" onClick={() => onNavigate('travel', { tripId: done.id })}>정산하기 →</button>
                 : <button type="button" className="btn primary" onClick={() => onNavigate('home')}>홈으로</button>}

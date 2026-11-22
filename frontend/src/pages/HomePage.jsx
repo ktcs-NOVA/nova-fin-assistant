@@ -66,7 +66,10 @@ export default function HomePage({ user, onNavigate }) {
   // 출장 카드 오른쪽 버튼: 지금 단계에서 할 일
   function tripAction(t) {
     if (settleable(t)) return <button type="button" className="btn primary" onClick={() => onNavigate('travel', { tripId: t.id })}>정산하기 →</button>
-    if (t.submission) return <button type="button" className="btn" onClick={() => onNavigate('mystatus')}>{t.submission.status} · 서류 쓰기 →</button>
+    if (t.submission) {
+      const rejected = t.submission.status === '반려'   // 반려되면 서류보다 고쳐서 다시 내는 게 먼저
+      return <button type="button" className={rejected ? 'btn primary' : 'btn'} onClick={() => onNavigate('mystatus')}>{t.submission.status} · {rejected ? '다시 내기' : '서류 쓰기'} →</button>
+    }
     return <button type="button" className="link-btn" onClick={() => cancel(t)}>신청 취소</button>
   }
 
