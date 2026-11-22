@@ -15,6 +15,50 @@ function sectionLabel(s) {
   return s.title ? `${s.article} ${s.title}` : s.article
 }
 
+// 별지 서식: 표의 한 줄이 '소속 | 직급(직위) | 성명' 처럼 칸을 ' | '로 이은 한 줄로 저장돼 있습니다.
+// (서식은 제목 행이 없는 빈칸 양식이라 '제목: 값' 모양이 아님. 칸 안의 줄바꿈은 ' / ')
+// 줄마다 칸을 나눠 양식처럼 그리고, 칸 수가 모자란 줄은 마지막 칸을 오른쪽 끝까지 늘립니다.
+const FORM_CELL = ' | '
+
+function FormView({ content, query }) {
+  const lines = content.split('\n').map((l) => l.trim()).filter(Boolean)
+  const captions = []
+  const rows = []
+  for (const line of lines) {
+    if (line.includes(FORM_CELL)) rows.push(line.split(FORM_CELL))
+    else if (rows.length === 0) captions.push(line.replace(/\s*<(신설|개정)[^>]*>\s*/g, ' ').trim())
+    else rows.push([line])  // 표 중간의 한 칸짜리 줄 (안내 문구 등)
+  }
+  const width = Math.max(1, ...rows.map((r) => r.length))
+
+  return (
+    <>
+      {captions.map((c, i) => (
+        <p key={i} className={i === 0 ? 'form-caption' : 'form-title'}><Marked text={c} query={query} /></p>
+      ))}
+      {rows.length > 0 && (
+        <div className="peek-table-wrap">
+          <table className="form-sheet">
+            <tbody>
+              {rows.map((cells, i) => (
+                <tr key={i}>
+                  {cells.map((cell, j) => (
+                    <td key={j} colSpan={j === cells.length - 1 ? width - cells.length + 1 : 1}>
+                      {cell.split(' / ').map((part, k) => (
+                        <span key={k} className="form-line"><Marked text={part} query={query} /></span>
+                      ))}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
+  )
+}
+
 function SectionBody({ section, query }) {
   if (section.kind === 'table') {
     const table = parseTable(section.content)
@@ -191,7 +235,7 @@ export default function RegulationViewer({ focus }) {
                   {s.kind === 'form' ? (
                     <details>
                       <summary>서식 내용 보기</summary>
-                      <p className="rule-text"><Marked text={s.content} query={query} /></p>
+                      <FormView content={s.content} query={query} />
                     </details>
                   ) : (
                     <SectionBody section={s} query={query} />
