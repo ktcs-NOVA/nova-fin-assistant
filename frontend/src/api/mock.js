@@ -252,12 +252,13 @@ const mockRegion = (addr) => {
   if (words.some((w) => ['부산', '대구', '인천', '대전', '울산'].some((m) => w.startsWith(m)))) return '광역시'
   return '기타'
 }
-let tripSeq = 3
+// 백엔드 scripts/seed_trips.py 와 같은 시연 출장 1건 (정산 전: 지난주 월·화)
+let tripSeq = 2
+const lastMonday = -(((new Date().getDay() + 6) % 7) + 7)
 const trips = [
-  { id: 1, trip_type: '국내출장', purpose: '(예시) 부산 선사 방문 · 선박금융 상담', destination: '부산광역시 강서구 신항로 1', region: '광역시',
-    start_date: isoDay(-6), end_date: isoDay(-5), vehicle: '대중교통', private_car_approved: false, distance_km: 18.5, status: '신청' },
-  { id: 2, trip_type: '국내출장', purpose: '(예시) 해양수산부 정책 협의', destination: '세종특별자치시 다솜2로 94', region: '기타',
-    start_date: isoDay(9), end_date: isoDay(9), vehicle: '대중교통', private_car_approved: false, distance_km: 330, status: '신청' },
+  { id: 1, trip_type: '국내출장', purpose: '서울 선사 간담회 (친환경 선박 금융 수요 조사)', destination: '서울특별시 영등포구 여의대로 108',
+    region: '서울', start_date: isoDay(lastMonday), end_date: isoDay(lastMonday + 1), vehicle: '대중교통', private_car_approved: false,
+    distance_km: 390, education: false, hours: null, start_time: '08:00:00', end_time: '18:00:00', companions: [], status: '신청' },
 ]
 function tripView(t) {
   const sub = submissions.find((s) => s.trip_id === t.id)

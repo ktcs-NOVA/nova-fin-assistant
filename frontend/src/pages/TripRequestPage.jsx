@@ -4,7 +4,7 @@
 // 요청·응답 모양은 docs/API.md 3-15.
 
 import { useEffect, useState } from 'react'
-import { calcTravel, createTrip, getTrip, lookupRoute, USE_MOCK } from '../api/client.js'
+import { calcTravel, cancelTrip, createTrip, getTrip, lookupRoute, USE_MOCK } from '../api/client.js'
 import DateRangePicker from '../components/DateRangePicker.jsx'
 import TimeField from '../components/TimeField.jsx'
 import { formatTime } from '../utils/time.js'
@@ -160,6 +160,18 @@ export default function TripRequestPage({ user, onNavigate, param }) {
     }
   }
 
+  // 내역 화면에서 신청 취소 (정산 전만)
+  async function cancel() {
+    if (!window.confirm(`'${done.purpose}' 출장 신청을 취소할까요?`)) return
+    setError('')
+    try {
+      await cancelTrip(done.id)
+      onNavigate('home')
+    } catch (e) {
+      setError(e.message)
+    }
+  }
+
   function restart() {
     setForm(EMPTY)
     setDone(null)
@@ -229,13 +241,19 @@ export default function TripRequestPage({ user, onNavigate, param }) {
             <li>다녀오면 홈 ‘내 출장’에서 <b>정산하기</b>를 누르세요. 신청한 목적·기간·장소가 그대로 채워져요.</li>
           </ul>
 
+          {error && <div className="error" role="alert">{error}</div>}
           <div className="wiz-nav">
-            {viewId
-              ? <button type="button" className="btn" onClick={() => onNavigate('home')}>홈으로</button>
-              : <button type="button" className="btn" onClick={restart}>다른 출장 신청</button>}
-            {settleable(done)
-              ? <button type="button" className="btn primary" onClick={() => onNavigate('travel', { tripId: done.id })}>정산하기 →</button>
-              : <button type="button" className="btn primary" onClick={() => onNavigate('home')}>홈으로</button>}
+            {/* 왼쪽은 보조 동작, 오른쪽(강조)은 지금 단계에서 할 일 */}
+            {!viewId
+              ? <button type="button" className="btn" onClick={restart}>다른 출장 신청</button>
+              : !done.submission && !settleable(done)
+                ? <button type="button" className="btn" onClick={cancel}>신청 취소</button>
+                : <button type="button" className="btn" onClick={() => onNavigate('home')}>홈으로</button>}
+            {done.submission
+              ? <button type="button" className="btn primary" onClick={() => onNavigate('mystatus')}>서류 쓰기 →</button>
+              : settleable(done)
+                ? <button type="button" className="btn primary" onClick={() => onNavigate('travel', { tripId: done.id })}>정산하기 →</button>
+                : <button type="button" className="btn primary" onClick={() => onNavigate('home')}>홈으로</button>}
           </div>
         </div>
       </section>
