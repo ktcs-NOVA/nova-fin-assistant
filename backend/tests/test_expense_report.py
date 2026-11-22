@@ -130,6 +130,17 @@ def test_minutes_fill_roster_and_amounts_from_the_meeting():
     assert block(polished, "field")["cell"]["source"] == "ai" and polished["ready"]
 
 
+def test_roster_reads_name_with_team_so_same_names_stay_apart():
+    """화면은 참석자를 '이름 (소속)' 으로 보냅니다. 동명이인도 소속 칸으로 구분됩니다."""
+    sub = {**SUB, "expenses": [{**SUB["expenses"][0],
+                                "attendees": ["김민수 (해운정책팀)", "김민수 (부산항만공사 물류팀)", "이영희"]}]}
+    form = forms.build(forms.MINUTES, sub, {}, "w")
+    roster = rows(form)
+    assert [c["value"] for c in roster[0]] == ["해운정책팀", "김민수", "(인)", "부산항만공사 물류팀", "김민수", "(인)"]
+    assert [c["value"] for c in roster[1]][:3] == ["", "이영희", "(인)"]
+    assert forms._split_person("(소속만)") == ("", "(소속만)")  # 이름 없는 괄호는 그대로 둠
+
+
 def test_trip_report_asks_for_destination_and_content():
     sub = {**TRIP_SUB, "submitter": "박철환", "trip": {**TRIP_SUB["trip"], "destination": "광역시"}}
     form = forms.build(forms.TRIP_REPORT, sub, forms.initial_fields(forms.TRIP_REPORT, sub), "w")

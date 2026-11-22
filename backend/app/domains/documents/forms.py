@@ -109,8 +109,14 @@ def _item_name(e: dict) -> str:
 
 
 def _split_person(text: str) -> tuple[str, str]:
-    """'총무인사부 박철환' → ('총무인사부', '박철환'). 소속 없이 이름만 있으면 ('', 이름)."""
-    parts = str(text or "").split()
+    """참석자 한 줄 → (소속, 이름). 화면이 보내는 '박철환 (총무인사부)' 와 예전에 적던 '총무인사부 박철환' 을 모두 읽습니다.
+    소속 없이 이름만 있으면 ('', 이름)."""
+    s = str(text or "").strip()
+    if s.endswith(")") and "(" in s:
+        name, _, team = s[:-1].rpartition("(")
+        if name.strip() and team.strip():
+            return team.strip(), name.strip()
+    parts = s.split()
     if len(parts) <= 1:
         return "", "".join(parts)
     return parts[0], " ".join(parts[1:])
