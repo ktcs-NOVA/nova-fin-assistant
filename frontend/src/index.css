@@ -385,6 +385,12 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .items-editor { display: grid; gap: 10px; }
 .item-row { position: relative; border: 1px solid var(--line); border-radius: 10px; padding: 12px 12px 12px; background: var(--bg); }
 .item-row .form-grid { padding-right: 56px; }
+/* 회의 참석자: 이름 · 소속 · 삭제 를 한 줄씩 */
+.people { border: 0; padding: 0; margin: 0; min-width: 0; }
+.people legend { padding: 0; margin-bottom: 4px; }
+.people-row { display: grid; grid-template-columns: 1fr 1.3fr auto; gap: 8px; margin-bottom: 6px; }
+.people-add { align-self: flex-start; }
+@media (max-width: 640px) { .people-row { grid-template-columns: 1fr 1fr; } .people-row .btn { grid-column: 1 / -1; justify-self: end; } }
 .item-remove { position: absolute; top: 10px; right: 10px; padding: 4px 10px; font-size: 12px; color: var(--muted); }
 .field-check .check-inline { display: flex; align-items: center; gap: 8px; min-height: 36px; font-size: 14px; }
 /* .field input 의 width:100% 가 체크박스에도 걸려 글자가 세로로 밀리던 것 방지 */
