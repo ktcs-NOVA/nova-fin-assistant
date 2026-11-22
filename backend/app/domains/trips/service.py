@@ -22,15 +22,24 @@ def today() -> date:
     return datetime.now(KST).date()
 
 
+METROS = ("부산", "대구", "인천", "광주", "대전", "울산")
+
+
 def region_of(address: str | None) -> str | None:
-    """출장지 주소 → 숙박비 상한용 지역 구분. 모르면 None."""
-    text = (address or "").strip()
-    if not text:
+    """출장지 → 숙박비 상한용 지역 구분. 모르면 None.
+
+    경로 조회 결과는 '부산역 (부산광역시 동구 중앙대로 206)' 처럼 이름 뒤 괄호에 주소가 붙으므로
+    낱말 전체를 훑습니다. '광주'는 경기도 광주시와 헷갈리므로 '광주광역시'로 적힌 경우만 광역시로 봅니다.
+    """
+    words = [w.strip("()[],·") for w in (address or "").split()]
+    words = [w for w in words if w]
+    if not words:
         return None
-    if text.startswith("서울"):
+    if any(w.startswith("서울") for w in words):
         return "서울"
-    head = text.split()[0]
-    if head.endswith("광역시") or head in {"부산", "대구", "인천", "광주", "대전", "울산"}:
+    if any(w.endswith("광역시") for w in words):
+        return "광역시"
+    if any(w.startswith(m) and m != "광주" for w in words for m in METROS):
         return "광역시"
     return "기타"
 
@@ -70,6 +79,9 @@ def view(trip: Trip, sub: Submission | None, on: date | None = None) -> dict:
         "distance_km": trip.distance_km,
         "education": bool(trip.education),
         "hours": trip.hours,
+        "start_time": trip.start_time,
+        "end_time": trip.end_time,
+        "companions": trip.companions or [],
         "status": trip.status or REQUESTED,
         "stage": stage_of(trip, sub, on or today()),
         "submission": (
@@ -95,6 +107,14 @@ def create_trip(db: Session, user: User, req: dict) -> dict:
         distance_km=req.get("distance_km"),
         education=bool(req.get("education")),
         hours=req.get("hours"),
+        start_time=req.get("start_time"),
+        end_time=req.get("end_time"),
+        companions=[
+            {"name": c["name"].strip(), "dept": (c.get("dept") or "").strip()}
+            for c in req.get("companions") or []
+            if c.get("name", "").strip()
+        ]
+        or None,
         status=REQUESTED,
     )
     db.add(trip)

@@ -231,6 +231,12 @@ export function listTrips() {
   return request('GET', '/api/trips')
 }
 
+/** 출장 신청 한 건 (홈 '내 출장'에서 눌러 다시 볼 때) */
+export function getTrip(id) {
+  if (USE_MOCK) return mock.getTrip(id)
+  return request('GET', `/api/trips/${id}`)
+}
+
 export function createTrip(trip) {
   if (USE_MOCK) return mock.createTrip(trip)
   return request('POST', '/api/trips', trip)

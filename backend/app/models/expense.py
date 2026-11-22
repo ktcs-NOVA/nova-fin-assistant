@@ -45,6 +45,10 @@ class Trip(TimestampMixin, Base):
     # 교육 출장이면 일비 2일 한도. 근무지 내 출장은 예상 출장 시간(4시간 기준) — 정산에서 실제 시간으로 고칠 수 있음
     education: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     hours: Mapped[float | None] = mapped_column(Float)
+    # 출발·복귀 시각과 동행 출장자 [{"name", "dept"}] — 여비규정 별지 제1호 출장원의 '일시' · '출장자' 칸
+    start_time: Mapped[time | None] = mapped_column(Time)
+    end_time: Mapped[time | None] = mapped_column(Time)
+    companions: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB)
 
     user: Mapped["User"] = relationship()
     expenses: Mapped[list["Expense"]] = relationship(back_populates="trip")

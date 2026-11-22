@@ -1132,3 +1132,19 @@ body:has(.form-actions-bar) .ask-fab { bottom: 100px; }
 @media (max-width: 760px) { .trip-est li { grid-template-columns: 1fr auto; } .trip-est li .hint { grid-column: 1 / -1; } }
 .wiz-card > .check-inline { display: flex; align-items: center; gap: 8px; font-size: 14.5px; }
 .field select:disabled, .field input:disabled { opacity: .6; cursor: not-allowed; }
+.trip-people { display: grid; gap: 8px; }
+.trip-people .hint { margin: 0; }
+.trip-person { display: grid; grid-template-columns: 1fr 1.3fr auto; gap: 8px; }
+.trip-add { justify-self: start; }
+@media (max-width: 760px) { .trip-person { grid-template-columns: 1fr 1fr; } .trip-person .btn { grid-column: 1 / -1; } }
+.time-field { position: relative; display: block; }
+.time-field input { width: 100%; font-variant-numeric: tabular-nums; }
+.time-field input[aria-invalid] { border-color: var(--bad); }
+.time-list { position: absolute; z-index: 20; top: calc(100% + 4px); left: 0; right: 0; max-height: 240px; overflow-y: auto; margin: 0; padding: 4px; list-style: none; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+.time-list li { padding: 8px 10px; border-radius: 8px; cursor: pointer; font-variant-numeric: tabular-nums; }
+.time-list li:hover, .time-list li.active { background: var(--brand-soft); }
+.time-list li.on { color: var(--brand); font-weight: 700; }
+.time-dur { margin-left: 8px; font-size: 12.5px; color: var(--muted); font-weight: 400; }
+.time-bad { display: block; margin-top: 4px; font-size: 12.5px; color: var(--bad); }
+.trip-main.recent-link { flex: 1; cursor: pointer; }
+.trip-main.recent-link:hover .recent-name { color: var(--brand); text-decoration: underline; }

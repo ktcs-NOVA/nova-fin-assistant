@@ -243,12 +243,14 @@ const isoDay = (offset) => {
   d.setDate(d.getDate() + offset)
   return d.toISOString().slice(0, 10)
 }
+// 백엔드 trips/service.py region_of 와 같은 규칙 (경로 조회 결과 '부산역 (부산광역시 …)' 도 처리)
 const mockRegion = (addr) => {
-  const t = String(addr ?? '').trim()
-  if (!t) return null
-  if (t.startsWith('서울')) return '서울'
-  const head = t.split(/\s+/)[0]
-  return head.endsWith('광역시') || ['부산', '대구', '인천', '광주', '대전', '울산'].includes(head) ? '광역시' : '기타'
+  const words = String(addr ?? '').split(/\s+/).map((w) => w.replace(/[()[\],·]/g, '')).filter(Boolean)
+  if (!words.length) return null
+  if (words.some((w) => w.startsWith('서울'))) return '서울'
+  if (words.some((w) => w.endsWith('광역시'))) return '광역시'
+  if (words.some((w) => ['부산', '대구', '인천', '대전', '울산'].some((m) => w.startsWith(m)))) return '광역시'
+  return '기타'
 }
 let tripSeq = 3
 const trips = [
@@ -267,6 +269,13 @@ function tripView(t) {
 export async function listTrips() {
   await wait(300)
   return trips.filter((t) => t.status === '신청').sort((a, b) => b.start_date.localeCompare(a.start_date)).map(tripView)
+}
+
+export async function getTrip(id) {
+  await wait(200)
+  const t = trips.find((x) => x.id === id && x.status === '신청')
+  if (!t) throw new Error('출장 신청을 찾을 수 없습니다.')
+  return tripView(t)
 }
 
 export async function createTrip(req) {

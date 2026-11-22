@@ -27,6 +27,9 @@ def test_region_from_address():
     assert region_of("대전 서구 둔산로 100") == "광역시"
     assert region_of("세종특별자치시 한누리대로 2130") == "기타"
     assert region_of("경기도 수원시") == "기타"
+    assert region_of("부산역 (부산광역시 동구 중앙대로 206)") == "광역시"  # 경로 조회 결과 모양
+    assert region_of("대전 정부청사") == "광역시"
+    assert region_of("경기 광주시청 (경기도 광주시 행정타운로 50)") == "기타"
     assert region_of("") is None and region_of(None) is None
 
 
@@ -80,7 +83,15 @@ def request_trip(made, **over) -> dict:
 
 
 def test_request_then_settle_links_same_trip(made):
-    trip = request_trip(made, education=True)
+    trip = request_trip(
+        made,
+        education=True,
+        start_time="08:30",
+        end_time="19:00",
+        companions=[{"name": "황종원", "dept": "해운정책팀"}],
+    )
+    assert trip["start_time"] == "08:30:00" and trip["end_time"] == "19:00:00"
+    assert trip["companions"] == [{"name": "황종원", "dept": "해운정책팀"}]
     assert trip["region"] == "광역시" and trip["status"] == "신청"
     assert trip["education"] is True and trip["hours"] is None
     assert trip["stage"] == "정산 전"  # 지난 날짜라 다녀온 출장
@@ -125,3 +136,18 @@ def test_end_before_start_is_rejected(made):
         headers=auth("E1001"),
     )
     assert r.status_code == 422 or r.status_code == 400
+
+
+def test_same_day_return_must_be_after_departure(made):
+    r = client.post(
+        "/api/trips",
+        json={
+            "purpose": "x",
+            "start_date": "2026-10-20",
+            "end_date": "2026-10-20",
+            "start_time": "18:00",
+            "end_time": "09:00",
+        },
+        headers=auth("E1001"),
+    )
+    assert r.status_code in (400, 422)

@@ -123,10 +123,10 @@ export default function HomePage({ user, onNavigate }) {
           <ul className="recent-list trip-list">
             {trips.slice(0, 5).map((t) => (
               <li key={t.id}>
-                <div className="trip-main">
+                <button type="button" className="recent-link trip-main" onClick={() => onNavigate('trip', { tripId: t.id })} title="신청 내역 보기">
                   <div className="recent-name">{t.purpose}</div>
-                  <div className="hint">{periodText(t.start_date, t.end_date)} · {t.destination || t.region || '출장지 미정'} · {t.vehicle}</div>
-                </div>
+                  <div className="hint">{periodText(t.start_date, t.end_date)} · {t.destination || t.region || '출장지 미정'} · {t.vehicle}{t.companions?.length ? ` · 동행 ${t.companions.length}명` : ''}</div>
+                </button>
                 <span className="trip-side">
                   <span className={`badge ${STAGE_TONE[t.stage] ?? 'muted'}`}>{t.stage}</span>
                   {tripAction(t)}
