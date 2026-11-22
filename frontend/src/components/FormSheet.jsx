@@ -162,7 +162,10 @@ function ApprovalBox({ approval }) {
     <table className="form-table form-approval" aria-label="결재란">
       <tbody>
         <tr>
-          <th scope="row" rowSpan={2} className="form-approval-label">{approval.label}</th>
+          {/* 글자를 한 줄에 하나씩 쌓아 세로로 씀 (세로쓰기 CSS 는 브라우저에 따라 글자가 눕기도 해서 쓰지 않음) */}
+          <th scope="row" rowSpan={2} className="form-approval-label" aria-label={approval.label}>
+            {[...approval.label].map((ch, i) => <span key={i} aria-hidden="true">{ch}</span>)}
+          </th>
           {approval.roles.map((r) => <th key={r} scope="col">{r}</th>)}
         </tr>
         <tr>{approval.roles.map((r) => <td key={r} className="src-blank" aria-label={`${r} 서명 칸`} />)}</tr>

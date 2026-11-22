@@ -940,7 +940,8 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .form-head .form-title { flex: 1; margin: 0; display: flex; align-items: center; justify-content: center; }
 .form-table.form-approval { width: auto; flex: none; margin: 0; font-size: 13px; }
 .form-table.form-approval th { width: 62px; padding: 4px 6px; height: 26px; }
-.form-table.form-approval .form-approval-label { width: 26px; padding: 4px 3px; writing-mode: vertical-rl; letter-spacing: .5em; }
+.form-table.form-approval .form-approval-label { width: 26px; padding: 4px 3px; }
+.form-approval-label span { display: block; line-height: 1.9; }
 .form-table.form-approval td { height: 54px; }
 .form-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 12px; font-size: 14px; }
 .form-table th, .form-table td { border: 1px solid var(--ink); padding: 7px 9px; vertical-align: middle; word-break: keep-all; overflow-wrap: anywhere; }
