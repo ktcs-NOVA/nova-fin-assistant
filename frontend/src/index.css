@@ -1086,7 +1086,7 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
   .form-receipt { max-height: 320px; }
 }
 
-/* 문서 작업 양식: ① 작성하기 / ② 양식으로 보기 탭, 아래에 붙는 버튼 줄 (미리보기안) */
+/* 문서 작업 양식: 작성하기 / 양식으로 보기 토글 (번호 없음 — 순서가 아니라 보는 방식을 고르는 것), 아래에 붙는 버튼 줄 (미리보기안) */
 .doc-tabs { max-width: 420px; }
 .write-view { display: grid; gap: 12px; }
 .write-summary-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
