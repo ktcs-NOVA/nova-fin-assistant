@@ -126,8 +126,8 @@ export default function ExpenseReportEditor({ doc, onBack, onChanged }) {
         <>
           <div className="doc-toolbar no-print">
             <div className="seg doc-tabs" role="tablist">
-              <button type="button" role="tab" aria-selected={tab === 'write'} className={tab === 'write' ? 'on' : ''} onClick={() => setTab('write')}>① 작성하기</button>
-              <button type="button" role="tab" aria-selected={tab === 'form'} className={tab === 'form' ? 'on' : ''} onClick={() => setTab('form')}>② 양식으로 보기</button>
+              <button type="button" role="tab" aria-selected={tab === 'write'} className={tab === 'write' ? 'on' : ''} onClick={() => setTab('write')}>작성하기</button>
+              <button type="button" role="tab" aria-selected={tab === 'form'} className={tab === 'form' ? 'on' : ''} onClick={() => setTab('form')}>양식으로 보기</button>
             </div>
             {todo.length > 0 ? (
               <div className="doc-todo">
@@ -170,7 +170,7 @@ export default function ExpenseReportEditor({ doc, onBack, onChanged }) {
   )
 }
 
-// ① 작성하기: 양식 전체 대신, 직원이 적거나 확인할 칸만 모아서 보여 줍니다.
+// 작성하기 탭: 양식 전체 대신, 직원이 적거나 확인할 칸만 모아서 보여 줍니다.
 //   직접 적는 칸(검수자·특이 사항·회의 내용 …)이 위, AI 가 쓴 짧은 문구(상세내역·용도)는 아래에 품명·금액과 함께.
 function WriteView({ form, fields, onEdit, onShowForm }) {
   const cells = editableWithContext(form)
