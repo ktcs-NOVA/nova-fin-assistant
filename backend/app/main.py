@@ -22,6 +22,7 @@ from app.domains.procedure.router import router as procedure_router
 from app.domains.qa.router import router as qa_router
 from app.domains.receipt.router import router as receipt_router
 from app.domains.regulations.router import router as regulations_router
+from app.domains.route.router import router as route_router
 from app.domains.submissions.router import router as submissions_router
 from app.domains.travel.router import router as travel_router
 from app.domains.verify import service as verify_service
@@ -70,6 +71,7 @@ app.include_router(verify_router)  # POST /api/verify  (규칙 엔진 연결)
 app.include_router(checklist_router)  # GET  /api/checklist
 app.include_router(procedure_router)  # POST /api/procedure  (U-02, 예시 응답)
 app.include_router(travel_router)  # POST /api/travel-calc  (U-05 출장비 계산)
+app.include_router(route_router)  # POST /api/route  (U-05 근무지 → 도착지 거리, 네이버 지도)
 app.include_router(voucher_router)  # POST /api/voucher-draft  (U-07 결의서 초안)
 app.include_router(receipt_router)  # POST /api/receipt  (U-06 영수증 인식)
 app.include_router(documents_router)  # /api/documents (문서 작업: 출장보고서·회의록·출장원·지출결과서)
