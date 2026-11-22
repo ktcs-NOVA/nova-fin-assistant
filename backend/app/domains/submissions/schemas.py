@@ -38,6 +38,7 @@ class SubmissionCreate(BaseModel):
     account: str | None = None  # 직원이 적은 계정과목 (M-05)
     verify_result: dict[str, Any] | None = None  # 이미 받은 /api/verify 응답. 없으면 서버가 다시 검증
     resubmit_of: str | None = None  # 반려된 내 정산 건을 고쳐 다시 내는 것이면 그 건의 번호
+    trip_id: int | None = None  # 출장 신청(POST /api/trips)에서 이어 온 정산이면 그 출장 번호
 
     @field_validator("items")
     @classmethod

@@ -8,7 +8,7 @@
 from datetime import date, time
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import Boolean, Date, ForeignKey, Integer, String, Text, Time
+from sqlalchemy import Boolean, Date, Float, ForeignKey, Integer, String, Text, Time
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -36,6 +36,15 @@ class Trip(TimestampMixin, Base):
     private_car_approved: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="false"
     )
+    # 출장 신청(POST /api/trips)으로 미리 만든 출장이면 아래 값이 채워집니다.
+    # 정산을 제출할 때 함께 만들어진 출장은 status 가 비어 있습니다.
+    trip_type: Mapped[str | None] = mapped_column(String(20))  # 국내출장 / 근무지 내 출장
+    status: Mapped[str | None] = mapped_column(String(10))  # 신청 / 취소
+    # 사무실 → 출장지 편도 거리 (네이버 경로)
+    distance_km: Mapped[float | None] = mapped_column(Float)
+    # 교육 출장이면 일비 2일 한도. 근무지 내 출장은 예상 출장 시간(4시간 기준) — 정산에서 실제 시간으로 고칠 수 있음
+    education: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    hours: Mapped[float | None] = mapped_column(Float)
 
     user: Mapped["User"] = relationship()
     expenses: Mapped[list["Expense"]] = relationship(back_populates="trip")

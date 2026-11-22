@@ -19,7 +19,7 @@ export default function RouteField({ onDistance }) {
     try {
       const r = await lookupRoute(dest.trim())
       setRoute(r)
-      onDistance?.(r.distance_km)
+      onDistance?.(r.distance_km, r)   // 두 번째 값: 조회 결과 전체 (출장 신청에서 출장지 이름으로 씀)
     } catch {
       setRoute(null)
       setError('경로 조회가 아직 연결되지 않았어요. 거리(km)는 직접 입력해 주세요.')

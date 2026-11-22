@@ -21,6 +21,7 @@ from app.core.constants import (
     VERDICT_OK,
 )
 from app.core.errors import AppError
+from app.domains.trips import service as trips_service
 from app.domains.verify import service as verify_service
 from app.models import Expense, Review, Submission, Trip, User
 
@@ -104,12 +105,24 @@ def create_submission(db: Session, user: User, req: dict) -> Submission:
     now = datetime.now(KST)
 
     # AI 사전검증: 프론트가 보낸 결과가 있으면 그대로, 없으면 다시 돌림
-    claim = {k: v for k, v in req.items() if k not in {"purpose", "account", "verify_result", "resubmit_of"}}
+    claim = {
+        k: v
+        for k, v in req.items()
+        if k not in {"purpose", "account", "verify_result", "resubmit_of", "trip_id"}
+    }
     verify = req.get("verify_result") or verify_service.verify(claim)
 
     start, end = _parse_date(trip_in.get("start_date")), _parse_date(trip_in.get("end_date"))
     trip = None
-    if start and end:
+    if req.get("trip_id"):
+        # 출장 신청에서 이어 온 정산: 새 출장을 만들지 않고 신청한 출장에 붙임 (출장보고서가 목적·출장지를 이어받음)
+        trip = trips_service.own_trip(db, user, int(req["trip_id"]))
+        if trip.status != trips_service.REQUESTED:
+            raise AppError("취소한 출장으로는 정산할 수 없습니다.")
+        start = start or trip.start_date
+        if not req.get("purpose"):
+            req = {**req, "purpose": trip.title}
+    elif start and end:
         trip = Trip(
             user=user,
             title=req.get("purpose") or _default_purpose(trip_type, trip_in, items),

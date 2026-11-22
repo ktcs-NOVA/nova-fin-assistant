@@ -9,6 +9,7 @@ import VerifyPage from './pages/VerifyPage.jsx'
 import DocumentsPage from './pages/DocumentsPage.jsx'
 import ReceiptPage from './pages/ReceiptPage.jsx'
 import TravelCalcPage from './pages/TravelCalcPage.jsx'
+import TripRequestPage from './pages/TripRequestPage.jsx'
 import AdminHomePage from './pages/admin/AdminHomePage.jsx'
 import ReviewPage from './pages/admin/ReviewPage.jsx'
 import { loadSession, saveSession, clearSession, UNAUTHORIZED_EVENT } from './auth/accounts.js'
@@ -22,6 +23,7 @@ const MENUS = {
     home: 'home',
     pages: {
       home: { label: '홈', component: HomePage },
+      trip: { label: '출장 신청', component: TripRequestPage, parent: 'home' },     // 출장 신청 → 정산 → 보고서
       type: { label: '정산하기', component: TypePage, parent: 'home' },
       receipt: { label: '영수증 등록', component: ReceiptPage, parent: 'type' },     // U-06
       travel: { label: '출장 정산', component: TravelCalcPage, parent: 'type' },   // U-05

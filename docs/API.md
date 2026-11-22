@@ -483,6 +483,59 @@ curl -s localhost:8000/api/checklists -H 'Authorization: Bearer <token>'
 - 프론트는 토큰을 실어 받아서 `지출내역_YYYYMMDD.xlsx` 로 저장합니다 (`downloadLedger`, `components/LedgerButton.jsx`). 버튼은 직원의 "내 정산 현황"과 관리자의 "정산 검토 대기함"에 있습니다.
 - 만드는 코드는 `backend/app/domains/ledger/excel.py` (라이브러리 `xlsxwriter`).
 
+### 3-15. 출장 신청 (`/api/trips`) — 2026-11-23 추가 (2026-11-20 코칭: 신청 → 정산 → 보고서)
+
+출장 전에 목적·기간·장소·교통을 등록합니다. 다녀와서 출장 정산을 시작할 때 이 값을 그대로 불러와 잠그고,
+정산을 제출할 때 `trip_id` 를 함께 보내면 새 출장을 만들지 않고 신청한 출장에 붙습니다. 그래서 출장보고서가 목적·일시·출장지를 이어받습니다.
+실제 결재는 하지 않으므로 신청하면 바로 `신청` 상태입니다. 모두 로그인한 본인의 출장만 다룹니다.
+
+| 하는 일 | 방식 | 주소 |
+|---|---|---|
+| 출장 신청 | POST | `/api/trips` |
+| 내 출장 목록 (취소 제외, 시작일 최근 순) | GET | `/api/trips` |
+| 한 건 보기 | GET | `/api/trips/{id}` |
+| 신청 취소 (정산 전만, 정산했으면 409) | DELETE | `/api/trips/{id}` |
+
+요청 (POST)
+
+```json
+{
+  "trip_type": "국내출장",
+  "purpose": "부산 선사 방문 · 선박금융 상담",
+  "destination": "부산광역시 강서구 신항로 1",
+  "start_date": "2026-12-03",
+  "end_date": "2026-12-04",
+  "vehicle": "대중교통",
+  "private_car_approved": false,
+  "distance_km": 18.5
+}
+```
+
+- `trip_type`: `국내출장` / `근무지 내 출장`. `vehicle`: `대중교통` / `업무용차량` / `렌트차량` / `자가용`.
+- `region`(서울 / 광역시 / 기타)을 비우면 출장지 주소로 정합니다 (`서울…` → 서울, `○○광역시`·부산·대구·인천·광주·대전·울산 → 광역시, 나머지 → 기타).
+- `distance_km` 는 사무실 → 출장지 **편도** 거리(경로 조회 결과). 자가용 정산의 운행거리(근무지 내 출장은 왕복 거리)는 이 값의 왕복으로 채우고 잠급니다.
+- `education`(교육 출장, 일비 2일 한도)과 `private_car_approved`(자가용 사전 승인)는 정산에서 잠깁니다.
+- `hours`: 근무지 내 출장의 **예상** 출장 시간(4시간 기준). 정산에서 불러오되 실제 시간으로 고칠 수 있습니다.
+
+응답 (한 건)
+
+```json
+{
+  "id": 21, "trip_type": "국내출장", "purpose": "부산 선사 방문 · 선박금융 상담",
+  "destination": "부산광역시 강서구 신항로 1", "region": "광역시",
+  "start_date": "2026-12-03", "end_date": "2026-12-04",
+  "vehicle": "대중교통", "private_car_approved": false, "distance_km": 18.5,
+  "status": "신청",
+  "stage": "출장 예정",
+  "submission": null
+}
+```
+
+- `stage` 는 저장하지 않고 매번 계산합니다: `출장 예정`(시작 전) → `출장 중` → `정산 전`(끝난 뒤, 정산 없음) → `정산 제출`(이 출장으로 낸 정산이 있음).
+- `submission`: 이 출장으로 낸 가장 최근 정산 `{ "id": "S-2026-002", "status": "검토 대기", "verdict": "규정상 확인 가능" }`.
+- 정산 제출(3-9)에 `"trip_id": 21` 을 넣으면 그 출장에 연결됩니다. 건명(`purpose`)을 비우면 신청한 목적이 건명이 됩니다. 취소한 출장이나 남의 출장이면 400 / 404.
+- 코드: `backend/app/domains/trips/`, 화면: `pages/TripRequestPage.jsx`(신청), `pages/HomePage.jsx`(내 출장), `pages/TravelCalcPage.jsx`(불러오기·잠금).
+
 ---
 
 ## 4. 에러일 때 돌려주는 모양 (함께 정할 것)
