@@ -935,6 +935,13 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .form-paper { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 26px 28px; max-width: 860px; margin: 0 auto; width: 100%; }
 .form-title { text-align: center; font-size: 21px; font-weight: 800; letter-spacing: .28em; padding: 10px 0; border: 2px solid var(--ink); margin-bottom: 14px; }
 .form-subtitle { text-align: center; font-weight: 700; letter-spacing: .2em; margin: 20px 0 8px; }
+/* 결재란: 제목 오른쪽 위. 직위 줄 아래가 서명·날인 칸 */
+.form-head { display: flex; gap: 12px; align-items: stretch; margin-bottom: 14px; }
+.form-head .form-title { flex: 1; margin: 0; display: flex; align-items: center; justify-content: center; }
+.form-table.form-approval { width: auto; flex: none; margin: 0; font-size: 13px; }
+.form-table.form-approval th { width: 62px; padding: 4px 6px; height: 26px; }
+.form-table.form-approval .form-approval-label { width: 26px; padding: 4px 3px; writing-mode: vertical-rl; letter-spacing: .5em; }
+.form-table.form-approval td { height: 54px; }
 .form-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 12px; font-size: 14px; }
 .form-table th, .form-table td { border: 1px solid var(--ink); padding: 7px 9px; vertical-align: middle; word-break: keep-all; overflow-wrap: anywhere; }
 .form-table th { background: var(--bg); font-weight: 700; text-align: center; }
@@ -1053,6 +1060,10 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
   .form-table { font-size: 12.5px; }
   .form-table th, .form-table td { padding: 5px 4px; }
   .form-title { font-size: 17px; letter-spacing: .15em; }
+  .form-head { flex-direction: column-reverse; gap: 8px; }
+  .form-table.form-approval { align-self: flex-end; }
+  .form-table.form-approval th { width: 52px; }
+  .form-table.form-approval td { height: 44px; }
 }
 
 /* 인쇄 · PDF 저장: 양식만 흰 종이에 */

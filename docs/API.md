@@ -442,7 +442,7 @@ curl -s localhost:8000/api/checklists -H 'Authorization: Bearer <token>'
     - 회의록: `content`(회의 내용)
     - 출장보고서: `destination`(출장지), `content`(출장 내용)
     - 공통: `ai_keys`(지금 값이 AI 가 쓴 그대로인 칸 목록. 직원이 고치면 프론트가 빼서 보냄)
-  - `GET …/form` 응답: `{ kind, submission_code, sheets: [{ title, blocks: [...] }], todo[], ready }`. 블록 종류:
+  - `GET …/form` 응답: `{ kind, submission_code, sheets: [{ title, approval?, blocks: [...] }], todo[], ready }`. `approval` (`{ label: "결재", roles: ["담당","팀장","부서장"] }`, 2026-11-22 추가)이 있는 장은 제목 오른쪽 위에 결재란 표를 그립니다 — 지출 결과서·출장보고서만, 인쇄 후 서명하는 빈 칸이고 결재가 넘어가는 기능은 없음. 블록 종류:
     `info`(머리표 `rows:[{label, cell}]`) · `table`(`caption?, columns, rows, total?`) · `field`(넓은 글 칸 `label, cell`) ·
     `note`(`text, style`) · `signers`(`rows:[{role, cell}]`) · `evidence`(`title, items:[{date, label, payment, amount, receipt_id}]`) · `photos`(`title, hint`).
     칸 하나는 `{ value, source, align? }` 이고 고칠 수 있는 칸에는 `key, label, required, placeholder, ai, multiline, limit` 가 더 붙습니다.
