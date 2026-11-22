@@ -60,7 +60,7 @@ function withCitations(text, refs, activeRef, citeProps) {
   return out.map((part, i) => (typeof part === 'string' ? rich(part, `t${i}`) : part))
 }
 
-export default function QaAnswer({ result }) {
+export default function QaAnswer({ result, onOpenSource }) {
   const [activeRef, setActiveRef] = useState(null)
   const [peek, setPeek] = useState(null) // { ref, top, left, width, pinned }
   const boxRef = useRef(null)
@@ -149,6 +149,7 @@ export default function QaAnswer({ result }) {
         onSelect={toggle}
         onPeek={hoverOpen}
         onPeekEnd={hoverClose}
+        onOpen={onOpenSource}
       />
       {peekSource && (
         <SourcePeek

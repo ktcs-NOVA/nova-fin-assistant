@@ -2,8 +2,9 @@
 // sources[] 한 개 모양: { ref, regulation, article, revised_at, url }
 // activeRef 와 같은 번호의 항목을 강조합니다 (본문의 [1] 을 누르면 해당 출처가 강조됨).
 // onPeek / onPeekEnd 를 주면 마우스를 올렸을 때 조항 본문 미리보기를 엽니다 (QaAnswer).
+// onOpen 을 주면 조항마다 "원문에서 보기"가 생겨, 규정 원문 화면에서 그 조항을 펼쳐 보여 줍니다 (규정 확인하기 화면).
 
-export default function SourceList({ sources, activeRef, onSelect, onPeek, onPeekEnd }) {
+export default function SourceList({ sources, activeRef, onSelect, onPeek, onPeekEnd, onOpen }) {
   if (!sources?.length) return null
 
   return (
@@ -28,6 +29,11 @@ export default function SourceList({ sources, activeRef, onSelect, onPeek, onPee
                 </span>
                 {s.revised_at && <span className="source-date">개정 {s.revised_at}</span>}
               </button>
+              {onOpen && (
+                <button type="button" className="source-link source-open" onClick={() => onOpen(s)}>
+                  원문에서 보기
+                </button>
+              )}
               {s.url && (
                 <a className="source-link" href={s.url} target="_blank" rel="noreferrer">
                   원문 보기

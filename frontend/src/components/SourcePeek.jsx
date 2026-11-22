@@ -3,7 +3,7 @@
 
 import { parseTable, relatedRows } from '../utils/excerpt.js'
 
-function TableView({ table, highlight }) {
+export function TableView({ table, highlight }) {
   return (
     <>
       {table.before.map((line) => (

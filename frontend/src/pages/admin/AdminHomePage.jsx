@@ -103,9 +103,9 @@ export default function AdminHomePage({ user, onNavigate }) {
           <span className="tile-go">{counts ? `${counts.approved}건` : '불러오는 중…'}</span>
         </button>
         <button type="button" className="tile compact" onClick={() => onNavigate('qa')}>
-          <span className="tile-title">규정 물어보기</span>
-          <span className="tile-desc">판정이 헷갈릴 때 근거 조항을 찾아봐요.</span>
-          <span className="tile-go">질문하기 →</span>
+          <span className="tile-title">규정 확인하기</span>
+          <span className="tile-desc">판정이 헷갈릴 때 원문을 읽거나 물어봐요.</span>
+          <span className="tile-go">원문 보기 →</span>
         </button>
       </div>
     </div>

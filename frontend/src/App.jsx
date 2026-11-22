@@ -28,7 +28,7 @@ const MENUS = {
       verify: { label: '청구 검증', component: VerifyPage, parent: 'type' },         // U-04
       mystatus: { label: '내 정산 현황', component: MyStatusPage, parent: 'home' },
       checklist: { label: '문서 작업', component: DocumentsPage, parent: 'home' }, // U-02
-      qa: { label: '규정 물어보기', component: QaPage, parent: 'home' },             // U-01
+      qa: { label: '규정 확인하기', component: QaPage, parent: 'home' },             // U-01
     },
   },
   admin: {
@@ -37,7 +37,7 @@ const MENUS = {
     pages: {
       adminhome: { label: '홈', component: AdminHomePage },
       review: { label: '검토 대기', component: ReviewPage, parent: 'adminhome' },   // M-01
-      qa: { label: '규정 물어보기', component: QaPage, parent: 'adminhome' },
+      qa: { label: '규정 확인하기', component: QaPage, parent: 'adminhome' },
     },
   },
 }

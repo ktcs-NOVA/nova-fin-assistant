@@ -18,6 +18,24 @@ const UNGROUNDED_WORDS = ['주차', '연차', '휴가']
 // 이 단어가 들어간 질문은 절차 안내(U-02) 응답을 돌려줍니다. 실제로는 백엔드의 챗봇이 고릅니다.
 const PROCEDURE_WORDS = ['절차', '준비', '해야', '다음', '처리']
 
+// 규정 원문 보기: 목업은 모양만 보여 주는 예시 한 건
+const MOCK_REGULATION = {
+  id: 1, title: '여비규정 (예시)', doc_type: '규정', revised_at: '2026-10-21', source_url: null,
+  sections: [
+    { seq: 0, type: 'article', article: '제1조', title: '목적', chapter: '제1장 총칙', revised_at: null, content: '제1조(목적) (목업) 백엔드를 연결하면 실제 규정 원문이 보입니다.' },
+    { seq: 1, type: 'article', article: '제2조', title: '용어의 정의', chapter: '제1장 총칙', revised_at: null, content: '제2조(용어의 정의) (목업) 예시 조항입니다.' },
+  ],
+}
+export async function listRegulations() {
+  await wait(200)
+  const { sections, ...rest } = MOCK_REGULATION
+  return [{ ...rest, admin_only: false, sections: sections.length }]
+}
+export async function getRegulation() {
+  await wait(200)
+  return MOCK_REGULATION
+}
+
 export async function askQa(question) {
   await wait(600)
   if (!question?.trim()) throw new Error('질문을 입력해 주세요.')

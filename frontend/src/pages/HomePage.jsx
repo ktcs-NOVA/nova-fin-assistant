@@ -76,8 +76,9 @@ export default function HomePage({ user, onNavigate }) {
 
       <section className="home-ask" aria-labelledby="home-ask-title">
         <div className="home-ask-head">
-          <h2 id="home-ask-title">규정 물어보기</h2>
-          <span className="hint">근거 조항과 함께 알려 드려요</span>
+          <h2 id="home-ask-title">규정 확인하기</h2>
+          <span className="hint">물어보면 근거 조항과 함께 알려 드려요</span>
+          <button type="button" className="link-btn home-ask-read" onClick={() => onNavigate('qa')}>규정 원문 보기 →</button>
         </div>
         <form className="ask-bar" onSubmit={(e) => { e.preventDefault(); ask(question) }}>
           <Icon name="search" size={22} />

@@ -486,6 +486,14 @@ curl -s localhost:8000/api/checklists -H 'Authorization: Bearer <token>'
 
 ---
 
+### 3-13. 규정 원문 보기 (`GET /api/regulations`, `GET /api/regulations/{id}`) — U-03, 2026-11-22 추가 · 로그인 필요
+
+11/20 코칭 피드백("규정 물어보기 → 규정 확인하기, 원문을 바로 볼 수 있게, 챗봇은 그대로")으로 추가. 규정 Q&A 가 근거로 쓰는 것과 같은 자료(documents · chunks)를 읽기만 합니다.
+
+- `GET /api/regulations` → `[{ id, title, doc_type, revised_at, admin_only, sections }]` (이름순, `sections` 는 조항·별표·서식 수). 직원에게는 직원 대상 규정만, 회계 관리자에게는 관리자용 규정까지.
+- `GET /api/regulations/{id}` → `{ id, title, doc_type, revised_at, source_url, sections: [{ seq, type, article, title, chapter, revised_at, content }] }`. `type` 은 `article`(조문) / `table`(별표) / `form`(서식), `content` 는 원문 그대로, 문서에 실린 순서. 없는 규정·볼 수 없는 규정은 `404`.
+- 화면: 헤더의 **규정 확인하기** → `규정 원문 보기 | NOVA에게 물어보기` 토글. 원문 보기는 규정 목록 + 조항 펼쳐 읽기 + 규정 안에서 낱말 찾기. 챗봇 답변의 근거 조항 옆 "원문에서 보기"를 누르면 그 조항이 펼쳐진 채로 원문 보기가 열립니다.
+
 ## 4. 에러일 때 돌려주는 모양 (함께 정할 것)
 
 백엔드가 실패했을 때도 프론트가 "문제가 생겼습니다"를 띄워야 합니다. 아래처럼 통일하면 프론트는 성공/실패 두 경우만 처리하면 됩니다.

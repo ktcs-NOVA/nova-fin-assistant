@@ -82,6 +82,19 @@ export function askQa(question) {
   return request('POST', '/api/qa', { question })
 }
 
+/** 규정 원문 보기 (U-03): 볼 수 있는 규정 목록 [{ id, title, doc_type, revised_at, admin_only, sections(조항 수) }] */
+export function listRegulations() {
+  if (USE_MOCK) return mock.listRegulations()
+  return request('GET', '/api/regulations')
+}
+
+/** 규정 한 건의 원문: { id, title, revised_at, source_url,
+ *    sections: [{ seq, type: 'article'|'table'|'form', article, title, chapter, revised_at, content }] } (문서 순서 그대로) */
+export function getRegulation(id) {
+  if (USE_MOCK) return mock.getRegulation(id)
+  return request('GET', `/api/regulations/${id}`)
+}
+
 /** 업무절차·필요서류 안내 (U-02):
  *  { task, summary, documents: [{ name, detail, basis }], steps: [{ title, detail, basis }],
  *    deadline: { text, basis }, approver: { text, basis, check }, grounded, sources: [...] } */
