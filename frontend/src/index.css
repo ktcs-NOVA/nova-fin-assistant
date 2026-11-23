@@ -1334,3 +1334,18 @@ body:has(.form-actions-bar) .ask-fab { bottom: 100px; }
   .home-ask-mascot { display: none; }
   .home-v2 .home-ask { padding: 18px; }
 }
+
+/* ---------- 2026-11-23 상단 헤더: 별 로고 + 메뉴 (디자인 개선안) ---------- */
+.header { font-family: 'IBM Plex Sans KR', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', system-ui, sans-serif; }
+.logo-btn { display: flex; align-items: center; gap: 8px; }
+.logo-star { flex: none; }
+.logo-name.brand-font { color: var(--ink); font-size: 26px; }
+.header-nav { display: flex; flex-wrap: wrap; gap: 4px; }
+.header-nav button { min-height: 40px; padding: 8px 13px; border: 0; border-radius: 8px; background: none; color: var(--muted); font-size: 15px; }
+.header-nav button:hover { color: var(--ink); background: var(--brand-soft); }
+.header-nav button[aria-current="page"] { background: var(--bg); color: var(--ink); font-weight: 600; }
+.header-nav button:focus-visible { outline: 3px solid #f4c14b; outline-offset: 2px; }
+@media (max-width: 900px) {
+  .header-nav { order: 3; width: 100%; flex-wrap: nowrap; overflow-x: auto; }
+  .header-nav button { flex: none; }
+}

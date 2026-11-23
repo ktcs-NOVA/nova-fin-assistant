@@ -21,6 +21,7 @@ const MENUS = {
   employee: {
     label: '직원',
     home: 'home',
+    nav: ['home', 'trip', 'type', 'mystatus', 'checklist', 'qa'],   // 상단 메뉴 (2026-11-23)
     pages: {
       home: { label: '홈', component: HomePage },
       trip: { label: '출장 신청', component: TripRequestPage, parent: 'home' },     // 출장 신청 → 정산 → 보고서
@@ -36,6 +37,7 @@ const MENUS = {
   admin: {
     label: '회계 관리자',
     home: 'adminhome',
+    nav: ['adminhome', 'review', 'qa'],
     pages: {
       adminhome: { label: '홈', component: AdminHomePage },
       review: { label: '검토 대기', component: ReviewPage, parent: 'adminhome' },   // M-01
@@ -101,7 +103,12 @@ export default function App() {
   }
 
   return (
-    <Layout user={user} roleLabel={menu.label} onLogout={logout} onHome={() => changePage(menu.home)} onAsk={() => changePage('qa')} crumbs={crumbs} askDock={user.role === 'employee' && ASK_DOCK_PAGES.includes(pageId) ? pageId : null}>
+    <Layout
+      user={user} roleLabel={menu.label} onLogout={logout} onHome={() => changePage(menu.home)} onAsk={() => changePage('qa')} crumbs={crumbs}
+      nav={menu.nav.map((id) => ({ id, label: menu.pages[id].label, go: () => changePage(id) }))}
+      navCurrent={crumbs.length > 1 ? crumbs[1].id : crumbs[0].id}
+      askDock={user.role === 'employee' && ASK_DOCK_PAGES.includes(pageId) ? pageId : null}
+    >
       <Page user={user} onNavigate={changePage} onSendToVerify={sendToVerify} prefill={verifyPrefill} param={pageParam} />
     </Layout>
   )
