@@ -78,6 +78,7 @@ export default function LoginPage({ onLogin }) {
           <span className="reveal-line" style={{ '--d': '2.3s' }}>제출하기 전에,</span>
           <span className="reveal-line" style={{ '--d': '3s' }}>규정에 맞는지 먼저 확인하세요</span>
         </p>
+        <p className="login-sub">출장비 계산부터 규정 검증, 증빙 서류까지 한 곳에서. 판정마다 근거 조항을 함께 보여 드려요.</p>
       </section>
 
       <section className="login-pane">

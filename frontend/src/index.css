@@ -1,17 +1,18 @@
 /* ---------- 디자인 토큰 (색·폰트는 여기서만 바꿉니다) ---------- */
 :root {
-  --bg: #f4f6f8;        /* 페이지 배경 */
+  /* 2026-11-23: 마스코트 색으로 통일 (남색 외곽선 · 연보라 고리 · 인디고) */
+  --bg: #eef0fa;        /* 페이지 배경 (연보라 안개) */
   --panel: #ffffff;     /* 카드·헤더 배경 */
-  --ink: #1b2430;       /* 기본 글자색 */
-  --muted: #65707c;     /* 보조 글자색 */
-  --line: #e1e6ec;      /* 테두리 */
-  --brand: #1f5fa8;     /* 포인트 색 (해양 블루) */
+  --ink: #1e2250;       /* 기본 글자색 (마스코트 외곽선 남색) */
+  --muted: #5a6085;     /* 보조 글자색 */
+  --line: #d6daf0;      /* 테두리 */
+  --brand: #4b57c9;     /* 포인트 색 (인디고) */
   --brand-ink: #ffffff;
-  --brand-soft: #e6eef9;
+  --brand-soft: #e3e6fa;
 
   /* 판정 3단계 색 */
-  --good: #1e7a46; --good-soft: #e6f4ec;   /* 규정상 확인 가능 */
-  --bad: #b3261e;  --bad-soft: #fdecea;    /* 보완 필요 */
+  --good: #1e7a4e; --good-soft: #e4f3ea;   /* 규정상 확인 가능 */
+  --bad: #b3261e;  --bad-soft: #fbe9e6;    /* 보완 필요 */
   --warn: #a15c00; --warn-soft: #fff4e2;   /* 담당자 확인 필요 */
 
   --radius: 12px;
@@ -20,8 +21,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #13181e; --panel: #1b222b; --ink: #e6ebf0; --muted: #98a3ae; --line: #2a333d;
-    --brand: #6ea6e8; --brand-ink: #0f1620; --brand-soft: #1e2d40;
+    --bg: #14162b; --panel: #1c1f3a; --ink: #e8e9f7; --muted: #a3a7cc; --line: #2e3258;
+    --brand: #8d96ee; --brand-ink: #14162b; --brand-soft: #262b52;
     --good: #6fd29b; --good-soft: #193326;
     --bad: #f2867d;  --bad-soft: #3b1f1d;
     --warn: #f0b45c; --warn-soft: #3a2d17;
@@ -1222,3 +1223,91 @@ body:has(.form-actions-bar) .ask-fab { bottom: 100px; }
 .time-bad { display: block; margin-top: 4px; font-size: 12.5px; color: var(--bad); }
 .trip-main.recent-link { flex: 1; cursor: pointer; }
 .trip-main.recent-link:hover .recent-name { color: var(--brand); text-decoration: underline; }
+
+
+/* ---------- 2026-11-23 디자인 개선안: 로그인 · 직원 홈 ----------
+   마스코트 색(남색 외곽선 · 연보라 고리 · 노란 별)을 화면 색으로 씁니다.
+   제목은 Jua, 본문·숫자는 IBM Plex Sans KR. 판정은 결재 도장(.stamp-s) 모양으로 표시합니다.
+   색은 맨 위 :root 토큰으로 앱 전체에 적용했어요. 글꼴(Jua + IBM Plex Sans KR)은 아직 로그인과 직원 홈에만 써요. */
+.login-hero { background: #1e2250; color: #ffffff; }
+.login-wordmark { color: #f4c14b; }
+.login-hero .login-sub { color: #c9cdee; opacity: 1; }
+.login-split, .home-v2 { font-family: 'IBM Plex Sans KR', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', system-ui, sans-serif; }
+.login-head h2, .home-v2 h1, .home-v2 h2 { font-family: 'Jua', 'Noto Sans KR', system-ui, sans-serif; font-weight: 400; }
+
+/* 로그인 */
+.login-head h2 { font-size: 34px; }
+.login-hero .login-sub { max-width: 30em; font-size: 17px; line-height: 1.7; }
+.login-split .login-submit { min-height: 52px; font-size: 17px; border-radius: 10px; }
+
+/* 판정 도장 (작은 크기) */
+.stamp-s { display: inline-flex; align-items: center; padding: 3px 10px; border: 2px solid currentColor; border-radius: 6px; font-family: 'Jua', 'Noto Sans KR', system-ui, sans-serif; font-size: 15px; line-height: 1.2; transform: rotate(-3deg); white-space: nowrap; }
+.stamp-s.fix { color: var(--bad); background: var(--bad-soft); }
+.stamp-s.ok { color: var(--good); background: var(--good-soft); }
+.stamp-s.ask { color: var(--warn); background: var(--warn-soft); }
+
+/* 직원 홈: 스크롤 없이 한 화면 */
+.home-v2 { display: grid; gap: 18px; color: var(--ink); }
+.home-v2-head h1 { font-size: 34px; margin: 0 0 2px; color: var(--ink); }
+.home-v2-head .hint { margin: 0; font-size: 16px; }
+.home-v2-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 18px; }
+.home-start { background: #4b57c9; color: #fff; border-radius: 20px; padding: 26px 28px; display: grid; gap: 14px; align-content: start; }
+.home-start h2 { margin: 0; font-size: 36px; line-height: 1.2; color: #fff; }
+.home-start > p { margin: 0; font-size: 16px; line-height: 1.6; color: #e1e4fa; }
+.home-start-list { display: grid; background: var(--panel); border-radius: 14px; overflow: hidden; }
+.home-start-item { display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 14px 20px; border: 0; border-top: 1px solid var(--line); background: none; color: var(--ink); text-align: left; }
+.home-start-item:first-child { border-top: 0; }
+.home-start-item:hover { background: var(--brand-soft); }
+.home-start-item svg { flex: none; color: var(--brand); }
+.home-start-text { flex: 1; display: grid; gap: 2px; }
+.home-start-text b { font-size: 18px; }
+.home-start-text span { font-size: 14.5px; color: var(--muted); }
+.home-side { display: grid; gap: 18px; }
+.home-card { display: grid; gap: 12px; align-content: start; padding: 22px 24px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; }
+.home-card h2 { margin: 0; font-size: 24px; color: var(--ink); }
+.home-card p { margin: 0; font-size: 15px; line-height: 1.6; color: var(--muted); }
+.home-stats { display: flex; justify-content: space-between; gap: 8px; margin: 0; }
+.home-stats div { display: flex; flex-direction: column-reverse; gap: 2px; }
+.home-stats dt { font-size: 14px; color: var(--muted); }
+.home-stats dd { margin: 0; font-size: 30px; font-weight: 700; line-height: 1.2; color: var(--ink); font-variant-numeric: tabular-nums; }
+.home-stats .fix dd { color: var(--bad); }
+.home-stats .ok dd { color: var(--good); }
+.home-fix { justify-self: start; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0; border: 0; background: none; color: var(--bad); font-size: 15px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.home-card-go { justify-self: start; min-height: 44px; padding: 0; border: 0; background: none; color: var(--brand); font-size: 15px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.home-v2 .home-ask { margin-top: 0; display: flex; align-items: center; gap: 22px; padding: 20px 26px; border-width: 1px; border-radius: 20px; }
+.home-ask-mascot { flex: none; width: 104px; height: auto; }
+.home-ask-body { flex: 1; min-width: 0; display: grid; gap: 12px; }
+.home-v2 .home-ask-head { margin-bottom: 0; flex-wrap: wrap; }
+.home-v2 .home-ask-head h2 { font-size: 24px; color: var(--ink); }
+.home-v2 .chips { justify-content: flex-start; margin-top: 0; }
+/* 직원 홈: 내 출장(최근 2건) · 작은 칸 두 개 */
+.home-v2-grid { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); }
+.home-side { gap: 16px; align-content: start; }
+.home-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.home-pill { min-height: 44px; padding: 0 16px; border: 1.5px solid var(--brand); border-radius: 999px; background: none; color: var(--brand); font-size: 15px; font-weight: 600; }
+.home-pill:hover { background: var(--brand-soft); }
+.home-trips-card { gap: 6px; padding: 18px 22px 14px; }
+.home-trip-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.home-trip-list li { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+.home-trip-main { flex: 1; min-width: 0; display: grid; gap: 2px; padding: 0; border: 0; background: none; color: var(--ink); text-align: left; }
+.home-trip-main b { font-size: 16px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.home-trip-main span { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.home-trip-main:hover b { color: var(--brand); text-decoration: underline; }
+.home-trip-list .badge { flex: none; }
+.home-trip-list .btn { flex: none; min-height: 44px; padding: 0 14px; font-size: 14px; }
+.home-trip-list .link-btn { flex: none; min-height: 44px; font-size: 14px; font-weight: 500; color: var(--muted); }
+.home-mini-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.home-mini { gap: 6px; padding: 16px 20px; }
+.home-mini h2 { font-size: 21px; }
+.home-mini p { font-size: 14px; }
+.home-mini p b { font-size: 16px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.home-mini p b.ok { color: var(--good); }
+.home-mini .home-fix, .home-mini .home-card-go { font-size: 14px; }
+.home-v2 .home-ask-mascot { width: 96px; }
+.home-v2 .home-ask { padding: 18px 26px; }
+@media (max-width: 860px) {
+  .home-v2-grid { grid-template-columns: 1fr; }
+  .home-mini-row { grid-template-columns: 1fr; }
+  .home-ask-mascot { display: none; }
+  .home-v2 .home-ask { padding: 18px; }
+}
