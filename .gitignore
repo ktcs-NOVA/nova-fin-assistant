@@ -24,3 +24,6 @@ experiments/receipt-ocr/results/*
 
 # 직원이 올린 영수증 사진 (개인정보) — 로컬에만 보관
 backend/data/uploads/
+
+# 운영 서버 설정 (DB 비밀번호·API 키) — 절대 커밋 금지
+.env.prod
