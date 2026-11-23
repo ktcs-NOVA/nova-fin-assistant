@@ -34,6 +34,54 @@ export async function askQa(question) {
   return { type: 'answer', ...qaData }
 }
 
+// 규정 원문 (U-03) 예시. 실제 원문은 백엔드가 적재된 규정에서 돌려줍니다.
+const MOCK_REGULATIONS = [
+  {
+    id: 1,
+    title: '여비규정',
+    revised_at: '2026-10-21',
+    source_file: '(예시) 여비규정.hwpx',
+    sections: [
+      {
+        key: '제13조', article: '제13조', title: '교통비', kind: 'article', chapter: '제2장 국내여비', head: null, revised_at: '2025-09-23',
+        content: '제13조(교통비) ① 교통비는 별표 1에 정하는 바에 따라 실비를 지급한다.\n⑤ (예시) 자가용을 이용한 여행은 부득이한 사유로 출장승인권자가 인정하는 경우에만 가능하다.\n⑥ (예시) 자가용 이용 시 연료비, 통행료 등을 포함하여 별표 1에 따른 교통비 한도 내에서 실비로 지급한다.',
+      },
+      {
+        key: '제14조', article: '제14조', title: '일비, 식비, 숙박비', kind: 'article', chapter: '제2장 국내여비', head: null, revised_at: '2026-10-21',
+        content: '제14조(일비, 식비, 숙박비) ① (예시) 일비, 식비는 날수에 따라 별표 1의 금액을 기준으로 지급한다.\n② (예시) 숙박비는 별표 1에 정하는 한도 내에서 실비로 지급한다.',
+      },
+      {
+        key: '별표 1', article: '별표 1', title: '국내여비지급표', kind: 'table', chapter: null, head: null, revised_at: '2026-10-21',
+        content: '[별표 1] 국내여비지급표\n(단위: 천원)\n구분: 직원(1·2급) | 일비(1일당): 30 | 식비(1일당): 27 | 숙박비(1일당): 서울 100 / 광역시 90 / 기타 80\n구분: 직원(3급 이하) | 일비(1일당): 30 | 식비(1일당): 27 | 숙박비(1일당): 서울 100 / 광역시 90 / 기타 80',
+      },
+    ],
+  },
+  {
+    id: 2,
+    title: '법인카드 관리 및 사용 지침',
+    revised_at: '2025-09-04',
+    source_file: '(예시) 법인카드 관리 및 사용 지침.hwpx',
+    sections: [
+      {
+        key: '제10조', article: '제10조', title: '사용제한', kind: 'article', chapter: null, head: null, revised_at: '2024-08-12',
+        content: '제10조(사용제한) ① (예시) 법인카드는 공사의 업무와 관련하여 사용하여야 한다.\n④ (예시) 공휴일 및 비정상시간대(23시~익일 06시) 사용은 불가피한 경우 별지 제5호 서식을 첨부한다.',
+      },
+    ],
+  },
+]
+
+export async function listRegulations() {
+  await wait(300)
+  return MOCK_REGULATIONS.map(({ id, title, revised_at, sections }) => ({ id, title, revised_at, sections: sections.length }))
+}
+
+export async function getRegulation(id) {
+  await wait(300)
+  const found = MOCK_REGULATIONS.find((r) => r.id === Number(id))
+  if (!found) throw new Error('규정을 찾을 수 없습니다.')
+  return found
+}
+
 export async function getProcedure(task) {
   await wait(700)
   if (!task?.trim()) throw new Error('알고 싶은 업무를 입력해 주세요.')

@@ -41,6 +41,23 @@ class Settings(BaseSettings):
     rag_top_k: int = 5
     rag_min_score: float = 0.3
 
+    # 경로 조회 (POST /api/route) — 네이버 클라우드 플랫폼 Maps (Geocoding · Directions 5)
+    # 콘솔 > Maps > Application 등록에서 받은 Client ID / Client Secret. 비어 있으면 거리를 직접 입력하라고 안내
+    naver_maps_client_id: str = ""
+    naver_maps_client_secret: str = ""
+    # 새 Maps 서비스 주소. 예전 AI·NAVER API 로 받은 키라면 https://naveropenapi.apigw.ntruss.com
+    naver_maps_base: str = "https://maps.apigw.ntruss.com"
+    # (선택) NAVER API HUB 의 지역 검색 Application Client ID / Secret. 넣으면 "부산시청" 같은 장소 이름으로도 찾음
+    # (Maps 키와 별개. 예전 네이버 개발자센터 검색 키는 쓸 수 없음)
+    naver_search_client_id: str = ""
+    naver_search_client_secret: str = ""
+    # 출발지 = 근무지. 한국해양진흥공사 본사 (알리오 공시 주소)
+    route_origin_address: str = "부산광역시 해운대구 마린시티2로 38"
+
+    @property
+    def route_enabled(self) -> bool:
+        return bool(self.naver_maps_client_id.strip() and self.naver_maps_client_secret.strip())
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]

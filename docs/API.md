@@ -484,6 +484,49 @@ curl -s localhost:8000/api/checklists -H 'Authorization: Bearer <token>'
 - 프론트는 토큰을 실어 받아서 `지출내역_YYYYMMDD.xlsx` 로 저장합니다 (`downloadLedger`, `components/LedgerButton.jsx`). 버튼은 직원의 "내 정산 현황"과 관리자의 "정산 검토 대기함"에 있습니다.
 - 만드는 코드는 `backend/app/domains/ledger/excel.py` (라이브러리 `xlsxwriter`).
 
+### 3-13. 규정 원문 (`GET /api/regulations`, `GET /api/regulations/{id}`) — U-03, 2026-11-20 추가
+
+'규정 확인하기' 화면의 **원문 보기** 탭이 씁니다. 적재된 규정을 조문·별표 순서대로 돌려줍니다. 로그인 없이도 되며, 로그인하면 역할에 맞는 문서만(직원은 공통+직원용, 관리자는 공통+관리자용) 보입니다.
+
+| 하는 일 | 방식 | 주소 |
+|---|---|---|
+| 규정 목록 | GET | `/api/regulations` → `[{ id, title, revised_at, sections }]` |
+| 규정 원문 | GET | `/api/regulations/{id}` → 아래 모양 (없으면 404) |
+
+```json
+{
+  "id": 9, "title": "여비규정", "revised_at": "2026-10-21", "source_file": "여비규정(2026년도 10월 21일 개정).hwpx",
+  "sections": [
+    { "key": "제14조", "article": "제14조", "title": "일비, 식비, 숙박비", "kind": "article",
+      "chapter": "제2장 국내여비", "head": null, "revised_at": "2026-10-21", "content": "제14조(일비, 식비, 숙박비) ① …" },
+    { "key": "별표 1", "article": "별표 1", "title": "국내여비지급표", "kind": "table", "content": "[별표 1] 국내여비지급표\n구분: 직원(3급 이하) | 식비(1일당): 27 | …" }
+  ]
+}
+```
+
+- `kind`: `article` 조문 / `table` 별표 / `form` 별지 서식. 별표는 한 행이 `제목: 값 | 제목: 값` 한 줄이라 화면에서 표로 그립니다 (`utils/excerpt.js` 의 `parseTable`).
+- 검색용으로 잘게 나눈 조각을 다시 이어 붙인 것입니다. 긴 조문·별표의 `(계속)` 머리 줄은 빼고, 전결표는 구역(`head`)마다 한 묶음으로, 반복되던 `※ 안내`는 한 번만 넣습니다.
+- 같은 이름의 묶음이 여러 개면 `key` 에 번호가 붙습니다 (`별표#1`, `별표#2` …). 화면 이동에는 `key` 를 씁니다.
+- 규정 Q&A 답변의 근거(`sources[]`)에서 "원문에서 보기"를 누르면 `regulation` + `article` 로 같은 조항을 찾고, 전결표처럼 같은 `article` 이 여러 개면 `excerpt` 첫 줄로 고릅니다.
+
+### 3-14. 경로 조회 (`POST /api/route`) — U-05, 2026-11-22 추가
+
+출장비 계산의 **근무지(공사 본사) → 도착지 자동차 거리**. 자가용이면 화면이 이 편도 거리로 왕복 운행거리를 채웁니다. 로그인 필요.
+
+프론트가 보내는 것: `{ "destination": "부산광역시 연제구 중앙대로 1001" }` (주소 또는 장소 이름)
+
+백엔드가 돌려주는 것: `{ "destination": "부산광역시 연제구 중앙대로 1001", "distance_km": 12.3, "duration_min": 25 }` (편도, 실시간 빠른 길)
+
+| 상황 | 응답 | 화면 |
+|---|---|---|
+| 키 없음 | 503 `경로 조회가 아직 설정되지 않았어요…` | 이유를 보여 주고 거리 직접 입력 |
+| 도착지를 못 찾음 / 길 없음 | 404 이유 | 〃 |
+| 키 틀림, 사용 한도, 네이버 연결 실패 | 502 이유 | 〃 |
+
+- 네이버 클라우드 플랫폼 **Maps** 의 Geocoding(주소 → 좌표)과 Directions 5(자동차 경로)를 서버에서 부릅니다. 키는 `backend/.env` 의 `NAVER_MAPS_CLIENT_ID` · `NAVER_MAPS_CLIENT_SECRET` (브라우저에 내보내지 않음). 콘솔의 Application 에서 두 API 를 모두 선택해야 합니다.
+- Geocoding 은 주소만 찾습니다. `NAVER_SEARCH_CLIENT_ID` · `SECRET`(선택)을 넣으면 "부산시청" 같은 장소 이름도 주소로 바꿔 찾습니다. 이 키는 **NAVER API HUB** 의 지역 검색(`GET https://naverapihub.apigw.ntruss.com/search/v1/local`)용으로, 네이버 클라우드 콘솔 > NAVER API HUB 에서 따로 받습니다. 예전 네이버 개발자센터 검색 API 는 API HUB 로 옮겨져 개발자센터에서는 발급되지 않습니다.
+- 출발지는 `ROUTE_ORIGIN_ADDRESS` (기본: 부산광역시 해운대구 마린시티2로 38, 알리오 공시 주소). 같은 도착지는 서버가 기억해 다시 부르지 않습니다.
+
 ---
 
 ## 4. 에러일 때 돌려주는 모양 (함께 정할 것)
