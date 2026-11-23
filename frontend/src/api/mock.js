@@ -280,8 +280,70 @@ export async function createSubmission(claim, extra = {}) {
     submitted_at: new Date().toISOString().slice(0, 10),
     step: 5, verdict: verify.overall, status: '검토 대기', items: verify.items,
   }
+  if (extra.trip_id ?? claim.trip_id) sub.trip_id = extra.trip_id ?? claim.trip_id
   submissions.unshift(sub)
   return sub
+}
+
+// ---------- 출장 신청 (메모리 안에서만 바뀜, 새로고침하면 초기화) ----------
+const isoDay = (offset) => {
+  const d = new Date()
+  d.setDate(d.getDate() + offset)
+  return d.toISOString().slice(0, 10)
+}
+// 백엔드 trips/service.py region_of 와 같은 규칙 (경로 조회 결과 '부산역 (부산광역시 …)' 도 처리)
+const mockRegion = (addr) => {
+  const words = String(addr ?? '').split(/\s+/).map((w) => w.replace(/[()[\],·]/g, '')).filter(Boolean)
+  if (!words.length) return null
+  if (words.some((w) => w.startsWith('서울'))) return '서울'
+  if (words.some((w) => w.endsWith('광역시'))) return '광역시'
+  if (words.some((w) => ['부산', '대구', '인천', '대전', '울산'].some((m) => w.startsWith(m)))) return '광역시'
+  return '기타'
+}
+// 백엔드 scripts/seed_trips.py 와 같은 시연 출장 1건 (정산 전: 지난주 월·화)
+let tripSeq = 2
+const lastMonday = -(((new Date().getDay() + 6) % 7) + 7)
+const trips = [
+  { id: 1, trip_type: '국내출장', purpose: '서울 선사 간담회 (친환경 선박 금융 수요 조사)', destination: '서울특별시 영등포구 여의대로 108',
+    region: '서울', start_date: isoDay(lastMonday), end_date: isoDay(lastMonday + 1), vehicle: '대중교통', private_car_approved: false,
+    distance_km: 390, education: false, hours: null, start_time: '08:00:00', end_time: '18:00:00', companions: [], status: '신청' },
+]
+function tripView(t) {
+  const sub = submissions.find((s) => s.trip_id === t.id)
+  const today = isoDay(0)
+  const stage = sub ? '정산 제출' : today < t.start_date ? '출장 예정' : today <= t.end_date ? '출장 중' : '정산 전'
+  return { ...t, stage, submission: sub ? { id: sub.id, status: sub.status, verdict: sub.verdict } : null }
+}
+
+export async function listTrips() {
+  await wait(300)
+  return trips.filter((t) => t.status === '신청').sort((a, b) => b.start_date.localeCompare(a.start_date)).map(tripView)
+}
+
+export async function getTrip(id) {
+  await wait(200)
+  const t = trips.find((x) => x.id === id && x.status === '신청')
+  if (!t) throw new Error('출장 신청을 찾을 수 없습니다.')
+  return tripView(t)
+}
+
+export async function createTrip(req) {
+  await wait(400)
+  if (!req.purpose?.trim()) throw new Error('출장 목적을 적어 주세요.')
+  if (req.end_date < req.start_date) throw new Error('출장 종료일이 시작일보다 앞설 수 없습니다.')
+  const t = { trip_type: '국내출장', vehicle: '대중교통', private_car_approved: false, distance_km: null, ...req,
+    id: tripSeq++, status: '신청', region: req.region || mockRegion(req.destination) }
+  trips.push(t)
+  return tripView(t)
+}
+
+export async function cancelTrip(id) {
+  await wait(300)
+  const t = trips.find((x) => x.id === id)
+  if (!t) throw new Error('출장 신청을 찾을 수 없습니다.')
+  if (submissions.some((s) => s.trip_id === id)) throw new Error('이미 정산을 낸 출장은 취소할 수 없습니다.')
+  t.status = '취소'
+  return null
 }
 
 export async function listMySubmissions() {

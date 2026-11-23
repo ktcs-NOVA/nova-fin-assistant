@@ -3,16 +3,19 @@
 // 한 화면에 한 단계씩 보여 주고 버튼으로 넘어가는 구조로 바꿨습니다.
 //   1 기본 정보 → 2 출장 기간(달력·경로·추가 조건) → 3 계산 결과 → 4 규정 검증 → 5 제출(→ 서류 쓰기)
 //   근무지 내 출장은 날짜가 없어서 2단계를 건너뜁니다.
+// 2026-11-23: '출장 신청'에서 이어 오면(홈 내 출장 → 정산하기, 또는 1단계에서 고르기) 구분·기간·지역·교통·거리를
+//   신청한 값으로 채우고 잠급니다. 제출할 때 trip_id 를 함께 보내 신청한 출장에 정산이 붙습니다(출장보고서가 목적·출장지를 이어받음).
 // 요청·응답 모양은 docs/API.md 3-5(계산), 3-2(검증)와 같고, 계산 결과의 verify_request 가 검증 단계의 항목이 됩니다.
 // 4단계에서는 실제 사용한 금액으로 고쳐 다시 검증할 수 있고, 보완 필요가 남아 있으면 제출 단계로 넘어갈 수 없습니다.
 
-import { useState } from 'react'
-import { calcTravel, verifyClaim, VERDICT } from '../api/client.js'
+import { useEffect, useState } from 'react'
+import { calcTravel, listTrips, verifyClaim, VERDICT } from '../api/client.js'
 import DateRangePicker from '../components/DateRangePicker.jsx'
 import RouteField from '../components/RouteField.jsx'
 import VerifyResult from '../components/VerifyResult.jsx'
 import SubmitPanel from '../components/SubmitPanel.jsx'
 import WizardSteps from '../components/WizardSteps.jsx'
+import { periodText, settleable } from '../utils/trips.js'
 
 const STEPS = ['기본 정보', '출장 기간', '계산 결과', '규정 검증', '제출']
 
@@ -61,10 +64,13 @@ const isLodging = (f) => f.includes('숙박')
 const isFixedField = (f) => f.includes('일비') || f.includes('식비')   // 정액: 실제 금액을 입력하지 않음
 const today = () => new Date().toISOString().slice(0, 10)
 
-export default function TravelCalcPage({ user, onNavigate }) {
+export default function TravelCalcPage({ user, onNavigate, param }) {
   const [step, setStep] = useState(1)
   const [tripType, setTripType] = useState('국내출장')
-  const [grade, setGrade] = useState('직원 3급 이하')
+  const myGrade = GRADES.includes(user?.grade) ? user.grade : '직원 3급 이하'   // 직급은 계정에 있는 값으로 시작
+  const [grade, setGrade] = useState(myGrade)
+  const [linked, setLinked] = useState(null)      // 신청한 출장에서 이어 왔으면 그 출장 (값이 잠김)
+  const [pickable, setPickable] = useState([])    // 아직 정산하지 않은 내 출장 신청
   const [trip, setTrip] = useState(INITIAL_TRIP)
   const [fares, setFares] = useState([])
   const [car, setCar] = useState(INITIAL_CAR)
@@ -80,6 +86,22 @@ export default function TravelCalcPage({ user, onNavigate }) {
   const [vLoading, setVLoading] = useState(false)
   const [vError, setVError] = useState('')
   const [vDirty, setVDirty] = useState(false)     // 금액을 고친 뒤 아직 다시 검증하지 않음
+
+  useEffect(() => {
+    let ignore = false
+    listTrips()
+      .then((list) => {
+        if (ignore) return
+        const open = list.filter(settleable)
+        setPickable(open)
+        const want = param?.tripId && open.find((t) => t.id === param.tripId)
+        if (want) applyTrip(want)
+      })
+      .catch(() => { /* 출장 신청 API 가 없어도 직접 입력은 그대로 */ })
+    return () => { ignore = true }
+    // 처음 들어올 때 한 번만 (홈 '내 출장 → 정산하기'로 들어오면 param.tripId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const intra = tripType.includes('근무지')
   const privateCar = trip.vehicle === '자가용'
@@ -101,7 +123,27 @@ export default function TravelCalcPage({ user, onNavigate }) {
     setVItems([]); setVResult(null); setVClaim(null); setVError(''); setVDirty(false)
   }
 
+  // 출장 신청 값 → 1·2단계 입력. 자가용이면 신청 때 조회한 편도 거리의 왕복으로 운행거리를 채움
+  function applyTrip(t) {
+    const roundKm = t.distance_km ? String(Math.round(t.distance_km * 2)) : ''
+    setTripType(t.trip_type || '국내출장')
+    setGrade(myGrade)
+    setTrip({
+      ...INITIAL_TRIP, start_date: t.start_date, end_date: t.end_date, region: t.region ?? '', vehicle: t.vehicle || '대중교통',
+      round_trip_km: roundKm, education: Boolean(t.education), hours: t.hours != null ? String(t.hours) : '',
+    })
+    setFares([])
+    setCar({ ...INITIAL_CAR, approved: Boolean(t.private_car_approved), distance_km: roundKm })
+    setResult(null)
+    resetVerify()
+    setError('')
+    setLinked(t)
+    // 국내출장은 1단계에서 더 적을 게 없으니 바로 2단계(추가 조건)로. 근무지 내 출장은 1단계에서 출장 시간만 확인
+    if (!(t.trip_type || '').includes('근무지')) setStep(2)
+  }
+
   function load(sample) {
+    setLinked(null)
     setTripType(sample.trip_type)
     setGrade(sample.grade)
     setTrip({ ...sample.trip })
@@ -293,59 +335,118 @@ export default function TravelCalcPage({ user, onNavigate }) {
         <div className="card wiz-card">
           <div className="card-head">
             <h2>어떤 출장인가요?</h2>
-            <div className="btn-row" style={{ margin: 0 }}>
-              <button type="button" className="btn" onClick={() => load(SAMPLE)}>부산 1박 예시</button>
-              <button type="button" className="btn" onClick={() => load(SAMPLE_CAR)}>자가용 예시</button>
-            </div>
-          </div>
-          <p className="notice wiz-banner">직급에 따라 일비·식비·숙박 상한이 자동으로 적용돼요.</p>
-          <div className="form-grid">
-            <label className="field">
-              <span className="field-label">출장 유형 *</span>
-              <select value={tripType} onChange={(e) => setTripType(e.target.value)}>
-                {TRIP_TYPES.map((t) => <option key={t}>{t}</option>)}
-              </select>
-            </label>
-            <label className="field">
-              <span className="field-label">직급 * <em>일비·식비·숙박 상한</em></span>
-              <select value={grade} onChange={(e) => setGrade(e.target.value)}>
-                {GRADES.map((g) => <option key={g}>{g}</option>)}
-              </select>
-            </label>
-            {intra ? (
-              <>
-                <label className="field">
-                  <span className="field-label">교통수단 <em>업무용 차량이면 0원</em></span>
-                  <select value={trip.vehicle} onChange={(e) => editTrip('vehicle', e.target.value)}>
-                    {VEHICLES.map((v) => <option key={v}>{v}</option>)}
-                  </select>
-                </label>
-                <label className="field">
-                  <span className="field-label">출장 시간(시간)</span>
-                  <input type="number" min="0" step="0.5" value={trip.hours} placeholder="예: 5" onChange={(e) => editTrip('hours', e.target.value)} />
-                </label>
-                <label className="field">
-                  <span className="field-label">왕복 거리(km) <em>8km 미만은 0원</em></span>
-                  <input type="number" min="0" value={trip.round_trip_km} placeholder="예: 12" onChange={(e) => editTrip('round_trip_km', e.target.value)} />
-                </label>
-              </>
-            ) : (
-              <>
-                <label className="field">
-                  <span className="field-label">교통수단 <em>일비·자가용 규칙</em></span>
-                  <select value={trip.vehicle} onChange={(e) => editTrip('vehicle', e.target.value)}>
-                    {VEHICLES.map((v) => <option key={v}>{v}</option>)}
-                  </select>
-                </label>
-                <label className="field">
-                  <span className="field-label">출장지 지역 <em>숙박비 상한</em></span>
-                  <select value={trip.region} onChange={(e) => editTrip('region', e.target.value)}>
-                    {REGIONS.map((r) => <option key={r} value={r}>{r || '선택 안 함'}</option>)}
-                  </select>
-                </label>
-              </>
+            {!linked && (
+              <div className="btn-row" style={{ margin: 0 }}>
+                <button type="button" className="btn" onClick={() => load(SAMPLE)}>부산 1박 예시</button>
+                <button type="button" className="btn" onClick={() => load(SAMPLE_CAR)}>자가용 예시</button>
+              </div>
             )}
           </div>
+          {linked ? (
+            <div className="trip-linked">
+              <span>
+                <b>신청한 출장에서 불러왔어요</b> · {linked.purpose}
+                <span className="hint"> ({periodText(linked.start_date, linked.end_date)} · {linked.destination || linked.region})</span>
+              </span>
+              <button type="button" className="link-btn" onClick={restart}>직접 입력으로 바꾸기</button>
+            </div>
+          ) : pickable.length > 0 && (
+            <div className="wiz-more">
+              <b>신청한 출장에서 시작하기</b>
+              <ul className="trip-pick">
+                {pickable.map((t) => (
+                  <li key={t.id}>
+                    <button type="button" onClick={() => applyTrip(t)}>
+                      <span><span className="recent-name">{t.purpose}</span><br /><span className="hint">{periodText(t.start_date, t.end_date)} · {t.destination || t.region}</span></span>
+                      <span className="tile-go">불러오기 →</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {linked ? (
+            <>
+              <dl className="cal-summary trip-summary">
+                <div><dt>구분 (신청)</dt><dd>{tripType}{trip.education ? ' · 교육 출장' : ''}</dd></div>
+                <div><dt>교통 (신청)</dt><dd>{trip.vehicle}{privateCar ? (car.approved ? ' · 사전 승인' : ' · 승인 전') : ''}</dd></div>
+                {intra
+                  ? <div><dt>왕복 거리 (신청)</dt><dd>{trip.round_trip_km ? `${trip.round_trip_km} km` : '—'}</dd></div>
+                  : <div><dt>지역 (신청)</dt><dd>{trip.region || '—'}</dd></div>}
+              </dl>
+              <div className="form-grid">
+                <label className="field">
+                  <span className="field-label">직급 <em>계정에 등록된 직급</em></span>
+                  <select value={grade} onChange={(e) => setGrade(e.target.value)}>
+                    {GRADES.map((g) => <option key={g}>{g}</option>)}
+                  </select>
+                </label>
+                {intra && (
+                  <label className="field">
+                    <span className="field-label">출장 시간(시간) <em>신청 때 예상 시간 · 실제와 다르면 고치세요</em></span>
+                    <input type="number" min="0" step="0.5" value={trip.hours} placeholder="예: 5" onChange={(e) => editTrip('hours', e.target.value)} />
+                  </label>
+                )}
+                {intra && !linked.distance_km && (
+                  <label className="field">
+                    <span className="field-label">왕복 거리(km) <em>신청 때 거리를 안 적었어요</em></span>
+                    <input type="number" min="0" value={trip.round_trip_km} placeholder="예: 12" onChange={(e) => editTrip('round_trip_km', e.target.value)} />
+                  </label>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="notice wiz-banner">직급에 따라 일비·식비·숙박 상한이 자동으로 적용돼요.</p>
+              <div className="form-grid">
+                <label className="field">
+                  <span className="field-label">출장 유형 *</span>
+                  <select value={tripType} onChange={(e) => setTripType(e.target.value)}>
+                    {TRIP_TYPES.map((t) => <option key={t}>{t}</option>)}
+                  </select>
+                </label>
+                <label className="field">
+                  <span className="field-label">직급 * <em>일비·식비·숙박 상한</em></span>
+                  <select value={grade} onChange={(e) => setGrade(e.target.value)}>
+                    {GRADES.map((g) => <option key={g}>{g}</option>)}
+                  </select>
+                </label>
+                {intra ? (
+                  <>
+                    <label className="field">
+                      <span className="field-label">교통수단 <em>업무용 차량이면 0원</em></span>
+                      <select value={trip.vehicle} onChange={(e) => editTrip('vehicle', e.target.value)}>
+                        {VEHICLES.map((v) => <option key={v}>{v}</option>)}
+                      </select>
+                    </label>
+                    <label className="field">
+                      <span className="field-label">출장 시간(시간)</span>
+                      <input type="number" min="0" step="0.5" value={trip.hours} placeholder="예: 5" onChange={(e) => editTrip('hours', e.target.value)} />
+                    </label>
+                    <label className="field">
+                      <span className="field-label">왕복 거리(km) <em>8km 미만은 0원</em></span>
+                      <input type="number" min="0" value={trip.round_trip_km} placeholder="예: 12" onChange={(e) => editTrip('round_trip_km', e.target.value)} />
+                    </label>
+                  </>
+                ) : (
+                  <>
+                    <label className="field">
+                      <span className="field-label">교통수단 <em>일비·자가용 규칙</em></span>
+                      <select value={trip.vehicle} onChange={(e) => editTrip('vehicle', e.target.value)}>
+                        {VEHICLES.map((v) => <option key={v}>{v}</option>)}
+                      </select>
+                    </label>
+                    <label className="field">
+                      <span className="field-label">출장지 지역 <em>숙박비 상한</em></span>
+                      <select value={trip.region} onChange={(e) => editTrip('region', e.target.value)}>
+                        {REGIONS.map((r) => <option key={r} value={r}>{r || '선택 안 함'}</option>)}
+                      </select>
+                    </label>
+                  </>
+                )}
+              </div>
+            </>
+          )}
           {intra && <p className="hint">같은 시·군 안의 출장은 교통비만 지급됩니다 (4시간 이상 30,000원 / 미만 15,000원).</p>}
           {error && <div className="error">{error}</div>}
           <div className="wiz-nav">
@@ -363,15 +464,25 @@ export default function TravelCalcPage({ user, onNavigate }) {
       {step === 2 && !intra && (
         <div className="card wiz-card">
           <h2>언제, 어디로 다녀오시나요?</h2>
-          <p className="hint">달력에서 출발일과 도착일을 차례로 눌러 주세요. 당일 출장이면 같은 날을 한 번 더 누르면 돼요.</p>
-          <DateRangePicker
-            blockWeekends
-            start={trip.start_date}
-            end={trip.end_date}
-            onChange={({ start, end }) => setTrip((t) => ({ ...t, start_date: start, end_date: end }))}
-          />
-          <h3 className="wiz-sub">경로</h3>
-          <RouteField onDistance={applyDistance} />
+          <p className="hint">{linked ? '출장 신청 때 적은 기간과 출장지예요. 아래 추가 조건만 확인해 주세요.' : '달력에서 출발일과 도착일을 차례로 눌러 주세요. 당일 출장이면 같은 날을 한 번 더 누르면 돼요.'}</p>
+          {linked ? (
+            <dl className="cal-summary trip-summary">
+              <div><dt>기간 (신청)</dt><dd>{periodText(trip.start_date, trip.end_date)}</dd></div>
+              <div><dt>출장지 (신청)</dt><dd>{linked.destination || linked.region || '—'}</dd></div>
+              <div><dt>편도 거리 (신청)</dt><dd>{linked.distance_km ? `약 ${linked.distance_km} km` : '—'}</dd></div>
+            </dl>
+          ) : (
+            <>
+            <DateRangePicker
+              blockWeekends
+              start={trip.start_date}
+              end={trip.end_date}
+              onChange={({ start, end }) => setTrip((t) => ({ ...t, start_date: start, end_date: end }))}
+            />
+            <h3 className="wiz-sub">경로</h3>
+            <RouteField onDistance={applyDistance} />
+            </>
+          )}
 
           <details className="wiz-more" open={moreOpen || privateCar} onToggle={(e) => setMoreOpen(e.currentTarget.open)}>
             <summary>추가 조건 — 조식·식사·교육·운임{privateCar ? '·자가용' : ''} <span className="hint">(선택{privateCar ? ', 자가용은 거리 입력 필요' : ''})</span></summary>
@@ -387,7 +498,7 @@ export default function TravelCalcPage({ user, onNavigate }) {
               <label className="field field-check">
                 <span className="field-label">교육 출장 <em>일비 2일 한도</em></span>
                 <span className="check-inline">
-                  <input type="checkbox" checked={trip.education} onChange={(e) => editTrip('education', e.target.checked)} />
+                  <input type="checkbox" checked={trip.education} disabled={Boolean(linked)} onChange={(e) => editTrip('education', e.target.checked)} />
                   근무지 외 교육 참석
                 </span>
               </label>
@@ -441,8 +552,8 @@ export default function TravelCalcPage({ user, onNavigate }) {
                 </p>
                 <div className="form-grid">
                   <label className="field">
-                    <span className="field-label">운행거리(km, 왕복) *</span>
-                    <input type="number" min="0" value={car.distance_km} placeholder="예: 200" onChange={(e) => editCar('distance_km', e.target.value)} />
+                    <span className="field-label">운행거리(km, 왕복) * {linked?.distance_km ? <em>신청한 경로 기준 · 잠김</em> : null}</span>
+                    <input type="number" min="0" value={car.distance_km} placeholder="예: 200" disabled={Boolean(linked?.distance_km)} onChange={(e) => editCar('distance_km', e.target.value)} />
                   </label>
                   <label className="field">
                     <span className="field-label">연료 구분 <em>연비 9·7·6·15 km/L, 전기 3.5 km/kWh</em></span>
@@ -465,7 +576,7 @@ export default function TravelCalcPage({ user, onNavigate }) {
                   <label className="field field-check">
                     <span className="field-label">출장승인권자 승인 <em>제13조 제5항</em></span>
                     <span className="check-inline">
-                      <input type="checkbox" checked={car.approved} onChange={(e) => editCar('approved', e.target.checked)} />
+                      <input type="checkbox" checked={car.approved} disabled={Boolean(linked)} onChange={(e) => editCar('approved', e.target.checked)} />
                       부득이한 사유로 자가용 이용을 승인받음
                     </span>
                   </label>
@@ -562,7 +673,7 @@ export default function TravelCalcPage({ user, onNavigate }) {
       {/* ---------- 5. 제출 ---------- */}
       {step === 5 && vResult && vClaim && (
         <div className="wiz-card">
-          <SubmitPanel claim={vClaim} result={vResult} user={user} onNavigate={onNavigate} />
+          <SubmitPanel claim={vClaim} result={vResult} user={user} onNavigate={onNavigate} tripId={linked?.id} purposeHint={linked?.purpose} />
           <div className="wiz-nav">
             <button type="button" className="btn" onClick={back}>이전</button>
             <button type="button" className="btn" onClick={restart}>새 출장 정산 시작</button>

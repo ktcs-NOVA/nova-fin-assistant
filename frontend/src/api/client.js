@@ -235,6 +235,31 @@ export function lookupRoute(destination) {
 
 /** 검증을 마친 청구 내역을 제출(검토 요청). claim 은 verifyClaim 에 보낸 것과 같은 모양,
  *  extra: { purpose, account, verify_result }. 돌려주는 것은 관리자 목록 한 건과 같은 모양 (id 가 S-2026-00N). */
+// ---------- 출장 신청 (docs/API.md 3-15) ----------
+// 출장 전에 목적·기간·장소·교통을 등록해 두면, 다녀와서 정산할 때 그 값을 그대로 이어 씁니다.
+
+/** 내 출장 목록: [{ id, purpose, destination, region, start_date, end_date, vehicle, stage, submission, … }] */
+export function listTrips() {
+  if (USE_MOCK) return mock.listTrips()
+  return request('GET', '/api/trips')
+}
+
+/** 출장 신청 한 건 (홈 '내 출장'에서 눌러 다시 볼 때) */
+export function getTrip(id) {
+  if (USE_MOCK) return mock.getTrip(id)
+  return request('GET', `/api/trips/${id}`)
+}
+
+export function createTrip(trip) {
+  if (USE_MOCK) return mock.createTrip(trip)
+  return request('POST', '/api/trips', trip)
+}
+
+export function cancelTrip(id) {
+  if (USE_MOCK) return mock.cancelTrip(id)
+  return request('DELETE', `/api/trips/${id}`)
+}
+
 export function createSubmission(claim, extra = {}) {
   if (USE_MOCK) return mock.createSubmission(claim, extra)
   return request('POST', '/api/submissions', { ...claim, ...extra })

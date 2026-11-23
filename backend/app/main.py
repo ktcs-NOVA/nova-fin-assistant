@@ -25,6 +25,7 @@ from app.domains.regulations.router import router as regulations_router
 from app.domains.route.router import router as route_router
 from app.domains.submissions.router import router as submissions_router
 from app.domains.travel.router import router as travel_router
+from app.domains.trips.router import router as trips_router
 from app.domains.verify import service as verify_service
 from app.domains.verify.router import router as verify_router
 from app.domains.voucher.router import router as voucher_router
@@ -77,4 +78,5 @@ app.include_router(receipt_router)  # POST /api/receipt  (U-06 영수증 인식)
 app.include_router(documents_router)  # /api/documents (문서 작업: 출장보고서·회의록·출장원·지출결과서)
 app.include_router(documents_admin_router)  # /api/admin/submissions/{code}/documents (첨부 서류)
 app.include_router(ledger_router)  # GET /api/ledger · /api/admin/ledger (지출내역 엑셀)
+app.include_router(trips_router)  # /api/trips (출장 신청 → 정산으로 이어 쓰기)
 app.include_router(submissions_router)  # /api/submissions (직원 제출) · /api/admin/submissions (M-01 검토)

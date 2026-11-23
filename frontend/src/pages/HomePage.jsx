@@ -1,9 +1,11 @@
-// 직원 홈: "무엇을 하시겠어요?" 큰 타일 3개 + 최근 정산.
+// 직원 홈: "무엇을 하시겠어요?" 큰 타일 4개 + 내 출장 + 규정 검색바.
+// 2026-11-23: 출장 신청 타일과 '내 출장'(신청한 출장의 진행 단계 · 다음에 할 일 버튼)을 추가했습니다.
 // 내 제출 내역(listMySubmissions)으로 보완 알림과 건수를 채웁니다. 목업 모드에서는 예시 데이터예요.
 
 import { useEffect, useState } from 'react'
-import { listDocuments, listMySubmissions, VERDICT } from '../api/client.js'
+import { cancelTrip, listDocuments, listMySubmissions, listTrips, VERDICT } from '../api/client.js'
 import Icon from '../components/Icons.jsx'
+import { periodText, settleable, STAGE_TONE } from '../utils/trips.js'
 
 // 자주 묻는 질문 칩 (2026-11-15: 홈 하단에 규정 검색바 — 눌러서 바로 규정 물어보기로)
 const ASK_CHIPS = [
@@ -17,6 +19,8 @@ export default function HomePage({ user, onNavigate }) {
   const [rows, setRows] = useState(null)   // null = 불러오는 중
   const [workingDocs, setWorkingDocs] = useState(null)   // 작성 중인 서류 수
   const [question, setQuestion] = useState('')   // 하단 규정 검색바
+  const [trips, setTrips] = useState(null)       // 내 출장 (null = 불러오는 중)
+  const [tripError, setTripError] = useState('')
 
   // 질문을 들고 규정 물어보기로: QaPage 가 param.ask 를 받아 바로 물어봅니다.
   function ask(text) {
@@ -40,6 +44,35 @@ export default function HomePage({ user, onNavigate }) {
     return () => { ignore = true }
   }, [])
 
+  useEffect(() => {
+    let ignore = false
+    listTrips()
+      .then((d) => { if (!ignore) setTrips(d) })
+      .catch(() => { if (!ignore) setTrips([]) })
+    return () => { ignore = true }
+  }, [])
+
+  async function cancel(trip) {
+    if (!window.confirm(`'${trip.purpose}' 출장 신청을 취소할까요?`)) return
+    setTripError('')
+    try {
+      await cancelTrip(trip.id)
+      setTrips((list) => list.filter((t) => t.id !== trip.id))
+    } catch (e) {
+      setTripError(e.message)
+    }
+  }
+
+  // 출장 카드 오른쪽 버튼: 지금 단계에서 할 일
+  function tripAction(t) {
+    if (settleable(t)) return <button type="button" className="btn primary" onClick={() => onNavigate('travel', { tripId: t.id })}>정산하기 →</button>
+    if (t.submission) {
+      const rejected = t.submission.status === '반려'   // 반려되면 서류보다 고쳐서 다시 내는 게 먼저
+      return <button type="button" className={rejected ? 'btn primary' : 'btn'} onClick={() => onNavigate('mystatus')}>{t.submission.status} · {rejected ? '다시 내기' : '서류 쓰기'} →</button>
+    }
+    return <button type="button" className="link-btn" onClick={() => cancel(t)}>신청 취소</button>
+  }
+
   const mine = rows ?? []
   const fixCount = mine.filter((s) => s.verdict === VERDICT.FIX).length
   const pendingCount = mine.filter((s) => s.status === '검토 대기').length
@@ -56,7 +89,12 @@ export default function HomePage({ user, onNavigate }) {
         </button>
       )}
 
-      <div className="tile-grid hero">
+      <div className="tile-grid hero four">
+        <button type="button" className="tile" onClick={() => onNavigate('trip')}>
+          <span className="tile-title">출장 신청</span>
+          <span className="tile-desc">출장 목적·기간·장소를 미리 적어 두면 정산과 출장보고서에 그대로 이어져요.</span>
+          <span className="tile-go">신청하기 →</span>
+        </button>
         <button type="button" className="tile" onClick={() => onNavigate('type')}>
           <span className="tile-title">정산하기</span>
           <span className="tile-desc">출장, 회의비, 법인카드 사용 내역을 제출하기 전에 규정에 맞는지 확인하고 서류를 준비해요.</span>
@@ -73,6 +111,34 @@ export default function HomePage({ user, onNavigate }) {
           <span className="tile-go">{workingDocs ? `이어서 쓰기 ${workingDocs}건 →` : '열기 →'}</span>
         </button>
       </div>
+
+      <section className="home-trips" aria-labelledby="home-trips-title">
+        <div className="home-ask-head">
+          <h2 id="home-trips-title">내 출장</h2>
+          <span className="hint">신청한 출장의 진행 단계와 다음에 할 일</span>
+        </div>
+        {tripError && <div className="error" role="alert">{tripError}</div>}
+        {trips === null && <div className="empty">불러오는 중…</div>}
+        {trips?.length === 0 && (
+          <div className="empty">아직 신청한 출장이 없어요. <button type="button" className="link-btn" onClick={() => onNavigate('trip')}>출장 신청하기 →</button></div>
+        )}
+        {trips?.length > 0 && (
+          <ul className="recent-list trip-list">
+            {trips.slice(0, 5).map((t) => (
+              <li key={t.id}>
+                <button type="button" className="recent-link trip-main" onClick={() => onNavigate('trip', { tripId: t.id })} title="신청 내역 보기">
+                  <div className="recent-name">{t.purpose}</div>
+                  <div className="hint">{periodText(t.start_date, t.end_date)} · {t.destination || t.region || '출장지 미정'} · {t.vehicle}{t.companions?.length ? ` · 동행 ${t.companions.length}명` : ''}</div>
+                </button>
+                <span className="trip-side">
+                  <span className={`badge ${STAGE_TONE[t.stage] ?? 'muted'}`}>{t.stage}</span>
+                  {tripAction(t)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <section className="home-ask" aria-labelledby="home-ask-title">
         <div className="home-ask-head">

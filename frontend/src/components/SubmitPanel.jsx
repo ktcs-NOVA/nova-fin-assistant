@@ -22,9 +22,10 @@ function defaultPurpose(claim) {
   return first ? `${first} (${claim.trip_type})` : `${claim.trip_type} 지출 정산`
 }
 
-export default function SubmitPanel({ claim, result, user, onNavigate , resubmit }) {
+export default function SubmitPanel({ claim, result, user, onNavigate , resubmit, tripId, purposeHint }) {
+  // tripId · purposeHint: 출장 신청에서 이어 온 정산이면 그 출장 번호와 신청한 목적 (건명 기본값, 제출 시 신청에 연결)
   // resubmit: 반려된 건을 고쳐 다시 내는 것이면 { of: 원래 번호, purpose, account } — 건명·계정과목을 이어받고 그 건의 재제출로 보냄
-  const [purpose, setPurpose] = useState(() => resubmit?.purpose || defaultPurpose(claim))
+  const [purpose, setPurpose] = useState(() => resubmit?.purpose || purposeHint || defaultPurpose(claim))
   const [account, setAccount] = useState(() => resubmit?.account || defaultAccount(claim))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -41,7 +42,7 @@ export default function SubmitPanel({ claim, result, user, onNavigate , resubmit
     setBusy(true)
     setError('')
     try {
-      setDone(await createSubmission(claim, { purpose: purpose.trim(), account: account || null, verify_result: result, ...(resubmit?.of ? { resubmit_of: resubmit.of } : {}) }))
+      setDone(await createSubmission(claim, { purpose: purpose.trim(), account: account || null, verify_result: result, ...(resubmit?.of ? { resubmit_of: resubmit.of } : {}), ...(tripId ? { trip_id: tripId } : {}) }))
     } catch (e) {
       setError(e.message)
     } finally {
@@ -55,7 +56,7 @@ export default function SubmitPanel({ claim, result, user, onNavigate , resubmit
         <b>{done.id}</b> 번으로 제출되었습니다. 회계 관리자 검토를 기다리는 중입니다.
         <div className="hint">건명 {done.purpose} · 합계 {done.amount.toLocaleString('ko-KR')}원{done.account ? ` · 계정과목 ${done.account}` : ''}</div>
         {/* 정산 → 문서 작성: 입력한 값으로 채운 서류 화면으로 (제출 번호를 함께 넘김) */}
-        <NextDocs src={{ ...claim, id: done.id, amount: done.amount }} user={user} onNavigate={onNavigate} />
+        <NextDocs src={{ ...claim, ...(done.trip ? { trip: done.trip } : {}), id: done.id, amount: done.amount }} user={user} onNavigate={onNavigate} />
       </div>
     )
   }
