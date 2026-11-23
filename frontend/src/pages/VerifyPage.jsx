@@ -16,7 +16,7 @@ import { verifyClaim } from '../api/client.js'
 import VerifyResult from '../components/VerifyResult.jsx'
 import SubmitPanel from '../components/SubmitPanel.jsx'
 import WizardSteps from '../components/WizardSteps.jsx'
-import { CLAIM, MEETING_FIELDS, splitAttendees } from '../utils/claimTypes.js'
+import { CLAIM, MEETING_FIELDS, duplicatePerson, emptyPerson, parsePerson, peopleToAttendees, splitAttendees } from '../utils/claimTypes.js'
 
 const TRIP_TYPES = [CLAIM.TRIP, CLAIM.LOCAL_TRIP, CLAIM.MEETING, CLAIM.CARD]
 const GRADES = ['직원 3급 이하', '직원 1·2급', '임원/본부장', '감사', '사장']
@@ -30,7 +30,13 @@ const isMeeting = (t) => t === CLAIM.MEETING
 // 업무추진비 건당 기준 (업무추진비 및 조직관리비 집행 지침 제3조④). 외부 참석 회의에만 해당
 const PRE_APPROVAL = 500000
 const DAILY_AUDIT = 1000000
-const emptyMeeting = () => ({ purpose: '', attendees: '', count: '', external: false, pre_approved: false, daily_audit: false })
+const emptyMeeting = () => ({ purpose: '', people: [emptyPerson()], count: '', external: false, pre_approved: false, daily_audit: false })
+// 넘어온 회의 정보(재제출 등)를 화면 모양으로: 참석자는 한 명씩 { name, team }. 예전 모양(쉼표로 적은 한 줄)도 받음
+function initMeeting(given = {}) {
+  const { attendees, ...rest } = given
+  const people = rest.people?.length ? rest.people : typeof attendees === 'string' ? splitAttendees(attendees).map(parsePerson) : []
+  return { ...emptyMeeting(), ...rest, people: people.length ? people : [emptyPerson()] }
+}
 const isLodging = (f) => f.includes('숙박')
 // 좌석 등급이 붙는 항목: 철도(일반/특실), 항공(이코노미/비즈니스)
 const seatOptions = (f) => (f.includes('철도') || f.includes('KTX') ? ['일반', '특실'] : f.includes('항공') ? ['이코노미', '비즈니스'] : null)
@@ -79,7 +85,7 @@ export default function VerifyPage({ prefill, user, onNavigate }) {
   const [grade, setGrade] = useState(prefill?.grade ?? '직원 3급 이하')
   const [trip, setTrip] = useState({ start_date: '', end_date: '', region: '', vehicle: '', ...(prefill?.trip ?? {}) })
   const [items, setItems] = useState(() => (prefill?.items?.length ? prefill.items.map((it) => ({ ...emptyItem(), ...it })) : [emptyItem()]))
-  const [meeting, setMeeting] = useState(() => ({ ...emptyMeeting(), ...(prefill?.meeting ?? {}) }))   // 회의비일 때만 씀
+  const [meeting, setMeeting] = useState(() => initMeeting(prefill?.meeting))   // 회의비일 때만 씀
   const receiptCount = items.filter(fromReceipt).length
   const fromTravel = prefill?.from === 'travel' && items.length > 0
   const [result, setResult] = useState(null)
@@ -93,6 +99,10 @@ export default function VerifyPage({ prefill, user, onNavigate }) {
 
   const editTrip = (k, v) => setTrip((t) => ({ ...t, [k]: v }))
   const editMeeting = (k, v) => setMeeting((m) => ({ ...m, [k]: v }))
+  const editPerson = (i, k, v) => setMeeting((m) => ({ ...m, people: m.people.map((p, j) => (j === i ? { ...p, [k]: v } : p)) }))
+  const addPerson = () => setMeeting((m) => ({ ...m, people: [...m.people, emptyPerson()] }))
+  const removePerson = (i) => setMeeting((m) => ({ ...m, people: m.people.filter((_, j) => j !== i) }))
+  const attendees = peopleToAttendees(meeting.people)   // 저장·검증에 쓰는 모양: ["홍길동 (해운정책팀)", …]
   const meetingTotal = items.reduce((sum, it) => sum + (Number(it.amount) || 0), 0)
   const biggest = items.reduce((max, it) => Math.max(max, Number(it.amount) || 0), 0)   // 사전결재·일상감사는 건당 금액 기준
   const editItem = (i, k, v) => setItems((list) => list.map((it, idx2) => (idx2 === i ? { ...it, [k]: v } : it)))
@@ -133,7 +143,7 @@ export default function VerifyPage({ prefill, user, onNavigate }) {
       if (isMeeting(tripType)) {
         // 회의 정보는 항목마다 실어 보냄: 엔진(참석자 확인)과 제출 건 저장(관리자 화면·문서 초안)이 항목 단위로 읽음
         row.meeting_purpose = meeting.purpose.trim()
-        row.attendees = splitAttendees(meeting.attendees)
+        row.attendees = attendees
         if (Number(meeting.count) > 0) row.participant_count = Number(meeting.count)
         // 외부 인사가 참석한 회의는 업무추진비(건당 50만 원 이상 사전결재 등), 내부 회의는 조직관리비 성격으로 검사
         row.category = meeting.external ? 'business' : 'org'
@@ -153,7 +163,10 @@ export default function VerifyPage({ prefill, user, onNavigate }) {
   }
   const checkMeeting = () => {
     if (!meeting.purpose.trim()) return '회의 목적을 적어 주세요. 회의비는 회의 목적과 참석자가 있어야 증빙이 됩니다.'
-    if (!splitAttendees(meeting.attendees).length) return '참석자를 적어 주세요. (예: 해운정책팀 홍길동, 김철수)'
+    if (!attendees.length) return '참석자 이름을 적어 주세요.'
+    if (meeting.people.some((p) => !p.name.trim() && p.team.trim())) return '소속만 적힌 참석자가 있어요. 이름을 적거나 그 줄을 삭제해 주세요.'
+    const twin = duplicatePerson(meeting.people)
+    if (twin) return `${twin} 님이 두 번 적혀 있어요. 다른 사람이면 소속을 적어 구분해 주세요.`
     return ''
   }
   const checkTrip = () => (trip.start_date && trip.end_date && trip.end_date < trip.start_date ? '출장 종료일이 시작일보다 앞설 수 없습니다.' : '')
@@ -367,13 +380,20 @@ export default function VerifyPage({ prefill, user, onNavigate }) {
               <span className="field-label">회의 목적 *</span>
               <input type="text" value={meeting.purpose} placeholder="예: 4분기 항만 물류 지원사업 업무협의" onChange={(e) => editMeeting('purpose', e.target.value)} />
             </label>
-            <label className="field field-wide">
-              <span className="field-label">참석자 * <em>쉼표로 구분</em></span>
-              <input type="text" value={meeting.attendees} placeholder="예: 해운정책팀 홍길동, 김철수 / ○○해운 이영희 부장" onChange={(e) => editMeeting('attendees', e.target.value)} />
-            </label>
+            <fieldset className="field field-wide people">
+              <legend className="field-label">참석자 * <em>이름이 같은 사람은 소속으로 구분해요</em></legend>
+              {meeting.people.map((p, i) => (
+                <div className="people-row" key={i}>
+                  <input type="text" value={p.name} placeholder="이름 (예: 홍길동)" aria-label={`참석자 ${i + 1} 이름`} onChange={(e) => editPerson(i, 'name', e.target.value)} />
+                  <input type="text" value={p.team} placeholder="소속 팀·기관 (예: 해운정책팀)" aria-label={`참석자 ${i + 1} 소속`} onChange={(e) => editPerson(i, 'team', e.target.value)} />
+                  <button type="button" className="btn small" onClick={() => removePerson(i)} disabled={meeting.people.length === 1} aria-label={`참석자 ${i + 1} 삭제`}>삭제</button>
+                </div>
+              ))}
+              <button type="button" className="btn small people-add" onClick={addPerson}>＋ 참석자 추가</button>
+            </fieldset>
             <label className="field">
               <span className="field-label">참석 인원 <em>비우면 참석자 수</em></span>
-              <input type="number" min="1" value={meeting.count} placeholder={String(splitAttendees(meeting.attendees).length || '')} onChange={(e) => editMeeting('count', e.target.value)} />
+              <input type="number" min="1" value={meeting.count} placeholder={String(attendees.length || '')} onChange={(e) => editMeeting('count', e.target.value)} />
             </label>
             <label className="field field-check">
               <span className="field-label">외부 참석 <em>업무추진비 기준 적용</em></span>
@@ -401,8 +421,8 @@ export default function VerifyPage({ prefill, user, onNavigate }) {
               </label>
             )}
           </div>
-          {(Number(meeting.count) || splitAttendees(meeting.attendees).length) > 0 && meetingTotal > 0 && (
-            <p className="hint">1인당 약 {Math.round(meetingTotal / (Number(meeting.count) || splitAttendees(meeting.attendees).length)).toLocaleString('ko-KR')}원 · 1인당 한도는 공사 기준이 확인되지 않아 자동으로 판정하지 않고 참고로만 보여 줘요.</p>
+          {(Number(meeting.count) || attendees.length) > 0 && meetingTotal > 0 && (
+            <p className="hint">1인당 약 {Math.round(meetingTotal / (Number(meeting.count) || attendees.length)).toLocaleString('ko-KR')}원 · 1인당 한도는 공사 기준이 확인되지 않아 자동으로 판정하지 않고 참고로만 보여 줘요.</p>
           )}
           {errorBox}
           {nav}

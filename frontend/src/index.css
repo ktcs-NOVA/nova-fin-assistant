@@ -385,6 +385,12 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .items-editor { display: grid; gap: 10px; }
 .item-row { position: relative; border: 1px solid var(--line); border-radius: 10px; padding: 12px 12px 12px; background: var(--bg); }
 .item-row .form-grid { padding-right: 56px; }
+/* 회의 참석자: 이름 · 소속 · 삭제 를 한 줄씩 */
+.people { border: 0; padding: 0; margin: 0; min-width: 0; }
+.people legend { padding: 0; margin-bottom: 4px; }
+.people-row { display: grid; grid-template-columns: 1fr 1.3fr auto; gap: 8px; margin-bottom: 6px; }
+.people-add { align-self: flex-start; }
+@media (max-width: 640px) { .people-row { grid-template-columns: 1fr 1fr; } .people-row .btn { grid-column: 1 / -1; justify-self: end; } }
 .item-remove { position: absolute; top: 10px; right: 10px; padding: 4px 10px; font-size: 12px; color: var(--muted); }
 .field-check .check-inline { display: flex; align-items: center; gap: 8px; min-height: 36px; font-size: 14px; }
 /* .field input 의 width:100% 가 체크박스에도 걸려 글자가 세로로 밀리던 것 방지 */
@@ -521,6 +527,62 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .peek-table thead tr > :first-child { background: var(--bg); }
 .peek-table tr.hit th, .peek-table tr.hit td { background: var(--brand-soft); }
 .peek-table tr.hit th { color: var(--brand); }
+.peek-foot { display: flex; justify-content: flex-end; padding: 8px 12px; border-top: 1px solid var(--line); }
+
+/* 규정 원문 보기 (U-03): 규정 고르기 + 검색 → 왼쪽 목차, 오른쪽 조문 */
+.rules-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 10px; }
+.rules-docs { justify-content: flex-start; margin: 0; flex: 1; }
+.chip.on { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); font-weight: 600; }
+.rules-search {
+  flex: 0 1 280px; min-width: 200px;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--ink);
+  padding: 9px 12px; font: inherit;
+}
+.rules-search:focus { outline: 2px solid var(--brand-soft); border-color: var(--brand); }
+.rules-meta { margin: 0 0 12px; }
+.rules-jump { display: none; width: 100%; margin-bottom: 12px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--ink); font: inherit; }
+.rules-layout { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 18px; align-items: start; }
+.rules-toc {
+  position: sticky; top: 72px; max-height: calc(100vh - 110px); overflow: auto;
+  display: flex; flex-direction: column; gap: 2px;
+  border-right: 1px solid var(--line); padding-right: 10px;
+}
+.toc-chapter { margin: 10px 0 4px; font-size: 12px; font-weight: 700; color: var(--muted); }
+.toc-item {
+  width: 100%; text-align: left; border: 0; background: none; color: var(--ink);
+  padding: 5px 8px; border-radius: 7px; font-size: 13px; line-height: 1.35; word-break: keep-all;
+}
+.toc-item:hover { background: var(--brand-soft); color: var(--brand); }
+.toc-item.table, .toc-item.form { color: var(--muted); }
+.rules-body { display: flex; flex-direction: column; gap: 12px; }
+.rule {
+  scroll-margin-top: 80px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px;
+  transition: border-color .3s, box-shadow .3s;
+}
+.rule.flash { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+.rule-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+.rule-head strong { font-size: 15px; word-break: keep-all; }
+.rule-text { margin: 0; white-space: pre-line; word-break: keep-all; line-height: 1.7; font-size: 14px; }
+.rule-approvals { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.7; }
+.rule-approvals li.note { list-style: none; margin-left: -18px; color: var(--muted); }
+.rule details summary { cursor: pointer; color: var(--brand); font-size: 13px; }
+.rule details .rule-text { margin-top: 8px; }
+/* 별지 서식: 빈칸 양식처럼 칸에 테두리 */
+.form-caption { margin: 10px 0 2px; color: var(--muted); font-size: 12px; }
+.form-title { margin: 0 0 8px; text-align: center; font-weight: 700; font-size: 15px; }
+.form-sheet { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: 13px; }
+.form-sheet td { border: 1px solid var(--line); padding: 7px 9px; vertical-align: middle; word-break: keep-all; overflow-wrap: anywhere; line-height: 1.5; }
+.form-sheet td:first-child { background: var(--bg); font-weight: 600; }
+.form-line { display: block; }
+mark { background: #ffe58a; color: inherit; border-radius: 3px; padding: 0 1px; }
+@media (prefers-color-scheme: dark) { mark { background: #7a5d00; } }
+@media (max-width: 760px) {
+  .rules-layout { grid-template-columns: minmax(0, 1fr); }
+  .rules-toc { display: none; }
+  .rules-jump { display: block; }
+  .rules-search { flex: 1 1 100%; }
+}
 
 /* 업무 절차 안내 (U-02) */
 .procedure-task { margin: 0; font-size: 16px; }
@@ -935,6 +997,14 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
 .form-paper { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 26px 28px; max-width: 860px; margin: 0 auto; width: 100%; }
 .form-title { text-align: center; font-size: 21px; font-weight: 800; letter-spacing: .28em; padding: 10px 0; border: 2px solid var(--ink); margin-bottom: 14px; }
 .form-subtitle { text-align: center; font-weight: 700; letter-spacing: .2em; margin: 20px 0 8px; }
+/* 결재란: 제목 오른쪽 위. 직위 줄 아래가 서명·날인 칸 */
+.form-head { display: flex; gap: 12px; align-items: stretch; margin-bottom: 14px; }
+.form-head .form-title { flex: 1; margin: 0; display: flex; align-items: center; justify-content: center; }
+.form-table.form-approval { width: auto; flex: none; margin: 0; font-size: 13px; }
+.form-table.form-approval th { width: 62px; padding: 4px 6px; height: 26px; }
+.form-table.form-approval .form-approval-label { width: 26px; padding: 4px 3px; }
+.form-approval-label span { display: block; line-height: 1.9; }
+.form-table.form-approval td { height: 54px; }
 .form-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 12px; font-size: 14px; }
 .form-table th, .form-table td { border: 1px solid var(--ink); padding: 7px 9px; vertical-align: middle; word-break: keep-all; overflow-wrap: anywhere; }
 .form-table th { background: var(--bg); font-weight: 700; text-align: center; }
@@ -1053,6 +1123,10 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
   .form-table { font-size: 12.5px; }
   .form-table th, .form-table td { padding: 5px 4px; }
   .form-title { font-size: 17px; letter-spacing: .15em; }
+  .form-head { flex-direction: column-reverse; gap: 8px; }
+  .form-table.form-approval { align-self: flex-end; }
+  .form-table.form-approval th { width: 52px; }
+  .form-table.form-approval td { height: 44px; }
 }
 
 /* 인쇄 · PDF 저장: 양식만 흰 종이에 */
@@ -1068,7 +1142,7 @@ textarea { width: 100%; resize: vertical; line-height: 1.5; }
   .form-receipt { max-height: 320px; }
 }
 
-/* 문서 작업 양식: ① 작성하기 / ② 양식으로 보기 탭, 아래에 붙는 버튼 줄 (미리보기안) */
+/* 문서 작업 양식: 작성하기 / 양식으로 보기 토글 (번호 없음 — 순서가 아니라 보는 방식을 고르는 것), 아래에 붙는 버튼 줄 (미리보기안) */
 .doc-tabs { max-width: 420px; }
 .write-view { display: grid; gap: 12px; }
 .write-summary-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }

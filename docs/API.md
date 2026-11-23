@@ -387,6 +387,7 @@ app.add_middleware(
 - 코드: `backend/app/domains/submissions/`, 마이그레이션 `0004` (`submissions.account`).
 
 - (2026-11-13) 제출 건 응답의 `expenses[]` 에 `attendees`(참석자 목록)와 회의비의 `meeting_purpose`·`participant_count` 가 들어가고, 출장 건이면 `trip: { start_date, end_date, region, destination }` 이 함께 옵니다 (아니면 `null`). 직원 화면이 이 값으로 회의록·출장보고서·출장원 입력 칸을 채웁니다.
+- (2026-11-22) 회의 참석자는 화면에서 이름·소속을 따로 입력받아 `attendees` 에 `"이름 (소속)"` 한 줄씩 보냅니다 (예: `["김민수 (해운정책팀)", "김민수 (부산항만공사 물류팀)"]`, 소속이 없으면 이름만). 저장 모양은 그대로 문자열 목록이고, 회의록 양식의 명단이 이를 소속·성명 칸으로 나눕니다. 예전 `"소속 이름"` 도 그대로 읽습니다.
 - (2026-11-13) 제출 건 응답에 `submitted_time`(분 단위 제출 시각, 예: `2026-11-13T17:55+09:00`)이 추가됐습니다. `submitted_at`(날짜)은 그대로입니다. 관리자 화면이 이 값으로 "방금 전"·"새 제출" 표시와 최근 제출 순 정렬을 합니다.
 
 ### 3-10. 로그인 · 회원가입 (`/api/auth/*`) — 2026-11-12 PM 요청, 백엔드·프론트 구현 완료
@@ -442,7 +443,7 @@ curl -s localhost:8000/api/checklists -H 'Authorization: Bearer <token>'
     - 회의록: `content`(회의 내용)
     - 출장보고서: `destination`(출장지), `content`(출장 내용)
     - 공통: `ai_keys`(지금 값이 AI 가 쓴 그대로인 칸 목록. 직원이 고치면 프론트가 빼서 보냄)
-  - `GET …/form` 응답: `{ kind, submission_code, sheets: [{ title, blocks: [...] }], todo[], ready }`. 블록 종류:
+  - `GET …/form` 응답: `{ kind, submission_code, sheets: [{ title, approval?, blocks: [...] }], todo[], ready }`. `approval` (`{ label: "결재", roles: ["담당","팀장","부서장"] }`, 2026-11-22 추가)이 있는 장은 제목 오른쪽 위에 결재란 표를 그립니다 — 지출 결과서·출장보고서만, 인쇄 후 서명하는 빈 칸이고 결재가 넘어가는 기능은 없음. 블록 종류:
     `info`(머리표 `rows:[{label, cell}]`) · `table`(`caption?, columns, rows, total?`) · `field`(넓은 글 칸 `label, cell`) ·
     `note`(`text, style`) · `signers`(`rows:[{role, cell}]`) · `evidence`(`title, items:[{date, label, payment, amount, receipt_id}]`) · `photos`(`title, hint`).
     칸 하나는 `{ value, source, align? }` 이고 고칠 수 있는 칸에는 `key, label, required, placeholder, ai, multiline, limit` 가 더 붙습니다.
@@ -482,6 +483,49 @@ curl -s localhost:8000/api/checklists -H 'Authorization: Bearer <token>'
 - 아래에 정산 유형별 소계와 합계가 붙습니다. 엑셀 수식(`SUMIF`, `SUM`)이라 줄을 고치면 다시 계산되고, 계산값도 함께 저장해서 수식을 계산하지 않는 미리보기에서도 숫자가 보입니다.
 - 프론트는 토큰을 실어 받아서 `지출내역_YYYYMMDD.xlsx` 로 저장합니다 (`downloadLedger`, `components/LedgerButton.jsx`). 버튼은 직원의 "내 정산 현황"과 관리자의 "정산 검토 대기함"에 있습니다.
 - 만드는 코드는 `backend/app/domains/ledger/excel.py` (라이브러리 `xlsxwriter`).
+
+### 3-13. 규정 원문 (`GET /api/regulations`, `GET /api/regulations/{id}`) — U-03, 2026-11-20 추가
+
+'규정 확인하기' 화면의 **원문 보기** 탭이 씁니다. 적재된 규정을 조문·별표 순서대로 돌려줍니다. 로그인 없이도 되며, 로그인하면 역할에 맞는 문서만(직원은 공통+직원용, 관리자는 공통+관리자용) 보입니다.
+
+| 하는 일 | 방식 | 주소 |
+|---|---|---|
+| 규정 목록 | GET | `/api/regulations` → `[{ id, title, revised_at, sections }]` |
+| 규정 원문 | GET | `/api/regulations/{id}` → 아래 모양 (없으면 404) |
+
+```json
+{
+  "id": 9, "title": "여비규정", "revised_at": "2026-10-21", "source_file": "여비규정(2026년도 10월 21일 개정).hwpx",
+  "sections": [
+    { "key": "제14조", "article": "제14조", "title": "일비, 식비, 숙박비", "kind": "article",
+      "chapter": "제2장 국내여비", "head": null, "revised_at": "2026-10-21", "content": "제14조(일비, 식비, 숙박비) ① …" },
+    { "key": "별표 1", "article": "별표 1", "title": "국내여비지급표", "kind": "table", "content": "[별표 1] 국내여비지급표\n구분: 직원(3급 이하) | 식비(1일당): 27 | …" }
+  ]
+}
+```
+
+- `kind`: `article` 조문 / `table` 별표 / `form` 별지 서식. 별표는 한 행이 `제목: 값 | 제목: 값` 한 줄이라 화면에서 표로 그립니다 (`utils/excerpt.js` 의 `parseTable`).
+- 검색용으로 잘게 나눈 조각을 다시 이어 붙인 것입니다. 긴 조문·별표의 `(계속)` 머리 줄은 빼고, 전결표는 구역(`head`)마다 한 묶음으로, 반복되던 `※ 안내`는 한 번만 넣습니다.
+- 같은 이름의 묶음이 여러 개면 `key` 에 번호가 붙습니다 (`별표#1`, `별표#2` …). 화면 이동에는 `key` 를 씁니다.
+- 규정 Q&A 답변의 근거(`sources[]`)에서 "원문에서 보기"를 누르면 `regulation` + `article` 로 같은 조항을 찾고, 전결표처럼 같은 `article` 이 여러 개면 `excerpt` 첫 줄로 고릅니다.
+
+### 3-14. 경로 조회 (`POST /api/route`) — U-05, 2026-11-22 추가
+
+출장비 계산의 **근무지(공사 본사) → 도착지 자동차 거리**. 자가용이면 화면이 이 편도 거리로 왕복 운행거리를 채웁니다. 로그인 필요.
+
+프론트가 보내는 것: `{ "destination": "부산광역시 연제구 중앙대로 1001" }` (주소 또는 장소 이름)
+
+백엔드가 돌려주는 것: `{ "destination": "부산광역시 연제구 중앙대로 1001", "distance_km": 12.3, "duration_min": 25 }` (편도, 실시간 빠른 길)
+
+| 상황 | 응답 | 화면 |
+|---|---|---|
+| 키 없음 | 503 `경로 조회가 아직 설정되지 않았어요…` | 이유를 보여 주고 거리 직접 입력 |
+| 도착지를 못 찾음 / 길 없음 | 404 이유 | 〃 |
+| 키 틀림, 사용 한도, 네이버 연결 실패 | 502 이유 | 〃 |
+
+- 네이버 클라우드 플랫폼 **Maps** 의 Geocoding(주소 → 좌표)과 Directions 5(자동차 경로)를 서버에서 부릅니다. 키는 `backend/.env` 의 `NAVER_MAPS_CLIENT_ID` · `NAVER_MAPS_CLIENT_SECRET` (브라우저에 내보내지 않음). 콘솔의 Application 에서 두 API 를 모두 선택해야 합니다.
+- Geocoding 은 주소만 찾습니다. `NAVER_SEARCH_CLIENT_ID` · `SECRET`(선택)을 넣으면 "부산시청" 같은 장소 이름도 주소로 바꿔 찾습니다. 이 키는 **NAVER API HUB** 의 지역 검색(`GET https://naverapihub.apigw.ntruss.com/search/v1/local`)용으로, 네이버 클라우드 콘솔 > NAVER API HUB 에서 따로 받습니다. 예전 네이버 개발자센터 검색 API 는 API HUB 로 옮겨져 개발자센터에서는 발급되지 않습니다.
+- 출발지는 `ROUTE_ORIGIN_ADDRESS` (기본: 부산광역시 해운대구 마린시티2로 38, 알리오 공시 주소). 같은 도착지는 서버가 기억해 다시 부르지 않습니다.
 
 ### 3-15. 출장 신청 (`/api/trips`) — 2026-11-23 추가 (2026-11-20 코칭: 신청 → 정산 → 보고서)
 
