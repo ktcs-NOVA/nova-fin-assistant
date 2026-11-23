@@ -387,6 +387,7 @@ app.add_middleware(
 - 코드: `backend/app/domains/submissions/`, 마이그레이션 `0004` (`submissions.account`).
 
 - (2026-11-13) 제출 건 응답의 `expenses[]` 에 `attendees`(참석자 목록)와 회의비의 `meeting_purpose`·`participant_count` 가 들어가고, 출장 건이면 `trip: { start_date, end_date, region, destination }` 이 함께 옵니다 (아니면 `null`). 직원 화면이 이 값으로 회의록·출장보고서·출장원 입력 칸을 채웁니다.
+- (2026-11-22) 회의 참석자는 화면에서 이름·소속을 따로 입력받아 `attendees` 에 `"이름 (소속)"` 한 줄씩 보냅니다 (예: `["김민수 (해운정책팀)", "김민수 (부산항만공사 물류팀)"]`, 소속이 없으면 이름만). 저장 모양은 그대로 문자열 목록이고, 회의록 양식의 명단이 이를 소속·성명 칸으로 나눕니다. 예전 `"소속 이름"` 도 그대로 읽습니다.
 - (2026-11-13) 제출 건 응답에 `submitted_time`(분 단위 제출 시각, 예: `2026-11-13T17:55+09:00`)이 추가됐습니다. `submitted_at`(날짜)은 그대로입니다. 관리자 화면이 이 값으로 "방금 전"·"새 제출" 표시와 최근 제출 순 정렬을 합니다.
 
 ### 3-10. 로그인 · 회원가입 (`/api/auth/*`) — 2026-11-12 PM 요청, 백엔드·프론트 구현 완료
@@ -442,7 +443,7 @@ curl -s localhost:8000/api/checklists -H 'Authorization: Bearer <token>'
     - 회의록: `content`(회의 내용)
     - 출장보고서: `destination`(출장지), `content`(출장 내용)
     - 공통: `ai_keys`(지금 값이 AI 가 쓴 그대로인 칸 목록. 직원이 고치면 프론트가 빼서 보냄)
-  - `GET …/form` 응답: `{ kind, submission_code, sheets: [{ title, blocks: [...] }], todo[], ready }`. 블록 종류:
+  - `GET …/form` 응답: `{ kind, submission_code, sheets: [{ title, approval?, blocks: [...] }], todo[], ready }`. `approval` (`{ label: "결재", roles: ["담당","팀장","부서장"] }`, 2026-11-22 추가)이 있는 장은 제목 오른쪽 위에 결재란 표를 그립니다 — 지출 결과서·출장보고서만, 인쇄 후 서명하는 빈 칸이고 결재가 넘어가는 기능은 없음. 블록 종류:
     `info`(머리표 `rows:[{label, cell}]`) · `table`(`caption?, columns, rows, total?`) · `field`(넓은 글 칸 `label, cell`) ·
     `note`(`text, style`) · `signers`(`rows:[{role, cell}]`) · `evidence`(`title, items:[{date, label, payment, amount, receipt_id}]`) · `photos`(`title, hint`).
     칸 하나는 `{ value, source, align? }` 이고 고칠 수 있는 칸에는 `key, label, required, placeholder, ai, multiline, limit` 가 더 붙습니다.

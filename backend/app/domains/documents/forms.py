@@ -17,6 +17,8 @@
   signers   [{role, cell}]                        작성자 · 확인자 · 검수자
   evidence  {title, items}                        증빙 (영수증 사진이 있으면 receipt_id)
   photos    {title, hint}                         인쇄한 뒤 붙이는 사진 자리
+장에 `approval` ({label, roles}) 이 있으면 제목 오른쪽 위에 결재란 표를 그립니다 (지출 결과서 · 출장보고서).
+결재란은 인쇄한 뒤 서명·날인하는 빈 칸이고, 결재가 실제로 넘어가는 기능은 없습니다.
 
 `sub` 는 submissions.service.to_view() 가 돌려주는 제출 건 한 건(dict), `fields` 는 서류에 저장된
 직원 입력값({"detail_0": …, "inspector": …, "content": …, "ai_keys": [...]}) 입니다.
@@ -107,8 +109,14 @@ def _item_name(e: dict) -> str:
 
 
 def _split_person(text: str) -> tuple[str, str]:
-    """'총무인사부 박철환' → ('총무인사부', '박철환'). 소속 없이 이름만 있으면 ('', 이름)."""
-    parts = str(text or "").split()
+    """참석자 한 줄 → (소속, 이름). 화면이 보내는 '박철환 (총무인사부)' 와 예전에 적던 '총무인사부 박철환' 을 모두 읽습니다.
+    소속 없이 이름만 있으면 ('', 이름)."""
+    s = str(text or "").strip()
+    if s.endswith(")") and "(" in s:
+        name, _, team = s[:-1].rpartition("(")
+        if name.strip() and team.strip():
+            return team.strip(), name.strip()
+    parts = s.split()
     if len(parts) <= 1:
         return "", "".join(parts)
     return parts[0], " ".join(parts[1:])
@@ -218,6 +226,10 @@ def suggest(sub: dict) -> dict[str, str]:
     return out
 
 
+# 결재란: 제목 오른쪽 위의 작은 표. 직위 줄 아래가 서명·날인 칸 (인쇄한 뒤 채움)
+APPROVAL = {"label": "결재", "roles": ["담당", "팀장", "부서장"]}
+
+
 def _report(sub: dict, fields: dict, writer: str, today: date) -> list[dict]:
     total = _total(sub)
     category = str(sub.get("account") or sub.get("type") or "")
@@ -244,7 +256,7 @@ def _report(sub: dict, fields: dict, writer: str, today: date) -> list[dict]:
         ])
 
     return [
-        {"title": "지출 결과서", "blocks": [
+        {"title": "지출 결과서", "approval": APPROVAL, "blocks": [
             {"type": "info", "rows": [
                 {"label": "기관명", "cell": _cell(ORG)},
                 {"label": "건명", "cell": _cell(sub.get("purpose"))},
@@ -345,7 +357,7 @@ def _trip_report(sub: dict, fields: dict) -> list[dict]:
             parts.append(f"{e['nights']}박")
         return ", ".join(parts)
 
-    return [{"title": "출 장 보 고 서", "blocks": [
+    return [{"title": "출 장 보 고 서", "approval": APPROVAL, "blocks": [
         {"type": "info", "rows": [
             {"label": "목적", "cell": _cell(sub.get("purpose"))},
             {"label": "출장일자", "cell": _cell(_period(start, end))},

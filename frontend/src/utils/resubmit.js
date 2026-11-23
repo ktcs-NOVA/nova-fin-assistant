@@ -1,7 +1,7 @@
 // 반려된 정산 건 → 청구 검증 화면의 초기값. "고쳐서 다시 제출"을 누르면 같은 내용이 채워진 채로 열립니다.
 // resubmit 에 원래 제출 번호·건명·계정과목을 실어 두면 제출 패널이 그 건의 재제출로 보냅니다 (백엔드 resubmit_of).
 
-import { CLAIM } from './claimTypes.js'
+import { CLAIM, parsePerson } from './claimTypes.js'
 
 const KNOWN = Object.values(CLAIM)
 
@@ -34,7 +34,7 @@ export function resubmitPrefill(sub, user) {
     })),
     meeting: {
       purpose: first.meeting_purpose ?? '',
-      attendees: (first.attendees ?? []).join(', '),
+      people: (first.attendees ?? []).map(parsePerson),
       count: first.participant_count ? String(first.participant_count) : '',
       external: first.category === 'business',
       pre_approved: Boolean(first.pre_approved),
