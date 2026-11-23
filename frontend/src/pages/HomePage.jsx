@@ -99,7 +99,7 @@ export default function HomePage({ user, onNavigate }) {
       <div className="home-v2-grid">
         <section className="home-start" aria-labelledby="home-start-title">
           <h2 id="home-start-title">정산하기</h2>
-          <p>무엇을 정산하나요? 고르면 제출하기 전에 규정에 맞는지 확인하고, 서류까지 준비해 드려요.</p>
+          <p>고르면 제출 전에 규정에 맞는지 확인하고, 서류까지 준비해 드려요.</p>
           <div className="home-start-list">
             {START.map((t) => (
               <button key={t.id} type="button" className="home-start-item" onClick={() => onNavigate(t.go, t.param ?? null)}>

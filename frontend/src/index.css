@@ -1305,6 +1305,29 @@ body:has(.form-actions-bar) .ask-fab { bottom: 100px; }
 .home-mini .home-fix, .home-mini .home-card-go { font-size: 14px; }
 .home-v2 .home-ask-mascot { width: 96px; }
 .home-v2 .home-ask { padding: 18px 26px; }
+/* 한 화면 맞춤 (1080p 노트북 브라우저 기준 높이 약 780px 안에 규정 확인하기까지 보이게) */
+.main:has(.home-v2) { padding-top: 20px; padding-bottom: 16px; }
+.home-v2 { gap: 16px; }
+.home-v2-head h1 { font-size: 30px; }
+.home-v2-head .hint { font-size: 15px; }
+.home-start { padding: 22px 24px; gap: 12px; grid-template-rows: auto auto 1fr; }
+.home-start h2 { font-size: 30px; }
+.home-start > p { font-size: 15px; }
+.home-start-list { align-content: stretch; }
+.home-start-item { min-height: 60px; padding: 10px 20px; }
+.home-start-text b { font-size: 17px; }
+.home-start-text span { font-size: 14px; }
+.home-trips-card { padding: 16px 20px 12px; }
+.home-card h2 { font-size: 22px; }
+.home-mini { padding: 14px 18px; }
+.home-mini h2 { font-size: 20px; }
+.home-v2 .home-ask { padding: 14px 22px; gap: 18px; }
+.home-v2 .home-ask-mascot { width: 80px; }
+.home-v2 .home-ask-body { gap: 10px; }
+.home-v2 .home-ask-head h2 { font-size: 22px; }
+.home-v2 .ask-bar .btn { min-height: 44px; }
+.home-v2 .ask-bar input { padding: 10px 4px; }
+.home-v2 .chip { min-height: 44px; padding: 6px 14px; font-size: 14px; }
 @media (max-width: 860px) {
   .home-v2-grid { grid-template-columns: 1fr; }
   .home-mini-row { grid-template-columns: 1fr; }
