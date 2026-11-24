@@ -1,0 +1,94 @@
+# CI/CD — PR 마다 테스트·빌드, main 에 머지되면 테스트 통과 후 Vultr 서버에 자동 배포
+#   서버 준비·Secrets 등록 방법: deploy/update.sh 맨 위 설명
+name: CI/CD
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:   # Actions 탭에서 수동 실행 (main 이면 배포까지)
+
+concurrency:
+  group: ci-${{ github.ref }}
+  # PR 은 새 커밋이 오면 이전 실행을 취소, main 은 배포 도중 끊기지 않게 취소하지 않음
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  backend:
+    name: 백엔드 테스트
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: nova
+          POSTGRES_PASSWORD: nova
+          POSTGRES_DB: nova
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U nova -d nova"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      DATABASE_URL: postgresql+psycopg://nova:nova@localhost:5432/nova
+      OPENAI_API_KEY: ""   # 비워 두면 목업 AI 로 돌아 키 없이 테스트됨
+      PYTHONUTF8: "1"
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.7"
+          python-version: "3.12"
+      - run: uv sync --frozen
+      - name: 테이블 생성 + 계정 시드
+        run: |
+          uv run alembic upgrade head
+          uv run python -m scripts.seed
+      - run: uv run pytest -q
+
+  frontend:
+    name: 프론트 린트·빌드
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+        env:
+          VITE_API_BASE: ""
+          VITE_USE_MOCK: "false"
+
+  deploy:
+    name: 서버 배포
+    needs: [backend, frontend]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false   # 배포 도중에는 끊지 않고 다음 배포를 기다리게 함
+    steps:
+      - name: SSH 로 서버에서 업데이트
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          if [ -z "$HOST" ] || [ -z "$SSH_KEY" ]; then
+            echo "DEPLOY_HOST / DEPLOY_SSH_KEY Secrets 가 없어 배포를 건너뜁니다."
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploy -o StrictHostKeyChecking=yes root@"$HOST" \
+            'cd ~/nova-fin-assistant && git pull --ff-only && sh deploy/update.sh'
