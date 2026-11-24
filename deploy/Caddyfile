@@ -1,0 +1,7 @@
+# 맨 앞에서 요청을 받아 web(nginx) 으로 넘깁니다.
+# SITE_ADDRESS 가 도메인이면 Let's Encrypt 인증서를 자동으로 받고 갱신하며, http 로 오면 https 로 넘겨 줍니다.
+# 비어 있으면(:80) 인증서 없이 http 로만 동작합니다.
+{$SITE_ADDRESS} {
+	encode gzip
+	reverse_proxy web:80
+}
